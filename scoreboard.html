@@ -9,107 +9,114 @@
     body {
       background:black;
       color:white;
-      font-family:Arial, Helvetica, sans-serif;
-      margin:0;
-      padding:20px;
+      font-family:Arial, sans-serif;
       text-align:center;
+      padding:20px;
     }
 
-    #scoreboard {
-      max-width:900px;
+    #scoreboard table {
+      width:733px;
       margin:0 auto;
-      border:4px solid white;
-      padding:20px;
-      border-radius:8px;
+      border-collapse:collapse;
     }
 
-    .label { font-size:18px; font-weight:bold; letter-spacing:1px; }
+    .label {
+      font-size:18px;
+      font-weight:bold;
+      padding:5px 0;
+    }
 
-    #timer { font-size:58px; font-weight:900; margin:10px 0; }
-
-    table {
-      width:100%;
-      border-collapse:collapse;
-      text-align:center;
+    #timer {
+      font-size:58px;
+      font-weight:900;
+      padding:10px 0;
     }
 
     .name {
       font-size:22px;
       font-weight:bold;
-      padding:5px 0;
+      padding:8px 0;
     }
 
     .score-box {
       font-size:140px;
       font-weight:900;
       padding:20px;
+      color:black;
+      text-align:center;
     }
 
-    .red { background:#cc0000; }
-    .green { background:#00aa00; }
+    .red { background:#ff0000; }
+    .green { background:#00ff00; }
   </style>
-
 </head>
+
 <body>
 
+<p>Matside Scoreboard</p>
+
 <div id="scoreboard">
+<table>
+<tbody>
 
-  <table>
-    <tr>
-      <td class="label">MAT</td>
-      <td colspan="2" class="label">MATSIDE SCOREBOARD</td>
-      <td class="label">PERIOD</td>
-    </tr>
+<tr>
+<td class="label" style="width:204px;">MAT</td>
+<td class="label" colspan="2" style="width:348px;">MATSIDE SCOREBOARD</td>
+<td class="label" style="width:164px;">PERIOD</td>
+</tr>
 
-    <tr>
-      <td id="mat-number" style="font-size:32px; font-weight:bold;">1</td>
-      <td></td><td></td>
-      <td id="period-number" style="font-size:32px; font-weight:bold;">1</td>
-    </tr>
+<tr>
+<td id="mat-number" style="font-size:32px; font-weight:bold;">1</td>
+<td></td><td></td>
+<td id="period-number" style="font-size:32px; font-weight:bold;">1</td>
+</tr>
 
-    <tr><td colspan="4" class="label">TIME</td></tr>
-    <tr><td colspan="4" id="timer">00:00</td></tr>
+<tr><td class="label" colspan="4">TIME</td></tr>
 
-    <tr>
-      <td colspan="2" class="name" id="red-name" style="color:#ff4444;">RED WRESTLER</td>
-      <td colspan="2" class="name" id="green-name" style="color:#66ff66;">GREEN WRESTLER</td>
-    </tr>
+<tr><td id="timer" colspan="4">00:00</td></tr>
 
-    <tr>
-      <td colspan="2" class="score-box red">
-        <span id="sb-p1">0</span>
-      </td>
-      <td colspan="2" class="score-box green">
-        <span id="sb-p2">0</span>
-      </td>
-    </tr>
+<tr>
+<td id="red-name" class="name" colspan="2" style="color:#ff4444;">RED WRESTLER</td>
+<td id="green-name" class="name" colspan="2" style="color:#66ff66;">GREEN WRESTLER</td>
+</tr>
 
-  </table>
+<tr>
+<td class="score-box red" colspan="2"><span id="sb-p1">0</span></td>
+<td class="score-box green" colspan="2"><span id="sb-p2">0</span></td>
+</tr>
 
+<tr>
+<td colspan="4" style="background:black;">
+  <img src="https://www.matside.org/assets/images/image01.png?v=809bcd3f"
+       width="150" height="138">
+</td>
+</tr>
+
+</tbody>
+</table>
 </div>
 
 <script>
   const SERVER = "https://scoreboard-server-er33.onrender.com";
-  const socket = io(SERVER, { transports: ["websocket"] });
+  const socket = io(SERVER, { transports:["websocket"] });
 
-  function formatTime(sec) {
+  function fmt(sec){
     const m = Math.floor(sec/60);
     const s = sec % 60;
     return (m<10?"0":"")+m + ":" + (s<10?"0":"")+s;
   }
 
   socket.on("stateUpdate", state => {
-    if (!state) return;
+    document.getElementById("sb-p1").innerText = state.player1;
+    document.getElementById("sb-p2").innerText = state.player2;
 
-    document.getElementById("sb-p1").innerText = state.player1 ?? 0;
-    document.getElementById("sb-p2").innerText = state.player2 ?? 0;
-    document.getElementById("timer").innerText = formatTime(state.timer ?? 0);
+    document.getElementById("mat-number").innerText = state.mat;
+    document.getElementById("period-number").innerText = state.period;
 
-    document.getElementById("mat-number").innerText = state.mat ?? 1;
-    document.getElementById("period-number").innerText = state.period ?? 1;
+    document.getElementById("red-name").innerText = state.redName;
+    document.getElementById("green-name").innerText = state.greenName;
 
-    document.getElementById("red-name").innerText = state.redName ?? "RED WRESTLER";
-    document.getElementById("green-name").innerText = state.greenName ?? "GREEN WRESTLER";
+    document.getElementById("timer").innerText = fmt(state.timeRemaining);
   });
 </script>
 
