@@ -287,8 +287,10 @@
     <button id="openDrawerLeft" class="icon-btn">⚡</button>
 
     <div class="brand-mini">
-      <img src="https://www.matside.org/assets/images/image01.png"/>
       <div class="brand-mini-title">Control Panel</div>
+      <div id="currentEventTag" class="brand-mini-title" style="color:#1e88e5; font-weight:700;">
+      <!-- Filled by JS -->
+</div>
     </div>
 
     <div style="display:flex;align-items:center;gap:10px;">
@@ -522,6 +524,22 @@ if (currentEventConfig && currentEventConfig.mats) {
     }
   }
 }
+
+
+// Display current event in header
+(function showEventName(){
+  try {
+    const evt = JSON.parse(localStorage.getItem("matside_selected_event"));
+    if(evt){
+      const tag = document.getElementById("currentEventTag");
+      if(tag){
+        tag.textContent = `Event: ${evt.name}`;
+      }
+    }
+  } catch(e){
+    console.warn("No event selected");
+  }
+})();
   
 /* Socket */
 const SERVER = "https://scoreboard-server-er33.onrender.com";
