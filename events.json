@@ -1,0 +1,25 @@
+{
+  "events": [
+    {
+      "id": "lincoln-vs-north",
+      "name": "Lincoln vs North Dual",
+      "code": "Huskers2024!",
+      "mats": 2,
+      "periodSeconds": 120
+    },
+    {
+      "id": "jv-invitational",
+      "name": "JV Invitational",
+      "code": "JV2024!",
+      "mats": 4,
+      "periodSeconds": 90
+    },
+    {
+      "id": "test-event",
+      "name": "Test Event",
+      "code": "Test123",
+      "mats": 4,
+      "periodSeconds": 60
+    }
+  ]
+}
