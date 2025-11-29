@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Matside — Control Hub</title>
+
+<style>
+  :root{
+    --bg:#070809; --panel:#15161a; --panel-soft:#191b20;
+    --muted:#9aa0a6; --accent:#1e88e5;
+    --red:#d32f2f; --green:#388e3c; --gold:#fbc02d;
+    --radius:12px; --gap:14px;
+  }
+  html,body{
+    margin:0;padding:0;
+    background:var(--bg);color:#fff;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  }
+
+  /* HEADER BRANDING (same as control panel) */
+  .header-bar{
+    background:#070809;
+    border-bottom:1px solid #111215;
+  }
+  .header-inner{
+    max-width:1100px;
+    margin:0 auto;
+    padding:4px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-logo{height:42px;border-radius:8px;}
+  .brand-title{font-size:18px;font-weight:700;}
+  .header-accent{
+    height:2px;
+    background:linear-gradient(90deg,
+      rgba(30,136,229,0.12),
+      rgba(30,136,229,0.5),
+      rgba(30,136,229,0.12)
+    );
+  }
+
+  .wrap{
+    max-width:1100px;
+    margin:0 auto;
+    padding:16px 14px 40px;
+  }
+
+  h1{
+    margin:12px 0 6px 0;
+    font-size:24px;
+    font-weight:800;
+  }
+  .subtitle{
+    margin-bottom:20px;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  /* GRID */
+  .grid{
+    display:grid;
+    grid-template-columns:2fr 1.5fr;
+    gap:var(--gap);
+  }
+  @media(max-width:900px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  .card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,.6);
+  }
+  .card h2{
+    margin:0 0 6px 0;
+    font-size:18px;
+  }
+  .card p{
+    margin:4px 0 10px 0;
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  .card-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  @media(max-width:700px){
+    .card-row{grid-template-columns:1fr;}
+  }
+
+  .card-mini{
+    background:var(--panel-soft);
+    border-radius:10px;
+    padding:10px 12px;
+    box-shadow:0 4px 12px rgba(0,0,0,.5);
+  }
+  .card-mini h3{
+    margin:0 0 4px 0;
+    font-size:15px;
+  }
+  .card-mini p{
+    margin:0 0 8px 0;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 10px;
+    border-radius:10px;
+    border:0;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    text-decoration:none;
+  }
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-secondary{background:#2a2b2c;color:#fff;}
+  .btn-ghost{
+    background:#202125;
+    color:var(--muted);
+    font-size:12px;
+    padding:6px 8px;
+  }
+  .btn-block{width:100%;justify-content:center;}
+
+  .mat-links{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:6px;
+  }
+  .mat-pill{
+    padding:6px 10px;
+    border-radius:999px;
+    background:#202125;
+    font-size:12px;
+    text-decoration:none;
+    color:#e0e0e0;
+  }
+  .mat-pill:hover{
+    background:#292b30;
+  }
+
+  ul{
+    padding-left:18px;
+    margin:6px 0 12px 0;
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  .muted-small{
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  /* LOCK SCREEN */
+  #lock-screen{
+    position:fixed;
+    inset:0;
+    background:radial-gradient(circle at top, #20242d, #050608);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+  }
+  .lock-card{
+    background:#111318;
+    border-radius:14px;
+    padding:20px 20px 16px;
+    width:100%;
+    max-width:360px;
+    box-shadow:0 16px 40px rgba(0,0,0,.8);
+    text-align:center;
+  }
+  .lock-logo{
+    height:56px;
+    border-radius:12px;
+    margin-bottom:8px;
+  }
+  .lock-title{
+    font-size:18px;
+    font-weight:800;
+    margin-bottom:4px;
+  }
+  .lock-sub{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:14px;
+  }
+  .lock-input{
+    width:100%;
+    padding:9px 10px;
+    border-radius:9px;
+    border:0;
+    background:#05070a;
+    color:#fff;
+    font-size:14px;
+    box-sizing:border-box;
+  }
+  .lock-input:focus{
+    outline:1px solid #32363e;
+  }
+  .lock-error{
+    margin-top:8px;
+    min-height:16px;
+    font-size:12px;
+    color:#ef5350;
+  }
+  .lock-footer{
+    margin-top:10px;
+    font-size:11px;
+    color:#70747d;
+  }
+
+  /* VERSION TAG (same style everywhere) */
+  #version-tag{
+    position:fixed;
+    bottom:6px;
+    right:10px;
+    font-size:11px;
+    color:#666;
+    opacity:0.75;
+    pointer-events:none;
+    user-select:none;
+    font-weight:600;
+    z-index:9999;
+  }
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="lock-screen">
+  <div class="lock-card">
+    <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="lock-logo"/>
+    <div class="lock-title">Matside Access</div>
+    <div class="lock-sub">Enter the tournament password to access the control hub.</div>
+    <input id="lock-password" class="lock-input" type="password" placeholder="Password" autocomplete="off"/>
+    <button id="lock-submit" class="btn btn-primary btn-block" style="margin-top:10px;">Unlock</button>
+    <div id="lock-error" class="lock-error"></div>
+    <div class="lock-footer">
+      For staff only • Do not share publicly.
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+
+  <div class="header-bar">
+    <div class="header-inner">
+      <img src="https://www.matside.org/assets/images/image01.png" class="brand-logo" alt="Matside"/>
+      <div class="brand-title">Matside</div>
+    </div>
+    <div class="header-accent"></div>
+  </div>
+
+  <div class="wrap">
+    <h1>Matside Control Hub</h1>
+    <div class="subtitle">
+      Run mats, project scoreboards, and monitor tournaments from a single place.
+    </div>
+
+    <div class="grid">
+      <!-- LEFT COLUMN: MAIN ACTIONS -->
+      <div class="card">
+        <h2>Run Mats</h2>
+        <p>Choose what you want to control or display.</p>
+
+        <div class="card-mini" style="margin-bottom:10px;">
+          <h3>Control Panel</h3>
+          <p>Live scoring and time control for all mats from a single interface.</p>
+          <a href="control.html" class="btn btn-primary btn-block">Open Control Panel</a>
+        </div>
+
+        <div class="card-mini" style="margin-bottom:10px;">
+          <h3>Scoreboards</h3>
+          <p>Projected views for spectators. One scoreboard per mat.</p>
+          <div class="mat-links">
+            <a href="scoreboard.html?mat=1" target="_blank" class="mat-pill">Mat 1</a>
+            <a href="scoreboard.html?mat=2" target="_blank" class="mat-pill">Mat 2</a>
+            <a href="scoreboard.html?mat=3" target="_blank" class="mat-pill">Mat 3</a>
+            <a href="scoreboard.html?mat=4" target="_blank" class="mat-pill">Mat 4</a>
+          </div>
+        </div>
+
+        <div class="card-mini" style="margin-bottom:10px;">
+          <h3>Overview</h3>
+          <p>Watch all mats at once with live time, scores, and winners.</p>
+          <a href="overview.html" class="btn btn-secondary btn-block">Open Overview</a>
+        </div>
+
+        <div class="card-mini">
+          <h3>Mat Assignment</h3>
+          <p>Assign matches to mats (names, period, and timing). Roadmap: v2.5.</p>
+          <a href="mat-assign.html" class="btn btn-ghost btn-block">Open Mat Assignment</a>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: HELP / DOCS / SUPPORT -->
+      <div class="card">
+        <h2>Quick Start & Support</h2>
+        <p>Share this with table workers and officials.</p>
+
+        <div class="card-mini" style="margin-bottom:10px;">
+          <h3>How to Run a Mat</h3>
+          <ul>
+            <li>Open <strong>Control Panel</strong> and select the correct mat from the dropdown.</li>
+            <li>Set wrestler names in the ⚙️ drawer (Match Settings).</li>
+            <li>Choose the period length in the ⚡ drawer (Timer Settings).</li>
+            <li>Use the Start/Stop/Reset buttons to manage the clock.</li>
+            <li>Use the scoring buttons (E1, R2, T3, N2, N3, N4) to update the score.</li>
+            <li>Scoreboard pages will update live for each mat.</li>
+          </ul>
+        </div>
+
+        <div class="card-mini" style="margin-bottom:10px;">
+          <h3>Common Setup</h3>
+          <ul>
+            <li>One laptop or tablet per mat running the <strong>Control Panel</strong>.</li>
+            <li>One display (TV/projector) per mat running the <strong>Scoreboard</strong> for that mat.</li>
+            <li>An extra device can run the <strong>Overview</strong> for the head table.</li>
+          </ul>
+        </div>
+
+        <div class="card-mini" style="margin-bottom:10px;">
+          <h3>Troubleshooting</h3>
+          <ul>
+            <li>If Status shows <strong>“connecting…”</strong> for more than a few seconds, refresh the page.</li>
+            <li>If a scoreboard does not update, verify the correct mat number is selected in the Control Panel.</li>
+            <li>Check network/Wi-Fi if all mats disconnect at once.</li>
+          </ul>
+        </div>
+
+        <div class="card-mini">
+          <h3>Support</h3>
+          <p>Questions, bugs, or feature requests?</p>
+          <a href="mailto:info@matside.org" class="btn btn-secondary btn-block">Email Support</a>
+          <div class="muted-small" style="margin-top:6px;">
+            Include tournament name, mat, and a brief description of the issue.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Simple frontend gate — for convenience, not true security.
+  // Change this to your preferred password.
+  const LANDING_PASSWORD = "Matside2024!"; 
+
+  const lockScreen   = document.getElementById("lock-screen");
+  const app          = document.getElementById("app");
+  const lockInput    = document.getElementById("lock-password");
+  const lockSubmit   = document.getElementById("lock-submit");
+  const lockError    = document.getElementById("lock-error");
+  const STORAGE_KEY  = "matside_hub_ok";
+
+  function unlock(){
+    lockScreen.style.display = "none";
+    app.style.display = "block";
+  }
+
+  function handleSubmit(){
+    const val = (lockInput.value || "").trim();
+    if(!val){
+      lockError.textContent = "Enter the tournament password.";
+      return;
+    }
+    if(val === LANDING_PASSWORD){
+      localStorage.setItem(STORAGE_KEY, "1");
+      lockError.textContent = "";
+      unlock();
+    }else{
+      lockError.textContent = "Incorrect password. Try again.";
+    }
+  }
+
+  // Check if already unlocked this browser
+  (function initGate(){
+    try{
+      if(localStorage.getItem(STORAGE_KEY) === "1"){
+        unlock();
+        return;
+      }
+    }catch(e){
+      // If localStorage fails, just continue with locked state.
+    }
+    lockScreen.style.display = "flex";
+    app.style.display = "none";
+  })();
+
+  lockSubmit.addEventListener("click", handleSubmit);
+  lockInput.addEventListener("keydown", function(e){
+    if(e.key === "Enter") handleSubmit();
+  });
+</script>
+
+<!-- Version tag (same as other pages) -->
+<script src="version-loader.js"></script>
+</body>
+</html>
