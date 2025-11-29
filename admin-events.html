@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Matside — Admin Events Editor</title>
+
+<style>
+  :root{
+    --bg:#070809; --panel:#15161a;
+    --muted:#9aa0a6; --accent:#1e88e5;
+    --radius:12px;
+  }
+  body{
+    background:var(--bg);
+    color:#fff;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+    margin:0;padding:20px;
+  }
+  .card{
+    background:var(--panel);
+    padding:16px;
+    border-radius:var(--radius);
+    max-width:800px;
+    margin:0 auto;
+    box-shadow:0 6px 18px rgba(0,0,0,.6);
+  }
+  h1{margin-top:0;}
+  label{font-size:12px;color:var(--muted);}
+  input,select{
+    width:100%;
+    padding:8px;
+    border:0;
+    border-radius:8px;
+    margin-bottom:10px;
+    background:#0d0e11;
+    color:#fff;
+  }
+  .btn{
+    padding:10px 14px;
+    border-radius:8px;
+    border:0;
+    cursor:pointer;
+    font-weight:700;
+    margin-right:6px;
+  }
+  .blue{background:var(--accent);color:#fff;}
+  .gray{background:#2a2b2c;color:#fff;}
+  .red{background:#b71c1c;color:#fff;}
+  .event-block{
+    border:1px solid #2a2b2c;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Matside — Admin Events Editor</h1>
+
+  <p style="color:var(--muted);">Add, edit, or remove events. Export the final JSON to upload to GitHub as <strong>events.json</strong>.</p>
+
+  <div id="eventsList"></div>
+
+  <h2>Add New Event</h2>
+  <label>Event Name</label>
+  <input id="newName" type="text"/>
+
+  <label>Event ID (URL-friendly)</label>
+  <input id="newId" type="text" placeholder="lincoln-vs-north"/>
+
+  <label>Event Password</label>
+  <input id="newPass" type="text"/>
+
+  <label>Number of Mats</label>
+  <input id="newMats" type="number" min="1" max="12"/>
+
+  <label>Default Period (seconds)</label>
+  <input id="newPeriod" type="number" min="30" max="600"/>
+
+  <button class="btn blue" onclick="addEvent()">Add Event</button>
+
+  <h2>Export JSON</h2>
+  <button class="btn gray" onclick="exportJSON()">Download events.json</button>
+
+</div>
+
+<script>
+let EVENTS = [];
+
+function render(){
+  const wrap = document.getElementById("eventsList");
+  wrap.innerHTML = "";
+
+  EVENTS.forEach((evt, idx)=>{
+    const d = document.createElement("div");
+    d.className = "event-block";
+    d.innerHTML = `
+      <div><strong>${evt.name}</strong></div>
+      <div style="font-size:12px;color:#999;">
+        ID: ${evt.id} • Mats: ${evt.mats} • Period: ${evt.periodSeconds}s
+      </div>
+
+      <label>Edit Name</label>
+      <input value="${evt.name}" onchange="updateEvent(${idx}, 'name', this.value)" />
+
+      <label>Edit Password</label>
+      <input value="${evt.code}" onchange="updateEvent(${idx}, 'code', this.value)" />
+
+      <label>Edit Mats</label>
+      <input type="number" min="1" max="12" value="${evt.mats}" onchange="updateEvent(${idx}, 'mats', Number(this.value))"/>
+
+      <label>Edit Period Seconds</label>
+      <input type="number" min="30" max="600" value="${evt.periodSeconds}" onchange="updateEvent(${idx}, 'periodSeconds', Number(this.value))"/>
+
+      <button class="btn red" onclick="deleteEvent(${idx})">Delete Event</button>
+    `;
+    wrap.appendChild(d);
+  });
+}
+
+function updateEvent(i, key, value){
+  EVENTS[i][key] = value;
+}
+
+function deleteEvent(i){
+  EVENTS.splice(i,1);
+  render();
+}
+
+function addEvent(){
+  EVENTS.push({
+    id: document.getElementById("newId").value,
+    name: document.getElementById("newName").value,
+    code: document.getElementById("newPass").value,
+    mats: Number(document.getElementById("newMats").value),
+    periodSeconds: Number(document.getElementById("newPeriod").value)
+  });
+  render();
+}
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify({events: EVENTS}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = "events.json";
+  a.click();
+}
+
+// Load existing events.json
+fetch("events.json")
+  .then(r=>r.json())
+  .then(j=>{
+    EVENTS = j.events || [];
+    render();
+  })
+  .catch(()=>alert("Could not load events.json"));
+</script>
+
+</body>
+</html>
