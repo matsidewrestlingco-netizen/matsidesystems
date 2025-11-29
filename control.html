@@ -1,135 +1,331 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Control Panel</title>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<meta charset="utf-8" />
+<title>Matside — Control Panel (Adaptive Dark)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1113; --panel:#17181a; --muted:#9aa0a6;
+    --accent:#1e88e5; --red:#d32f2f; --green:#388e3c; --gold:#fbc02d;
+    --card-radius:12px;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#0b0c0d,#0f1113);font-family:Inter,system-ui,Segoe UI,Arial;color:#fff}
+  .wrap{max-width:940px;margin:18px auto;padding:18px;box-sizing:border-box}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  header h1{font-size:20px;margin:0}
+  .status{font-size:13px;opacity:.9}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+  }
+  /* Responsive: collapse to 2 columns on medium, 1 column on small */
+  @media (max-width:900px){ .grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:600px){ .grid{grid-template-columns:1fr;} }
 
-  <style>
-    body {
-      background: #121212;
-      color: #ffffff;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 25px;
-      margin: 0;
-    }
-
-    h1, h3 {
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .section {
-      background: #1e1e1e;
-      padding: 20px;
-      margin: 20px auto;
-      border-radius: 10px;
-      max-width: 650px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.4);
-    }
-
-    button {
-      padding: 14px 20px;
-      margin: 6px;
-      border: none;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.15s;
-    }
-    button:hover { opacity: 0.75; }
-
-    .blue { background:#1e88e5; color:white; }
-    .red { background:#d32f2f; color:white; }
-    .green { background:#388e3c; color:white; }
-    .gray { background:#555; color:white; }
-    .yellow { background:#fbc02d; color:black; }
-    .orange { background:#f57c00; color:white; }
-
-    input {
-      padding: 10px;
-      margin: 5px;
-      border-radius: 6px;
-      border: none;
-      font-size: 16px;
-      width: 60%;
-    }
-  </style>
+  .card{background:var(--panel);padding:12px;border-radius:var(--card-radius);box-shadow:0 6px 18px rgba(0,0,0,.5)}
+  .card h3{margin:0 0 8px 0;font-size:15px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{border:0;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
+  .btn-wide{flex:1;min-width:110px}
+  .blue{background:var(--accent);color:#fff}
+  .gray{background:#2a2b2c;color:#fff}
+  .red{background:var(--red);color:#fff}
+  .green{background:var(--green);color:#fff}
+  .gold{background:var(--gold);color:#000}
+  .small{padding:8px 10px;font-size:14px;border-radius:8px}
+  input[type="text"],input[type="number"]{padding:10px;border-radius:8px;border:0;background:#0e0f10;color:#fff;outline:none;width:100%}
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+  .muted{color:var(--muted);font-size:13px;margin-top:8px}
+  .control-block{display:flex;flex-direction:column;gap:8px}
+  .presets{display:flex;gap:8px;flex-wrap:wrap}
+  .toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+  .toggle input{width:18px;height:18px}
+  footer{margin-top:14px;text-align:center;font-size:12px;color:var(--muted)}
+  .divider{height:1px;background:#101213;margin:8px 0;border-radius:2px}
+</style>
 </head>
-
 <body>
+<div class="wrap">
+  <header>
+    <h1>Matside Control Panel</h1>
+    <div class="status">
+      Status: <span id="conn">connecting…</span>
+    </div>
+  </header>
 
-<h1>Matside Control Panel</h1>
+  <div class="grid">
 
-<!-- TIMER SECTION -->
-<div class="section">
-  <h3>Timer</h3>
-  <button class="blue" onclick="socket.emit('startTimer')">Start</button>
-  <button class="gray" onclick="socket.emit('stopTimer')">Stop</button>
-  <button class="yellow" onclick="socket.emit('resetTimer')">Reset Timer</button>
-</div>
+    <!-- TIMER -->
+    <div class="card">
+      <h3>Timer</h3>
+      <div class="control-block">
+        <div class="row">
+          <button id="startBtn" class="blue btn-wide">Start Period</button>
+          <button id="stopBtn" class="gray btn-wide">Stop</button>
+          <button id="resetTimerBtn" class="gold btn-wide">Reset Timer</button>
+        </div>
 
-<!-- SCORE SECTION -->
-<div class="section">
-  <h3>Scoring</h3>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="flex:1">
+            <label for="customTime">Custom (MM:SS)</label>
+            <input id="customTime" type="text" placeholder="e.g. 2:00 or 90" />
+          </div>
+          <div style="min-width:110px">
+            <label>&nbsp;</label>
+            <button id="setCustomBtn" class="small gray" style="width:100%;">Set</button>
+          </div>
+        </div>
 
-  <div>
-    <button class="red" onclick="socket.emit('addPoint','player1')">+1 Red</button>
-    <button class="green" onclick="socket.emit('addPoint','player2')">+1 Green</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <div>
+            <label>Presets</label>
+            <div class="presets">
+              <button class="small" data-secs="60">1:00</button>
+              <button class="small" data-secs="90">1:30</button>
+              <button class="small" data-secs="120">2:00</button>
+            </div>
+          </div>
+
+          <div style="text-align:right">
+            <label>Auto-advance</label>
+            <div class="toggle">
+              <input id="autoAdvance" type="checkbox" checked />
+              <span class="muted">next period</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <label>Buzzer</label>
+            <div class="row">
+              <button id="buzzerTest" class="small blue">Test Buzzer</button>
+              <button id="buzzerEmit" class="small gray">Emit Buzzer (server)</button>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <label>Current</label>
+            <div id="currentTime" class="muted">00:00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCORES -->
+    <div class="card">
+      <h3>Scoring</h3>
+      <div class="control-block">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="addP1" class="red btn-wide">+1 Red</button>
+          <button id="addP2" class="green btn-wide">+1 Green</button>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <button id="subP1" class="small gray">-1 Red</button>
+          <button id="subP2" class="small gray">-1 Green</button>
+          <button id="resetScores" class="small gold">Reset Scores</button>
+        </div>
+
+        <div class="divider"></div>
+        <div class="muted">Tip: Use the scoreboard page for display-only; use this panel to control live updates.</div>
+      </div>
+    </div>
+
+    <!-- MATCH INFO -->
+    <div class="card">
+      <h3>Match Info</h3>
+      <div class="control-block">
+        <div>
+          <label for="matInput">Mat #</label>
+          <input id="matInput" type="number" min="1" placeholder="1" />
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button id="setMat" class="small blue">Set Mat</button>
+            <button id="incMat" class="small gray">+1</button>
+            <button id="decMat" class="small gray">-1</button>
+          </div>
+        </div>
+
+        <div>
+          <label for="periodInput">Period #</label>
+          <input id="periodInput" type="number" min="1" placeholder="1" />
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button id="setPeriod" class="small blue">Set Period</button>
+            <button id="incPeriod" class="small gray">+1</button>
+            <button id="decPeriod" class="small gray">-1</button>
+          </div>
+        </div>
+
+        <div>
+          <label>Wrestler Names</label>
+          <input id="redName" type="text" placeholder="Red Wrestler" />
+          <input id="greenName" type="text" placeholder="Green Wrestler" style="margin-top:8px" />
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button id="setNames" class="small blue">Set Names</button>
+            <button id="clearNames" class="small gray">Clear Names</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <div>
-    <button class="orange" onclick="socket.emit('subtractPoint','player1')">-1 Red</button>
-    <button class="orange" onclick="socket.emit('subtractPoint','player2')">-1 Green</button>
-  </div>
-
-  <button class="yellow" onclick="socket.emit('resetScores')">Reset Both Scores</button>
-</div>
-
-<!-- MATCH INFO -->
-<div class="section">
-  <h3>Match Info</h3>
-
-  <input id="matInput" placeholder="Mat #" type="number">
-  <button onclick="updateMat()">Set Mat</button>
-  <br>
-
-  <input id="periodInput" placeholder="Period #" type="number">
-  <button onclick="updatePeriod()">Set Period</button>
-</div>
-
-<!-- WRESTLER NAMES -->
-<div class="section">
-  <h3>Wrestler Names</h3>
-
-  <input id="redName" placeholder="Red Wrestler Name"><br>
-  <input id="greenName" placeholder="Green Wrestler Name"><br><br>
-
-  <button class="blue" onclick="updateNames()">Set Names</button>
+  <footer>Hosted controls — connected to your Render server</footer>
 </div>
 
 <script>
-  const SERVER = "https://scoreboard-server-er33.onrender.com";
-  const socket = io(SERVER, { transports:["websocket"] });
+/* Minimal inline 'why' comments only where necessary. */
 
-  function updateMat() {
-    const mat = Number(document.getElementById("matInput").value);
-    socket.emit("setMat", mat);
-  }
+const SERVER = "https://scoreboard-server-er33.onrender.com";
+const socket = io(SERVER, { transports: ["websocket"], reconnectionAttempts: Infinity });
 
-  function updatePeriod() {
-    const period = Number(document.getElementById("periodInput").value);
-    socket.emit("setPeriod", period);
-  }
+const el = (id) => document.getElementById(id);
+const connEl = el('conn');
+const currentTimeEl = el('currentTime');
 
-  function updateNames() {
-    const red = document.getElementById("redName").value;
-    const green = document.getElementById("greenName").value;
-    socket.emit("setNames", { red, green });
+/* connection status */
+socket.on('connect', ()=> connEl.innerText = 'connected');
+socket.on('disconnect', ()=> connEl.innerText = 'disconnected');
+socket.on('connect_error', ()=> connEl.innerText = 'error');
+
+/* reflect state updates for current time */
+socket.on('stateUpdate', state => {
+  const s = state && typeof state.timeRemaining === 'number' ? state.timeRemaining : 0;
+  currentTimeEl.innerText = fmt(s);
+});
+
+/* play buzzer locally and optionally respond to server buzzer event */
+function playBuzzer(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(440, ctx.currentTime);
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.02);
+    o.connect(g); g.connect(ctx.destination);
+    o.start();
+    setTimeout(()=>{ g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.02); o.stop(ctx.currentTime + 0.03); ctx.close().catch(()=>{}); }, 700);
+  }catch(e){ console.warn('Audio unsupported', e); }
+}
+socket.on('buzzer', ()=> playBuzzer());
+
+/* helpers */
+function fmt(sec){
+  sec = Math.max(0, Number(sec)||0);
+  const m = Math.floor(sec/60), s = sec%60;
+  return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+}
+function parseTimeInput(str){
+  if(!str) return null;
+  str = String(str).trim();
+  if(str.includes(':')){
+    const parts = str.split(':').map(p=>p.trim());
+    if(parts.length===2){
+      const mm = Number(parts[0])||0, ss = Number(parts[1])||0;
+      if(mm<0||ss<0||ss>=60) return null;
+      return mm*60 + ss;
+    }
+    return null;
+  } else {
+    const n = Number(str);
+    if(Number.isFinite(n) && n>=0) return Math.round(n); // treat as seconds
+    return null;
   }
+}
+
+/* bind controls */
+el('startBtn').addEventListener('click', ()=> socket.emit('startPeriod'));
+el('stopBtn').addEventListener('click', ()=> socket.emit('stopTimer'));
+el('resetTimerBtn').addEventListener('click', ()=> socket.emit('resetTimer'));
+
+el('setCustomBtn').addEventListener('click', ()=>{
+  const val = el('customTime').value;
+  const secs = parseTimeInput(val);
+  if(secs==null){ alert('Enter MM:SS or seconds (e.g. 90)'); return; }
+  socket.emit('setPeriodLength', secs);
+});
+
+document.querySelectorAll('.presets button').forEach(b=>{
+  b.addEventListener('click', ()=> {
+    const secs = Number(b.dataset.secs) || 0;
+    socket.emit('setPeriodLength', secs);
+  });
+});
+
+/* auto-advance toggle */
+const autoAdvanceCheckbox = el('autoAdvance');
+autoAdvanceCheckbox.addEventListener('change', ()=> {
+  socket.emit('toggleAutoAdvance', !!autoAdvanceCheckbox.checked);
+});
+/* sync initial checkbox state from server (best-effort) */
+socket.on('stateUpdate', state => {
+  if(state && typeof state.autoAdvance === 'boolean') autoAdvanceCheckbox.checked = !!state.autoAdvance;
+  if(typeof state.timeRemaining === 'number') currentTimeEl.innerText = fmt(state.timeRemaining);
+});
+
+/* buzzer */
+el('buzzerTest').addEventListener('click', ()=> playBuzzer());
+el('buzzerEmit').addEventListener('click', ()=> socket.emit('playBuzzer'));
+
+/* scoring */
+el('addP1').addEventListener('click', ()=> socket.emit('addPoint','player1'));
+el('addP2').addEventListener('click', ()=> socket.emit('addPoint','player2'));
+el('subP1').addEventListener('click', ()=> socket.emit('subtractPoint','player1'));
+el('subP2').addEventListener('click', ()=> socket.emit('subtractPoint','player2'));
+el('resetScores').addEventListener('click', ()=> { if(confirm('Reset both scores?')) socket.emit('resetScores'); });
+
+/* match info */
+el('setMat').addEventListener('click', ()=> {
+  const v = Number(el('matInput').value) || 1;
+  socket.emit('setMat', v);
+});
+el('incMat').addEventListener('click', ()=> {
+  const cur = Number(el('matInput').value) || 1;
+  el('matInput').value = cur+1;
+  socket.emit('setMat', cur+1);
+});
+el('decMat').addEventListener('click', ()=> {
+  const cur = Math.max(1, Number(el('matInput').value) || 1);
+  el('matInput').value = Math.max(1, cur-1);
+  socket.emit('setMat', Math.max(1, cur-1));
+});
+
+el('setPeriod').addEventListener('click', ()=> {
+  const v = Math.max(1, Number(el('periodInput').value) || 1);
+  socket.emit('setPeriod', v);
+});
+el('incPeriod').addEventListener('click', ()=> {
+  const cur = Number(el('periodInput').value) || 1;
+  el('periodInput').value = cur+1;
+  socket.emit('setPeriod', cur+1);
+});
+el('decPeriod').addEventListener('click', ()=> {
+  const cur = Math.max(1, Number(el('periodInput').value) || 1);
+  el('periodInput').value = Math.max(1, cur-1);
+  socket.emit('setPeriod', Math.max(1, cur-1));
+});
+
+el('setNames').addEventListener('click', ()=> {
+  const red = String(el('redName').value || '').trim() || 'RED WRESTLER';
+  const green = String(el('greenName').value || '').trim() || 'GREEN WRESTLER';
+  socket.emit('setNames', { red, green });
+});
+el('clearNames').addEventListener('click', ()=> {
+  el('redName').value = '';
+  el('greenName').value = '';
+  socket.emit('setNames', { red: 'RED WRESTLER', green: 'GREEN WRESTLER' });
+});
+
+/* reflect server-sent time on the page constantly via stateUpdate — already wired above. */
+
+/* Small safety: request initial state once connected */
+socket.on('connect', ()=> socket.emit('requestState', {}));
 </script>
-
 </body>
 </html>
