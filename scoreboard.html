@@ -1,162 +1,126 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Matside Scoreboard</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
 <style>
   body {
-    background:black;
-    color:white;
-    font-family:Arial, sans-serif;
-    text-align:center;
-    padding:20px;
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #000;
+    color: #fff;
+    text-align: center;
   }
-
-  #scoreboard table {
-    width:733px;
-    max-width:100%;
-    margin:0 auto;
-    border-collapse:collapse;
+  #container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 10px;
   }
-
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
   .label {
-    font-size:18px;
-    font-weight:bold;
-    padding:5px 0;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 6px 0;
   }
-
   #timer {
-    font-size:58px;
-    font-weight:900;
-    padding:10px 0;
+    font-size: 68px;
+    font-weight: 800;
+    padding: 12px 0;
   }
-
   .name {
-    font-size:22px;
-    font-weight:bold;
-    padding:8px 0;
+    font-size: 28px;
+    font-weight: bold;
+    padding: 6px 0;
   }
-
   .score-box {
-    font-size:140px;
-    font-weight:900;
-    padding:20px;
-    color:black;
-    text-align:center;
+    font-size: 120px;
+    font-weight: 800;
+    padding: 16px 0;
   }
-
-  .red { background:#ff0000; }
-  .green { background:#00ff00; }
-
-  /* Flash animation on buzzer */
-  .flash {
-    animation: flashAnim 0.5s ease-in-out 3;
-  }
-  @keyframes flashAnim {
-    0% { background:black; }
-    50% { background:#fffb00; }
-    100% { background:black; }
-  }
-
-  /* Auto-advance highlight */
-  #period-number.flash-period {
-    animation: periodFlash 1.5s ease-out;
-  }
-  @keyframes periodFlash {
-    0% { color:#fff; }
-    25% { color:#fffb00; }
-    50% { color:#fff; }
-    75% { color:#fffb00; }
-    100% { color:#fff; }
-  }
+  .red { background: #c62828; }
+  .green { background: #2e7d32; }
 </style>
 </head>
 
 <body>
+<div id="container">
+  <table>
+    <tbody>
+      <tr>
+        <td class="label">MAT</td>
+        <td class="label" colspan="2">MATSIDE SCOREBOARD</td>
+        <td class="label">PERIOD</td>
+      </tr>
 
-<div id="scoreboard">
-<table>
-<tbody>
+      <tr>
+        <td id="mat-number" style="font-size:32px;font-weight:800;">1</td>
+        <td></td>
+        <td></td>
+        <td id="period-number" style="font-size:32px;font-weight:800;">1</td>
+      </tr>
 
-<tr>
-<td class="label" style="width:204px;">MAT</td>
-<td class="label" colspan="2" style="width:348px;">MATSIDE SCOREBOARD</td>
-<td class="label" style="width:164px;">PERIOD</td>
-</tr>
+      <tr>
+        <td class="label" colspan="4">TIME</td>
+      </tr>
+      <tr>
+        <td id="timer" colspan="4">00:00</td>
+      </tr>
 
-<tr>
-<td id="mat-number" style="font-size:32px; font-weight:bold;">1</td>
-<td></td><td></td>
-<td id="period-number" style="font-size:32px; font-weight:bold;">1</td>
-</tr>
+      <tr>
+        <td id="red-name" class="name" colspan="2" style="color:#ff4444;">RED WRESTLER</td>
+        <td id="green-name" class="name" colspan="2" style="color:#66ff66;">GREEN WRESTLER</td>
+      </tr>
 
-<tr><td class="label" colspan="4">TIME</td></tr>
-
-<tr><td id="timer" colspan="4">00:00</td></tr>
-
-<tr>
-<td id="red-name" class="name" colspan="2" style="color:#ff4444;">RED WRESTLER</td>
-<td id="green-name" class="name" colspan="2" style="color:#66ff66;">GREEN WRESTLER</td>
-</tr>
-
-<tr>
-<td class="score-box red" colspan="2"><span id="sb-p1">0</span></td>
-<td class="score-box green" colspan="2"><span id="sb-p2">0</span></td>
-</tr>
-
-<tr>
-<td colspan="4" style="background:black;padding:20px 0;">
-  <img src="https://www.matside.org/assets/images/image01.png?v=809bcd3f"
-       width="100" height="92" />
-</td>
-</tr>
-
-</tbody>
-</table>
+      <tr>
+        <td class="score-box red" colspan="2"><span id="sb-red">0</span></td>
+        <td class="score-box green" colspan="2"><span id="sb-green">0</span></td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 
 <script>
-  const SERVER = "https://scoreboard-server-er33.onrender.com";
-  const socket = io(SERVER, { transports:["websocket"] });
+/* --- WHY: get ?mat= from URL so each embed shows only its own mat --- */
+function getMatFromURL() {
+  const p = new URLSearchParams(window.location.search);
+  const m = Number(p.get("mat"));
+  return Number.isFinite(m) && m >= 1 ? m : 1;
+}
 
-  const timerEl = document.getElementById("timer");
-  const p1El = document.getElementById("sb-p1");
-  const p2El = document.getElementById("sb-p2");
-  const matEl = document.getElementById("mat-number");
-  const periodEl = document.getElementById("period-number");
-  const redNameEl = document.getElementById("red-name");
-  const greenNameEl = document.getElementById("green-name");
+const mat = getMatFromURL();
+document.getElementById("mat-number").textContent = mat;
 
-  function fmt(sec){
-    const m = Math.floor(sec/60);
-    const s = sec % 60;
-    return (m<10?"0":"")+m + ":" + (s<10?"0":"")+s;
-  }
+/* Connect to Render server */
+const SERVER = "https://scoreboard-server-er33.onrender.com";
+const socket = io(SERVER, { transports:["websocket"] });
 
-  socket.on("stateUpdate", state => {
-    p1El.innerText = state.player1;
-    p2El.innerText = state.player2;
+/* Format mm:ss */
+function fmt(sec) {
+  sec = Math.max(0, Number(sec) || 0);
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
+}
 
-    matEl.innerText = state.mat;
-    periodEl.innerText = state.period;
+/* Update scoreboard when server pushes state */
+socket.on("stateUpdate", state => {
+  const m = state?.mats?.[mat];
+  if (!m) return;
 
-    redNameEl.innerText = state.redName;
-    greenNameEl.innerText = state.greenName;
-
-    timerEl.innerText = fmt(state.timeRemaining);
-  });
-
-  // Buzzer event → flash background + pulse period number
-  socket.on("buzzer", () => {
-    document.body.classList.add("flash");
-    periodEl.classList.add("flash-period");
-    setTimeout(()=>document.body.classList.remove("flash"),1500);
-    setTimeout(()=>periodEl.classList.remove("flash-period"),1500);
-  });
+  document.getElementById("period-number").textContent = m.period;
+  document.getElementById("timer").textContent = fmt(m.timeRemaining);
+  document.getElementById("sb-red").textContent = m.player1;
+  document.getElementById("sb-green").textContent = m.player2;
+  document.getElementById("red-name").textContent = m.redName || "RED WRESTLER";
+  document.getElementById("green-name").textContent = m.greenName || "GREEN WRESTLER";
+});
 </script>
-
 </body>
 </html>
