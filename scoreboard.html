@@ -2,40 +2,114 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Scoreboard</title>
+  <title>Matside Scoreboard</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
   <style>
-    body { font-family:Arial, sans-serif; text-align:center; padding:20px; }
-    .score { font-size:32px; font-weight:bold; }
-    #timer { font-size:40px; font-weight:bold; margin:10px 0; }
+    body {
+      background:black;
+      color:white;
+      font-family:Arial, Helvetica, sans-serif;
+      margin:0;
+      padding:20px;
+      text-align:center;
+    }
+
+    #scoreboard {
+      max-width:900px;
+      margin:0 auto;
+      border:4px solid white;
+      padding:20px;
+      border-radius:8px;
+    }
+
+    .label { font-size:18px; font-weight:bold; letter-spacing:1px; }
+
+    #timer { font-size:58px; font-weight:900; margin:10px 0; }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      text-align:center;
+    }
+
+    .name {
+      font-size:22px;
+      font-weight:bold;
+      padding:5px 0;
+    }
+
+    .score-box {
+      font-size:140px;
+      font-weight:900;
+      padding:20px;
+    }
+
+    .red { background:#cc0000; }
+    .green { background:#00aa00; }
   </style>
+
 </head>
 <body>
 
-  <h1>Scoreboard</h1>
+<div id="scoreboard">
 
-  <div id="timer">00:00</div>
+  <table>
+    <tr>
+      <td class="label">MAT</td>
+      <td colspan="2" class="label">MATSIDE SCOREBOARD</td>
+      <td class="label">PERIOD</td>
+    </tr>
 
-  <div class="score">Player 1: <span id="p1">0</span></div>
-  <div class="score">Player 2: <span id="p2">0</span></div>
+    <tr>
+      <td id="mat-number" style="font-size:32px; font-weight:bold;">1</td>
+      <td></td><td></td>
+      <td id="period-number" style="font-size:32px; font-weight:bold;">1</td>
+    </tr>
 
-  <h2>Winner: <span id="winner">None</span></h2>
+    <tr><td colspan="4" class="label">TIME</td></tr>
+    <tr><td colspan="4" id="timer">00:00</td></tr>
+
+    <tr>
+      <td colspan="2" class="name" id="red-name" style="color:#ff4444;">RED WRESTLER</td>
+      <td colspan="2" class="name" id="green-name" style="color:#66ff66;">GREEN WRESTLER</td>
+    </tr>
+
+    <tr>
+      <td colspan="2" class="score-box red">
+        <span id="sb-p1">0</span>
+      </td>
+      <td colspan="2" class="score-box green">
+        <span id="sb-p2">0</span>
+      </td>
+    </tr>
+
+  </table>
+
+</div>
 
 <script>
   const SERVER = "https://scoreboard-server-er33.onrender.com";
-  const socket = io(SERVER, { transports:["websocket"] });
+  const socket = io(SERVER, { transports: ["websocket"] });
 
-  function formatTime(seconds) {
-    const m = Math.floor(seconds/60);
-    const s = seconds % 60;
+  function formatTime(sec) {
+    const m = Math.floor(sec/60);
+    const s = sec % 60;
     return (m<10?"0":"")+m + ":" + (s<10?"0":"")+s;
   }
 
-  socket.on("stateUpdate", (state) => {
-    document.getElementById("p1").innerText = state.player1;
-    document.getElementById("p2").innerText = state.player2;
-    document.getElementById("timer").innerText = formatTime(state.timer);
-    document.getElementById("winner").innerText = state.winner || "None";
+  socket.on("stateUpdate", state => {
+    if (!state) return;
+
+    document.getElementById("sb-p1").innerText = state.player1 ?? 0;
+    document.getElementById("sb-p2").innerText = state.player2 ?? 0;
+    document.getElementById("timer").innerText = formatTime(state.timer ?? 0);
+
+    document.getElementById("mat-number").innerText = state.mat ?? 1;
+    document.getElementById("period-number").innerText = state.period ?? 1;
+
+    document.getElementById("red-name").innerText = state.redName ?? "RED WRESTLER";
+    document.getElementById("green-name").innerText = state.greenName ?? "GREEN WRESTLER";
   });
 </script>
 
