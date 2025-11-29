@@ -462,6 +462,12 @@ $('matSelect').addEventListener('change', ()=>{
     const m = latestState.mats[currentMat];
     $('sumPeriod').innerText = m.period;
     $('sumTime').innerText = fmt(m.timeRemaining);
+    // Add or remove the pulsing class depending on whether the timer is running
+    if (m.running) {
+      $('sumTime').classList.add('timer-running');
+    } else {
+      $('sumTime').classList.remove('timer-running');
+    }
     $('sumRed').innerText = m.player1;
     $('sumGreen').innerText = m.player2;
     $('periodLengthDisplay').innerText = fmt(m.periodLength);
