@@ -18,7 +18,7 @@
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
   }
 
-  /* HEADER BRANDING (same as control panel) */
+  /* HEADER BRANDING */
   .header-bar{
     background:#070809;
     border-bottom:1px solid #111215;
@@ -58,6 +58,7 @@
     color:var(--muted);
     font-size:14px;
   }
+  .subtitle strong{color:#e0e0e0;}
 
   /* GRID */
   .grid{
@@ -85,21 +86,14 @@
     color:var(--muted);
   }
 
-  .card-row{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-  }
-  @media(max-width:700px){
-    .card-row{grid-template-columns:1fr;}
-  }
-
   .card-mini{
     background:var(--panel-soft);
     border-radius:10px;
     padding:10px 12px;
     box-shadow:0 4px 12px rgba(0,0,0,.5);
+    margin-bottom:10px;
   }
+  .card-mini:last-child{margin-bottom:0;}
   .card-mini h3{
     margin:0 0 4px 0;
     font-size:15px;
@@ -162,7 +156,7 @@
     color:var(--muted);
   }
 
-  /* LOCK SCREEN */
+  /* EVENT + PASSWORD GATE */
   #lock-screen{
     position:fixed;
     inset:0;
@@ -177,25 +171,34 @@
     border-radius:14px;
     padding:20px 20px 16px;
     width:100%;
-    max-width:360px;
+    max-width:380px;
     box-shadow:0 16px 40px rgba(0,0,0,.8);
+  }
+  .lock-header{
     text-align:center;
+    margin-bottom:10px;
   }
   .lock-logo{
-    height:56px;
+    height:50px;
     border-radius:12px;
-    margin-bottom:8px;
+    margin-bottom:6px;
   }
   .lock-title{
     font-size:18px;
     font-weight:800;
-    margin-bottom:4px;
+    margin-bottom:2px;
   }
   .lock-sub{
     font-size:13px;
     color:var(--muted);
-    margin-bottom:14px;
   }
+  .lock-label{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:8px;
+    margin-bottom:3px;
+  }
+  .lock-select,
   .lock-input{
     width:100%;
     padding:9px 10px;
@@ -206,6 +209,7 @@
     font-size:14px;
     box-sizing:border-box;
   }
+  .lock-select:focus,
   .lock-input:focus{
     outline:1px solid #32363e;
   }
@@ -219,9 +223,10 @@
     margin-top:10px;
     font-size:11px;
     color:#70747d;
+    text-align:center;
   }
 
-  /* VERSION TAG (same style everywhere) */
+  /* VERSION TAG */
   #version-tag{
     position:fixed;
     bottom:6px;
@@ -238,17 +243,28 @@
 </head>
 <body>
 
-<!-- PASSWORD GATE -->
+<!-- EVENT + PASSWORD GATE -->
 <div id="lock-screen">
   <div class="lock-card">
-    <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="lock-logo"/>
-    <div class="lock-title">Matside Access</div>
-    <div class="lock-sub">Enter the tournament password to access the control hub.</div>
-    <input id="lock-password" class="lock-input" type="password" placeholder="Password" autocomplete="off"/>
-    <button id="lock-submit" class="btn btn-primary btn-block" style="margin-top:10px;">Unlock</button>
+    <div class="lock-header">
+      <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="lock-logo"/>
+      <div class="lock-title">Matside Events</div>
+      <div class="lock-sub">Select your event and enter the event password.</div>
+    </div>
+
+    <label class="lock-label" for="event-select">Event</label>
+    <select id="event-select" class="lock-select">
+      <option value="">Loading events...</option>
+    </select>
+
+    <label class="lock-label" for="event-password">Event Password</label>
+    <input id="event-password" class="lock-input" type="password" placeholder="Password" autocomplete="off"/>
+
+    <button id="event-submit" class="btn btn-primary btn-block" style="margin-top:10px;">Enter Event</button>
     <div id="lock-error" class="lock-error"></div>
+
     <div class="lock-footer">
-      For staff only • Do not share publicly.
+      For tournament staff only. Each event has its own password.
     </div>
   </div>
 </div>
@@ -265,43 +281,40 @@
   </div>
 
   <div class="wrap">
-    <h1>Matside Control Hub</h1>
-    <div class="subtitle">
-      Run mats, project scoreboards, and monitor tournaments from a single place.
+    <h1 id="hub-title">Matside Control Hub</h1>
+    <div id="hub-subtitle" class="subtitle">
+      Select an event to begin.
     </div>
 
     <div class="grid">
       <!-- LEFT COLUMN: MAIN ACTIONS -->
       <div class="card">
         <h2>Run Mats</h2>
-        <p>Choose what you want to control or display.</p>
+        <p>Use the controls below for the selected event.</p>
 
-        <div class="card-mini" style="margin-bottom:10px;">
+        <div class="card-mini">
           <h3>Control Panel</h3>
-          <p>Live scoring and time control for all mats from a single interface.</p>
+          <p>Live scoring and time control for all mats.</p>
           <a href="control.html" class="btn btn-primary btn-block">Open Control Panel</a>
         </div>
 
-        <div class="card-mini" style="margin-bottom:10px;">
+        <div class="card-mini">
           <h3>Scoreboards</h3>
-          <p>Projected views for spectators. One scoreboard per mat.</p>
-          <div class="mat-links">
-            <a href="scoreboard.html?mat=1" target="_blank" class="mat-pill">Mat 1</a>
-            <a href="scoreboard.html?mat=2" target="_blank" class="mat-pill">Mat 2</a>
-            <a href="scoreboard.html?mat=3" target="_blank" class="mat-pill">Mat 3</a>
-            <a href="scoreboard.html?mat=4" target="_blank" class="mat-pill">Mat 4</a>
+          <p>Projected spectator views. One scoreboard per mat for this event.</p>
+          <div id="mat-links" class="mat-links">
+            <!-- Filled by JS based on event.mats -->
           </div>
         </div>
 
-        <div class="card-mini" style="margin-bottom:10px;">
+        <div class="card-mini">
           <h3>Overview</h3>
-          <p>Watch all mats at once with live time, scores, and winners.</p>
+          <p>Watch all mats for this event at once.</p>
           <a href="overview.html" class="btn btn-secondary btn-block">Open Overview</a>
         </div>
 
         <div class="card-mini">
           <h3>Mat Assignment</h3>
-          <p>Assign matches to mats (names, period, and timing). Roadmap: v2.5.</p>
+          <p>Assign matches to mats (planned v2.5).</p>
           <a href="mat-assign.html" class="btn btn-ghost btn-block">Open Mat Assignment</a>
         </div>
       </div>
@@ -309,35 +322,35 @@
       <!-- RIGHT COLUMN: HELP / DOCS / SUPPORT -->
       <div class="card">
         <h2>Quick Start & Support</h2>
-        <p>Share this with table workers and officials.</p>
+        <p id="event-summary">Share this with table workers and officials.</p>
 
-        <div class="card-mini" style="margin-bottom:10px;">
+        <div class="card-mini">
           <h3>How to Run a Mat</h3>
           <ul>
-            <li>Open <strong>Control Panel</strong> and select the correct mat from the dropdown.</li>
+            <li>Open the <strong>Control Panel</strong> and confirm the selected mat matches the mat’s scoreboard.</li>
             <li>Set wrestler names in the ⚙️ drawer (Match Settings).</li>
-            <li>Choose the period length in the ⚡ drawer (Timer Settings).</li>
-            <li>Use the Start/Stop/Reset buttons to manage the clock.</li>
-            <li>Use the scoring buttons (E1, R2, T3, N2, N3, N4) to update the score.</li>
+            <li>Choose the period length in the ⚡ drawer (Timer Settings); defaults come from the selected event.</li>
+            <li>Use the Start/Stop/Reset buttons to control the clock.</li>
+            <li>Use the scoring buttons (E1, R2, T3, N2, N3, N4) to update scores.</li>
             <li>Scoreboard pages will update live for each mat.</li>
           </ul>
         </div>
 
-        <div class="card-mini" style="margin-bottom:10px;">
+        <div class="card-mini">
           <h3>Common Setup</h3>
           <ul>
             <li>One laptop or tablet per mat running the <strong>Control Panel</strong>.</li>
-            <li>One display (TV/projector) per mat running the <strong>Scoreboard</strong> for that mat.</li>
-            <li>An extra device can run the <strong>Overview</strong> for the head table.</li>
+            <li>One TV/projector per mat running that mat’s <strong>Scoreboard</strong>.</li>
+            <li>Optional extra device at the head table running the <strong>Overview</strong>.</li>
           </ul>
         </div>
 
-        <div class="card-mini" style="margin-bottom:10px;">
+        <div class="card-mini">
           <h3>Troubleshooting</h3>
           <ul>
-            <li>If Status shows <strong>“connecting…”</strong> for more than a few seconds, refresh the page.</li>
-            <li>If a scoreboard does not update, verify the correct mat number is selected in the Control Panel.</li>
-            <li>Check network/Wi-Fi if all mats disconnect at once.</li>
+            <li>If Status shows <strong>“connecting…”</strong>, refresh the Control Panel.</li>
+            <li>If a scoreboard doesn’t update, verify the mat number matches in the Control Panel.</li>
+            <li>If all mats disconnect, check the venue network or server status.</li>
           </ul>
         </div>
 
@@ -346,69 +359,130 @@
           <p>Questions, bugs, or feature requests?</p>
           <a href="mailto:info@matside.org" class="btn btn-secondary btn-block">Email Support</a>
           <div class="muted-small" style="margin-top:6px;">
-            Include tournament name, mat, and a brief description of the issue.
+            Include event name, mat, and a brief description of the issue.
           </div>
         </div>
 
       </div>
     </div>
-
   </div>
 </div>
 
 <script>
-  // Simple frontend gate — for convenience, not true security.
-  // Change this to your preferred password.
-  const LANDING_PASSWORD = "Matside2024!"; 
+  const STORAGE_EVENT_KEY = "matside_selected_event";
+  let EVENTS = [];
 
-  const lockScreen   = document.getElementById("lock-screen");
-  const app          = document.getElementById("app");
-  const lockInput    = document.getElementById("lock-password");
-  const lockSubmit   = document.getElementById("lock-submit");
-  const lockError    = document.getElementById("lock-error");
-  const STORAGE_KEY  = "matside_hub_ok";
+  const lockScreen = document.getElementById("lock-screen");
+  const app        = document.getElementById("app");
+  const eventSelect= document.getElementById("event-select");
+  const eventPass  = document.getElementById("event-password");
+  const eventSubmit= document.getElementById("event-submit");
+  const lockError  = document.getElementById("lock-error");
 
-  function unlock(){
+  const hubTitle   = document.getElementById("hub-title");
+  const hubSubtitle= document.getElementById("hub-subtitle");
+  const matLinks   = document.getElementById("mat-links");
+  const eventSummary = document.getElementById("event-summary");
+
+  function unlockForEvent(evt){
+    // Save event in localStorage so Control Panel & others can read it.
+    try{
+      localStorage.setItem(STORAGE_EVENT_KEY, JSON.stringify(evt));
+    }catch(e){}
     lockScreen.style.display = "none";
     app.style.display = "block";
+
+    hubTitle.textContent = "Matside Control Hub";
+    hubSubtitle.innerHTML = `Current Event: <strong>${evt.name}</strong> • Mats: <strong>${evt.mats}</strong> • Period: <strong>${Math.floor(evt.periodSeconds/60)}:${(evt.periodSeconds%60).toString().padStart(2,"0")}</strong>`;
+    eventSummary.textContent = `This hub is currently configured for "${evt.name}". Share these instructions with table workers and officials.`;
+
+    // Build mat scoreboard links based on evt.mats
+    matLinks.innerHTML = "";
+    const maxMats = Number(evt.mats) || 1;
+    for(let m=1; m<=maxMats; m++){
+      const a = document.createElement("a");
+      a.className = "mat-pill";
+      a.href = `scoreboard.html?mat=${m}`;
+      a.target = "_blank";
+      a.textContent = `Mat ${m}`;
+      matLinks.appendChild(a);
+    }
   }
 
-  function handleSubmit(){
-    const val = (lockInput.value || "").trim();
-    if(!val){
-      lockError.textContent = "Enter the tournament password.";
+  function handleEventSubmit(){
+    const id = eventSelect.value;
+    const pass = (eventPass.value || "").trim();
+    if(!id){
+      lockError.textContent = "Select an event.";
       return;
     }
-    if(val === LANDING_PASSWORD){
-      localStorage.setItem(STORAGE_KEY, "1");
-      lockError.textContent = "";
-      unlock();
-    }else{
-      lockError.textContent = "Incorrect password. Try again.";
+    const evt = EVENTS.find(e => e.id === id);
+    if(!evt){
+      lockError.textContent = "Event not found.";
+      return;
     }
+    if(!pass){
+      lockError.textContent = "Enter the event password.";
+      return;
+    }
+    if(pass !== evt.code){
+      lockError.textContent = "Incorrect password for this event.";
+      return;
+    }
+    lockError.textContent = "";
+    unlockForEvent(evt);
   }
 
-  // Check if already unlocked this browser
-  (function initGate(){
-    try{
-      if(localStorage.getItem(STORAGE_KEY) === "1"){
-        unlock();
+  // Load events.json
+  fetch("events.json")
+    .then(r => r.json())
+    .then(data => {
+      EVENTS = data.events || [];
+      eventSelect.innerHTML = "";
+      if(EVENTS.length === 0){
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No events configured";
+        eventSelect.appendChild(opt);
         return;
       }
-    }catch(e){
-      // If localStorage fails, just continue with locked state.
-    }
-    lockScreen.style.display = "flex";
-    app.style.display = "none";
-  })();
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select an event…";
+      eventSelect.appendChild(placeholder);
 
-  lockSubmit.addEventListener("click", handleSubmit);
-  lockInput.addEventListener("keydown", function(e){
-    if(e.key === "Enter") handleSubmit();
+      EVENTS.forEach(evt=>{
+        const opt = document.createElement("option");
+        opt.value = evt.id;
+        opt.textContent = evt.name;
+        eventSelect.appendChild(opt);
+      });
+
+      // If an event is already selected in this browser, auto-unlock
+      try{
+        const saved = localStorage.getItem(STORAGE_EVENT_KEY);
+        if(saved){
+          const parsed = JSON.parse(saved);
+          const found = EVENTS.find(e => e.id === parsed.id);
+          if(found){
+            unlockForEvent(found);
+          }
+        }
+      }catch(e){}
+    })
+    .catch(err=>{
+      console.error("Failed to load events.json", err);
+      eventSelect.innerHTML = "<option value=''>Error loading events</option>";
+      lockError.textContent = "Could not load events. Contact the administrator.";
+    });
+
+  eventSubmit.addEventListener("click", handleEventSubmit);
+  eventPass.addEventListener("keydown", e=>{
+    if(e.key === "Enter") handleEventSubmit();
   });
 </script>
 
-<!-- Version tag (same as other pages) -->
+<!-- Version tag loader (reuse your existing script) -->
 <script src="version-loader.js"></script>
 </body>
 </html>
