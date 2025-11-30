@@ -687,6 +687,28 @@ greenNameInput.addEventListener("blur", () => {
 loadSettings();
 refreshDrawerUI();
 refreshNameInputs();
+
+/* ==== SAFER DRAWER WIRING (v2.5.1) ==== */
+
+function safeBind(id, handler) {
+  const el = document.getElementById(id);
+  if (!el) {
+    console.warn("Missing element:", id);
+    return;
+  }
+  el.addEventListener("click", handler);
+}
+
+// LEFT
+safeBind("openDrawerLeft", openLeft);
+safeBind("closeDrawerLeft", closeLeft);
+safeBind("backdropLeft", closeLeft);
+
+// RIGHT
+safeBind("openDrawerRight", openRight);
+safeBind("closeDrawerRight", closeRight);
+safeBind("backdropRight", closeRight);
+  
 </script>
 
 </body>
