@@ -248,7 +248,7 @@ function saveToServer(){
 
 /* ---------- LOAD EXISTING events.json ---------- */
 
-fetch("events.json")
+fetch("https://scoreboard-server-er33.onrender.com/events.json")
   .then(r=>r.json())
   .then(j=>{
     EVENTS = j.events || [];
