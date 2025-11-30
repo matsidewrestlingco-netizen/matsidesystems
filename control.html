@@ -335,7 +335,58 @@ input[type=text],input[type=number]{
 <div id="version-tag">v2.5.3</div>
 
 <script>
-/* ===== Drawer helpers ===== */
+function handlePeriodAdvance(mat, m) {
+
+  // TECH FALL CHECK (15+ points)
+  if (Math.abs(m.red - m.green) >= 15) {
+    socket.emit("updateState", { 
+      mat,
+      updates: { running:false, winner: m.red > m.green ? "red" : "green" }
+    });
+    return;
+  }
+
+  // END OF REGULATION (Period 3 ends)
+  if (m.period === 3) {
+
+    // Winner decided
+    if (m.red !== m.green) {
+      socket.emit("updateState", {
+        mat,
+        updates: { 
+          running:false,
+          winner: m.red > m.green ? "red" : "green"
+        }
+      });
+      return;
+    }
+
+    // TIE → OVERTIME
+    socket.emit("updateState", {
+      mat,
+      updates: {
+        period: "OT1",
+        time: 60,     // 1-minute sudden victory
+        running:false
+      }
+    });
+    return;
+  }
+
+  // NORMAL ADVANCE (Period 1→2 or 2→3)
+  const nextPeriod = m.period + 1;
+
+  socket.emit("updateState", {
+    mat,
+    updates: {
+      period: nextPeriod,
+      time: m.periodLength ?? 60,  // Preset from control panel
+      running:false
+    }
+  });
+}
+  
+  /* ===== Drawer helpers ===== */
 function openLeft(){
   drawerLeft.classList.add("open");
   backdropLeft.classList.add("open");
@@ -381,8 +432,17 @@ socket.on("disconnect", () => {
   conn.textContent = "disconnected";
 });
 socket.on("stateUpdate", (state) => {
-  lastState = state;
+  const mat = parseInt(matSelect.value);
+  const m = state.mats[mat];
+
+  if (!m) return;
+
   updateUI(state);
+
+  // --- Period progression logic ---
+  if (m.time === 0 && m.running === false) {
+    handlePeriodAdvance(mat, m);
+  }
 });
 
 /* ===== Helpers ===== */
