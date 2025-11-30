@@ -296,6 +296,21 @@
   </div>
   <div class="drawer-body">
 
+<div class="drawer-section">
+  <h4>Wrestler Names</h4>
+  
+  <label style="font-size:12px;">Red Wrestler</label>
+  <input id="redNameInput" type="text" placeholder="Red wrestler name">
+
+  <label style="font-size:12px;margin-top:8px;display:block;">Green Wrestler</label>
+  <input id="greenNameInput" type="text" placeholder="Green wrestler name">
+
+  <div style="margin-top:4px;font-size:12px;color:var(--muted);">
+    These names are saved locally (per device).  
+    We can sync them to the scoreboard next.
+  </div>
+</div>
+    
     <div class="drawer-section">
       <h4>Reset Mat</h4>
       <button id="resetMatBtn" class="small red" style="width:100%;">Reset Entire Mat</button>
@@ -617,6 +632,34 @@ function renderTimeline(mat){
   });
 }
 
+  // =============== Wrestler Names (local storage) ===============
+function loadNames(mat) {
+  const saved = JSON.parse(localStorage.getItem("matside_names") || "{}");
+  const red = saved[mat]?.red || "";
+  const green = saved[mat]?.green || "";
+  redNameInput.value = red;
+  greenNameInput.value = green;
+}
+
+function saveNames(mat) {
+  const saved = JSON.parse(localStorage.getItem("matside_names") || "{}");
+  saved[mat] = {
+    red: redNameInput.value.trim(),
+    green: greenNameInput.value.trim()
+  };
+  localStorage.setItem("matside_names", JSON.stringify(saved));
+}
+
+// update UI if mat changes
+matSelect.addEventListener("change", () => {
+  loadNames(currentMat());
+  if (lastState) updateUI(lastState);
+});
+
+// save names on typing
+redNameInput.addEventListener("input", () => saveNames(currentMat()));
+greenNameInput.addEventListener("input", () => saveNames(currentMat()));
+
 /* ===================== Full Mat Reset ===================== */
 function doFullMatReset(mat, clearTimeline){
   const baseLen = periodLengthByMat[mat] || 60;
@@ -837,6 +880,9 @@ submitMatchEnd.onclick = () => {
 matSelect.addEventListener("change",()=>{
   if(lastState) updateUI(lastState);
 });
+
+loadNames(currentMat());
+  
 </script>
 
 </body>
