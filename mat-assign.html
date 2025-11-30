@@ -1,259 +1,247 @@
-<!-- mat-assign.html -->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Matside — Mat Assignment</title>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<title>Matside — Mat Assignments (v2.5.3)</title>
+
 <style>
   :root {
-    --bg:#070809;
+    --bg:#070809; 
     --panel:#15161a;
-    --panel2:#1b1c20;
     --muted:#9aa0a6;
-    --red:#c62828;
-    --green:#2e7d32;
     --accent:#1e88e5;
-    --radius:14px;
+    --red:#d32f2f;
+    --green:#00c853;
+    --gold:#fbc02d;
+    --radius:12px;
   }
-  body {
-    margin:0;
+
+  html,body {
+    margin:0; padding:0;
     background:var(--bg);
     color:#fff;
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
   }
-  .header-bar{
+
+  /* HEADER */
+  .header-bar {
     background:#070809;
-    border-bottom:1px solid #111215;
+    border-bottom:1px solid #111;
   }
-  .header-inner{
-    max-width:1100px;
+  .header-inner {
+    max-width:900px;
     margin:0 auto;
-    padding:4px 14px;
+    padding:10px 14px;
     display:flex;
     align-items:center;
     gap:10px;
   }
-  .brand-logo{height:42px;border-radius:8px;}
-  .brand-title{font-size:18px;font-weight:700;}
-  .header-accent{
-    height:2px;
-    background:linear-gradient(90deg,rgba(30,136,229,0.12),rgba(30,136,229,0.5),rgba(30,136,229,0.12));
+  .brand-logo {
+    height:42px; border-radius:8px;
+  }
+  .brand-title {
+    font-size:20px; font-weight:700;
   }
 
-  .wrap{
-    max-width:1100px;
+  h2 {
+    text-align:center;
+    margin:14px 0 4px;
+    font-weight:800;
+  }
+
+  .wrap {
+    max-width:900px;
     margin:0 auto;
     padding:14px;
-    text-align:center;
   }
 
-  h1 {
-    font-size:24px;
-    margin-bottom:18px;
-    font-weight:800;
-  }
-
-  .grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
-    gap:18px;
-  }
-
+  /* CARD */
   .card {
     background:var(--panel);
-    border-radius:var(--radius);
     padding:16px;
-    text-align:center;
-    box-shadow:0 6px 18px rgba(0,0,0,.55);
-    transition:.18s;
+    border-radius:12px;
+    box-shadow:0 6px 18px rgba(0,0,0,.45);
+    margin-bottom:20px;
   }
 
-  .card:hover {
-    background:var(--panel2);
-    transform:translateY(-3px);
+  .matRow {
+    margin-bottom:18px;
+    padding-bottom:14px;
+    border-bottom:1px solid #1e1f24;
   }
 
-  .mat-name {
-    font-size:22px;
-    font-weight:800;
-    margin-bottom:6px;
+  .matRow:last-child {
+    border-bottom:0;
   }
 
-  .info-line {
-    font-size:14px;
+  .matRow h3 {
+    margin:0 0 10px;
+    font-size:17px;
+  }
+
+  label {
+    font-size:13px;
     color:var(--muted);
-    margin:4px 0;
   }
 
-  .score-line {
-    font-size:20px;
-    font-weight:700;
-    margin:8px 0;
-  }
-
-  .score-red {
-    color:var(--red);
-  }
-
-  .score-green {
-    color:var(--green);
-  }
-
-  .btn-row {
-    margin-top:12px;
-    display:flex;
-    gap:10px;
-    justify-content:center;
-  }
-
-  .btn {
-    background:#232428;
+  input[type=text]{
+    width:100%;
+    padding:10px;
+    border-radius:10px;
+    background:#0e1012;
+    border:0;
     color:#fff;
-    padding:8px 12px;
-    border-radius:8px;
+    margin-top:4px;
+    margin-bottom:10px;
+    font-size:15px;
+  }
+
+  button {
+    border:0;
+    padding:12px 16px;
+    border-radius:10px;
     font-weight:700;
     cursor:pointer;
-    border:0;
-    transition:.15s;
+    font-size:15px;
   }
 
-  .btn:hover {
-    background:#2f3035;
+  .blue { background:var(--accent); color:#fff; }
+  .gold { background:var(--gold); color:#000; }
+  .gray { background:#2c2d31; color:#fff; }
+
+  .btn-row {
+    display:flex; gap:12px; flex-wrap:wrap;
+    margin-top:10px;
   }
 
-  .btn-blue {
-    background:var(--accent);
-  }
-  .btn-blue:hover {
-    background:#1873c7;
-  }
-
-  #version-tag{
-    position:fixed;
-    bottom:6px;
-    right:10px;
-    font-size:11px;
+  /* Version Tag */
+  #version-tag {
+    text-align:center;
+    margin-top:20px;
+    font-size:12px;
     color:#666;
-    opacity:0.75;
-    pointer-events:none;
-    user-select:none;
-    font-weight:600;
-    z-index:99999;
   }
 </style>
 </head>
+
 <body>
 
+<!-- HEADER -->
 <div class="header-bar">
   <div class="header-inner">
-    <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="brand-logo"/>
-    <div class="brand-title">Matside</div>
+    <img src="https://www.matside.org/assets/images/image01.png" class="brand-logo">
+    <div class="brand-title">Matside — Mat Assignments</div>
   </div>
-  <div class="header-accent"></div>
 </div>
 
 <div class="wrap">
+  <h2>Assign Wrestlers to Mats</h2>
 
-  <h1>Select a Mat</h1>
+  <div class="card">
 
-  <div class="grid">
-    <div class="card" id="mat1">
-      <div class="mat-name">MAT 1</div>
-      <div class="info-line" id="m1period">Period: --</div>
-      <div class="info-line" id="m1time">Time: --:--</div>
-      <div class="score-line">
-        <span class="score-red" id="m1red">0</span> —
-        <span class="score-green" id="m1green">0</span>
-      </div>
-      <div class="info-line" id="m1names">Red vs Green</div>
-      <div class="btn-row">
-        <button class="btn btn-blue" onclick="goControl(1)">Control</button>
-        <button class="btn" onclick="goScore(1)">Scoreboard</button>
-      </div>
+    <!-- MAT 1 -->
+    <div class="matRow">
+      <h3>Mat 1</h3>
+      <label>Red Wrestler</label>
+      <input id="red1" type="text" placeholder="Red wrestler name">
+
+      <label>Green Wrestler</label>
+      <input id="green1" type="text" placeholder="Green wrestler name">
     </div>
 
-    <div class="card" id="mat2">
-      <div class="mat-name">MAT 2</div>
-      <div class="info-line" id="m2period">Period: --</div>
-      <div class="info-line" id="m2time">Time: --:--</div>
-      <div class="score-line">
-        <span class="score-red" id="m2red">0</span> —
-        <span class="score-green" id="m2green">0</span>
-      </div>
-      <div class="info-line" id="m2names">Red vs Green</div>
-      <div class="btn-row">
-        <button class="btn btn-blue" onclick="goControl(2)">Control</button>
-        <button class="btn" onclick="goScore(2)">Scoreboard</button>
-      </div>
+    <!-- MAT 2 -->
+    <div class="matRow">
+      <h3>Mat 2</h3>
+      <label>Red Wrestler</label>
+      <input id="red2" type="text">
+
+      <label>Green Wrestler</label>
+      <input id="green2" type="text">
     </div>
 
-    <div class="card" id="mat3">
-      <div class="mat-name">MAT 3</div>
-      <div class="info-line" id="m3period">Period: --</div>
-      <div class="info-line" id="m3time">Time: --:--</div>
-      <div class="score-line">
-        <span class="score-red" id="m3red">0</span> —
-        <span class="score-green" id="m3green">0</span>
-      </div>
-      <div class="info-line" id="m3names">Red vs Green</div>
-      <div class="btn-row">
-        <button class="btn btn-blue" onclick="goControl(3)">Control</button>
-        <button class="btn" onclick="goScore(3)">Scoreboard</button>
-      </div>
+    <!-- MAT 3 -->
+    <div class="matRow">
+      <h3>Mat 3</h3>
+      <label>Red Wrestler</label>
+      <input id="red3" type="text">
+
+      <label>Green Wrestler</label>
+      <input id="green3" type="text">
     </div>
 
-    <div class="card" id="mat4">
-      <div class="mat-name">MAT 4</div>
-      <div class="info-line" id="m4period">Period: --</div>
-      <div class="info-line" id="m4time">Time: --:--</div>
-      <div class="score-line">
-        <span class="score-red" id="m4red">0</span> —
-        <span class="score-green" id="m4green">0</span>
-      </div>
-      <div class="info-line" id="m4names">Red vs Green</div>
-      <div class="btn-row">
-        <button class="btn btn-blue" onclick="goControl(4)">Control</button>
-        <button class="btn" onclick="goScore(4)">Scoreboard</button>
-      </div>
+    <!-- MAT 4 -->
+    <div class="matRow">
+      <h3>Mat 4</h3>
+      <label>Red Wrestler</label>
+      <input id="red4" type="text">
+
+      <label>Green Wrestler</label>
+      <input id="green4" type="text">
     </div>
+
+    <div class="btn-row">
+      <button id="saveBtn" class="blue">Save Assignments</button>
+      <button id="clearBtn" class="gray">Clear All</button>
+      <button id="backBtn" class="gold">Back to Control Hub</button>
+    </div>
+
   </div>
 </div>
 
+<div id="version-tag">v2.5.3</div>
+
 <script>
-const SERVER = "https://scoreboard-server-er33.onrender.com";
-const socket = io(SERVER, { transports:["websocket"] });
+/* Load existing assignments */
+function loadAssignments(){
+  try{
+    const raw = localStorage.getItem("matsideNames");
+    if(!raw) return;
+    const obj = JSON.parse(raw);
 
-function fmt(sec){
-  sec = Math.max(0, Number(sec)||0);
-  const m = Math.floor(sec/60), s = sec%60;
-  return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+    for(let m=1;m<=4;m++){
+      document.getElementById("red"+m).value = obj[m]?.red ?? "";
+      document.getElementById("green"+m).value = obj[m]?.green ?? "";
+    }
+  }catch(e){}
 }
 
-function goControl(mat){
-  window.location.href = `control.html?mat=${mat}`;
-}
-function goScore(mat){
-  window.location.href = `scoreboard.html?mat=${mat}`;
-}
+/* Save assignments */
+function saveAssignments(){
+  const data = {};
 
-socket.on("stateUpdate", state=>{
-  for(let i=1;i<=4;i++){
-    const m = state?.mats?.[i];
-    if(!m) continue;
-
-    document.getElementById(`m${i}period`).textContent = `Period: ${m.period}`;
-    document.getElementById(`m${i}time`).textContent = `Time: ${fmt(m.timeRemaining)}`;
-    document.getElementById(`m${i}red`).textContent = m.player1;
-    document.getElementById(`m${i}green`).textContent = m.player2;
-
-    const rn = m.redName || "Red";
-    const gn = m.greenName || "Green";
-    document.getElementById(`m${i}names`).textContent = `${rn} vs ${gn}`;
+  for(let m=1;m<=4;m++){
+    data[m] = {
+      red: document.getElementById("red"+m).value.trim(),
+      green: document.getElementById("green"+m).value.trim()
+    };
   }
-});
+
+  localStorage.setItem("matsideNames", JSON.stringify(data));
+  alert("Assignments saved!");
+}
+
+/* Clear all */
+function clearAssignments(){
+  if(!confirm("Clear all wrestler assignments?")) return;
+  localStorage.removeItem("matsideNames");
+  for(let m=1;m<=4;m++){
+    document.getElementById("red"+m).value = "";
+    document.getElementById("green"+m).value = "";
+  }
+}
+
+/* Navigation */
+function goBack(){ 
+  window.location.href = "index.html"; 
+}
+
+document.getElementById("saveBtn").onclick = saveAssignments;
+document.getElementById("clearBtn").onclick = clearAssignments;
+document.getElementById("backBtn").onclick = goBack;
+
+loadAssignments();
 </script>
-<script src="version-loader.js"></script>
+
 </body>
 </html>
