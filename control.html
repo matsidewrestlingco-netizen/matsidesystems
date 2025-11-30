@@ -223,9 +223,10 @@ input[type=text],input[type=number]{
     <div class="card">
       <h3>Timer</h3>
       <div class="row">
-        <button id="startBtn" class="blue btn-wide">Start</button>
-        <button id="stopBtn" class="gray btn-wide">Stop</button>
-      </div>
+       <button id="startBtn" class="blue btn-wide">Start</button>
+       <button id="stopBtn" class="gray btn-wide">Stop</button>
+       <button id="endMatchBtn" class="gold btn-wide">End Match</button>
+</div>
       <div class="row" style="margin-top:6px;">
         <button id="resetTimerBtn" class="gold btn-wide">Reset Timer</button>
       </div>
@@ -365,7 +366,115 @@ input[type=text],input[type=number]{
 
 <div id="version-tag">v2.7</div>
 
+     <!-- MATCH END MODAL -->
+<div id="matchEndModal" class="modal-backdrop" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.6);
+  display:none; align-items:center; justify-content:center;
+  z-index:999999;
+">
+  <div style="
+    background:#15161a; padding:20px; width:320px;
+    border-radius:12px; box-shadow:0 0 25px rgba(0,0,0,.6);
+  ">
+    <h3 style="margin-top:0;">Confirm Match Result</h3>
+
+    <div style="margin-bottom:10px;">
+      <strong>Winner:</strong><br>
+      <div style="display:flex; gap:10px; margin-top:6px;">
+        <button id="winnerRedBtn" class="red small" style="flex:1;">Red</button>
+        <button id="winnerGreenBtn" class="green small" style="flex:1;">Green</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <strong>Win Method:</strong><br>
+      <label><input type="radio" name="winMethod" value="decision" checked> Decision</label><br>
+      <label><input type="radio" name="winMethod" value="tech"> Tech Fall</label><br>
+      <label><input type="radio" name="winMethod" value="pin"> Pin</label><br>
+      <label><input type="radio" name="winMethod" value="forfeit"> Forfeit</label>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:15px;">
+      <button id="submitMatchEnd" class="gold small" style="flex:1;">Submit</button>
+      <button id="cancelMatchEnd" class="gray small" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
+
+// ===== Modal Control Variables ======
+let selectedWinner = null;
+
+const modal = document.getElementById("matchEndModal");
+const winnerRedBtn = document.getElementById("winnerRedBtn");
+const winnerGreenBtn = document.getElementById("winnerGreenBtn");     
+     
+// ===== Winner selection buttons
+winnerRedBtn.onclick = () => {
+  selectedWinner = "red";
+  winnerRedBtn.style.opacity = "1";
+  winnerGreenBtn.style.opacity = "0.5";
+};
+
+winnerGreenBtn.onclick = () => {
+  selectedWinner = "green";
+  winnerGreenBtn.style.opacity = "1";
+  winnerRedBtn.style.opacity = "0.5";
+};
+     
+// ===== Auto-suggest winner when modal opens
+function suggestWinner(matState) {
+  const { red, green } = matState;
+
+  if (red > green) {
+    selectedWinner = "red";
+    winnerRedBtn.style.opacity = "1";
+    winnerGreenBtn.style.opacity = "0.5";
+  } else if (green > red) {
+    selectedWinner = "green";
+    winnerGreenBtn.style.opacity = "1";
+    winnerRedBtn.style.opacity = "0.5";
+  } else {
+    // tied — no suggestion
+    selectedWinner = null;
+    winnerRedBtn.style.opacity = "1";
+    winnerGreenBtn.style.opacity = "1";
+  }
+}
+     
+// ===== Open modal
+     document.getElementById("endMatchBtn").onclick = () => {
+  const mat = parseInt(matSelect.value, 10);
+  const matState = window.lastState?.mats?.[mat];
+  if (matState) suggestWinner(matState);
+  modal.style.display = "flex";
+};
+
+// ===== Cancel modal
+     document.getElementById("cancelMatchEnd").onclick = () => {
+  modal.style.display = "none";
+};
+
+// ===== Submit result
+     document.getElementById("submitMatchEnd").onclick = () => {
+  if (!selectedWinner) {
+    alert("Please choose a winner.");
+    return;
+  }
+
+  const mat = parseInt(matSelect.value, 10);
+  const method = document.querySelector("input[name='winMethod']:checked").value;
+
+  socket.emit("matchEnded", {
+    mat,
+    winner: selectedWinner,
+    method
+  });
+
+  modal.style.display = "none";
+};
+     
 // ===== State helpers =====
 const periodLengthByMat = { 1:60, 2:60, 3:60, 4:60 };
 let lastState = null;
