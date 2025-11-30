@@ -1,216 +1,292 @@
-
-<!-- ===========================
-     public/scoreboard.html v2.7
-     =========================== -->
+<!-- scoreboard.html v2.15 -->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matside — Scoreboard v2.7</title>
-
-<script src="https://scoreboard-server-er33.onrender.com/socket.io/socket.io.js"></script>
-
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Matside Scoreboard</title>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <style>
-  :root{
-    --red:#d32f2f; --green:#00c853; --panel:#111216;
-    --bg:#000; --muted:#888; --gold:#fbc02d;
+  :root {
+    --bg:#000000;
+    --panel:#101114;
+    --border:#333;
+    --red:#d32f2f;
+    --green:#00c853;
+    --label:#cccccc;
+    --muted:#999999;
+    --gold:#fbc02d;
   }
-  html,body{
-    margin:0;padding:0;background:#000;color:#fff;
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  *{box-sizing:border-box;}
+  body {
+    margin:0;
+    background:var(--bg);
+    color:#fff;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;
     text-align:center;
+    overflow:hidden;
   }
-  #scoreboard{
-    max-width:760px;margin:0 auto;padding:6px;
+  .wrap {
+    max-width:900px;
+    margin:0 auto;
+    padding:10px 10px 0;
   }
-  table{
-    width:100%;border-collapse:collapse;table-layout:fixed;
+  table {
+    width:100%;
+    border-collapse:collapse;
   }
-  td{padding:4px;}
-  .label{
-    background:var(--panel);
-    font-size:14px;font-weight:700;text-transform:uppercase;
+  .label-cell {
+    font-size:14px;
+    font-weight:700;
+    color:var(--label);
+    padding:4px 0;
   }
-  .mat-num,.period-num{
-    font-size:30px;font-weight:800;
+  #mat-number, #period-code {
+    font-size:32px;
+    font-weight:800;
   }
-  .timer{
-    font-size:60px;font-weight:900;padding:6px 0;
+  #period-label-small{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:2px;
   }
-  @keyframes timerPulse{
-    0%{opacity:1;} 50%{opacity:.4;} 100%{opacity:1;}
+  #timer-label {
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:1px;
   }
-  .timer-running{animation:timerPulse 1.1s infinite ease-in-out;}
-  .timer-zero{color:var(--gold);}
-  .name{
-    font-size:20px;font-weight:700;opacity:.9;
+  #timer {
+    font-size:64px;
+    font-weight:800;
+    margin:4px 0 8px;
   }
-  .name-red{color:var(--red);}
-  .name-green{color:var(--green);}
-  .score-box{
+
+  /* Timer pulse while running */
+  @keyframes timerPulse {
+    0%{opacity:1;}50%{opacity:.5;}100%{opacity:1;}
+  }
+  .timer-running{animation:timerPulse 1s ease-in-out infinite;}
+
+  .name-cell {
+    font-size:20px;
+    font-weight:700;
+    padding:4px 0;
+  }
+  #red-name { color:var(--red); }
+  #green-name { color:var(--green); }
+
+  .score-row td{
+    padding-top:4px;
+  }
+  .score-box {
     font-size:64px;
     font-weight:700;
     padding:40px 0;
     border-radius:16px;
   }
-  .score-red{background:var(--red);color:#fff;}
-  .score-green{background:var(--green);color:#000;}
-  .winner-tag{
-    display:inline-block;margin-left:6px;padding:2px 6px;
-    border-radius:999px;background:var(--gold);
-    color:#000;font-size:12px;font-weight:700;
+  .score-box-red {
+    background:var(--red);
+    color:#fff;
   }
-  .branding{
-    font-size:12px;color:var(--muted);padding-top:6px;
+  .score-box-green {
+    background:var(--green);
+    color:#000;
+  }
+
+  .bottom-bar{
+    padding:6px 0 2px;
+  }
+  .brand-img{
+    height:70px;
+  }
+
+  .winner-banner{
+    margin-top:4px;
+    padding:4px 8px;
+    border-radius:999px;
+    display:inline-block;
+    font-size:14px;
+    font-weight:700;
+    background:#222;
+    border:1px solid #444;
+  }
+  .winner-red{
+    background:var(--red);
+    border-color:var(--red);
+    color:#fff;
+  }
+  .winner-green{
+    background:var(--green);
+    border-color:var(--green);
+    color:#000;
   }
 </style>
 </head>
 <body>
-
-<div id="scoreboard">
+<div class="wrap">
   <table>
     <tbody>
+      <!-- HEADER ROW -->
       <tr>
-        <td class="label">MAT</td>
-        <td class="label" colspan="2">MATSIDE SCOREBOARD</td>
-        <td class="label">PERIOD</td>
+        <td class="label-cell" style="width:15%;">MAT</td>
+        <td class="label-cell" style="width:55%;" colspan="2">MATSIDE SCOREBOARD</td>
+        <td class="label-cell" style="width:30%;">PERIOD</td>
       </tr>
+
+      <!-- MAT + PERIOD -->
       <tr>
-        <td><div id="matNumber" class="mat-num">1</div></td>
-        <td></td><td></td>
-        <td><div id="periodNumber" class="period-num">1</div></td>
-      </tr>
-      <tr><td colspan="4" class="label">TIME</td></tr>
-      <tr>
-        <td colspan="4"><div id="timer" class="timer">00:00</div></td>
-      </tr>
-      <tr>
-        <td id="redName" class="name name-red" colspan="2">RED WRESTLER</td>
-        <td id="greenName" class="name name-green" colspan="2">GREEN WRESTLER</td>
-      </tr>
-      <tr>
-        <td class="score-box score-red" colspan="2">
-          <span id="scoreRed">0</span>
-        </td>
-        <td class="score-box score-green" colspan="2">
-          <span id="scoreGreen">0</span>
+        <td id="mat-number">1</td>
+        <td></td>
+        <td></td>
+        <td>
+          <div id="period-code">1</div>
+          <div id="period-label-small">Period 1</div>
         </td>
       </tr>
+
+      <!-- TIME LABEL -->
       <tr>
-        <td colspan="4"><div class="branding">Matside — Live Mat View</div></td>
+        <td colspan="4" id="timer-label">TIME</td>
+      </tr>
+
+      <!-- TIMER -->
+      <tr>
+        <td colspan="4" id="timer">01:00</td>
+      </tr>
+
+      <!-- NAMES -->
+      <tr>
+        <td id="red-name" class="name-cell" colspan="2">RED WRESTLER</td>
+        <td id="green-name" class="name-cell" colspan="2">GREEN WRESTLER</td>
+      </tr>
+
+      <!-- SCORES -->
+      <tr class="score-row">
+        <td colspan="2">
+          <div id="red-score" class="score-box score-box-red">0</div>
+        </td>
+        <td colspan="2">
+          <div id="green-score" class="score-box score-box-green">0</div>
+        </td>
+      </tr>
+
+      <!-- BRAND / WINNER -->
+      <tr>
+        <td colspan="4">
+          <div class="bottom-bar">
+            <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="brand-img">
+          </div>
+          <div id="winner-banner" class="winner-banner" style="display:none;"></div>
+        </td>
       </tr>
     </tbody>
   </table>
 </div>
 
 <script>
-function getMatID(){
-  const params = new URLSearchParams(window.location.search);
-  const id = parseInt(params.get("mat"),10);
-  return (id>=1 && id<=4)?id:1;
-}
-const MAT_ID = getMatID();
-document.getElementById("matNumber").textContent = MAT_ID;
+(function(){
+  const params = new URLSearchParams(location.search);
+  const mat = parseInt(params.get("mat") || "1", 10) || 1;
+  const SERVER = "https://scoreboard-server-er33.onrender.com";
 
-const socket = io("https://scoreboard-server-er33.onrender.com", {
-  transports:["websocket","polling"]
-});
+  document.getElementById("mat-number").textContent = mat;
 
-const timerEl = document.getElementById("timer");
-const periodEl = document.getElementById("periodNumber");
-const scoreRedEl = document.getElementById("scoreRed");
-const scoreGreenEl = document.getElementById("scoreGreen");
-const redNameEl = document.getElementById("redName");
-const greenNameEl = document.getElementById("greenName");
+  const periodCodeEl = document.getElementById("period-code");
+  const periodLabelEl = document.getElementById("period-label-small");
+  const timerEl = document.getElementById("timer");
+  const redScoreEl = document.getElementById("red-score");
+  const greenScoreEl = document.getElementById("green-score");
+  const winnerBanner = document.getElementById("winner-banner");
 
-function formatTime(sec){
-  sec = Math.max(0, sec || 0);
-  const m = String(Math.floor(sec/60)).padStart(2,"0");
-  const s = String(sec%60).padStart(2,"0");
-  return `${m}:${s}`;
-}
-
-socket.on("stateUpdate",(state)=>{
-  const m = state.mats?.[MAT_ID];
-  if(!m) return;
-  updateTime(m);
-  updateScores(m);
-  updateNames(m);
-});
-
-function updateTime(m){
-  timerEl.textContent = formatTime(m.time);
-  if(m.running) timerEl.classList.add("timer-running");
-  else timerEl.classList.remove("timer-running");
-  if(m.time<=0) timerEl.classList.add("timer-zero");
-  else timerEl.classList.remove("timer-zero");
-  periodEl.textContent = m.period;
-}
-
-function isWinnerState(m){
-  const red = m.red ?? 0;
-  const green = m.green ?? 0;
-  const diff = Math.abs(red - green);
-  const period = m.period;
-  const time = m.time ?? 0;
-  const running = m.running;
-
-  if(diff >= 15) return red !== green;
-
-  if(typeof period === "number"){
-    if(period === 3 && time === 0 && !running && red !== green) return true;
-    return false;
+  function fmt(sec){
+    sec = Number(sec) || 0;
+    if(sec < 0) sec = 0;
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
   }
 
-  const otPeriods = ["OT","TB1","TB2","UTB"];
-  if(otPeriods.includes(String(period)) && time === 0 && !running && red !== green){
-    return true;
-  }
-  return false;
-}
-
-function updateScores(m){
-  const red = m.red ?? 0;
-  const green = m.green ?? 0;
-  scoreRedEl.textContent = red;
-  scoreGreenEl.textContent = green;
-
-  removeWinnerTags();
-  if(isWinnerState(m)){
-    if(red > green) attachWinner(redNameEl);
-    else attachWinner(greenNameEl);
-  }
-}
-
-function removeWinnerTags(){
-  document.querySelectorAll(".winner-tag").forEach(el=>el.remove());
-}
-function attachWinner(nameEl){
-  const tag = document.createElement("span");
-  tag.className = "winner-tag";
-  tag.textContent = "WINNER";
-  nameEl.appendChild(tag);
-}
-
-function updateNames(m){
-  // TODO: event-based names; for now local control / defaults
-  try{
-    const raw = localStorage.getItem("matsideNames");
-    if(raw){
-      const names = JSON.parse(raw);
-      const n = names[MAT_ID] || {};
-      if(n.red) redNameEl.textContent = n.red;
-      else redNameEl.textContent = "RED WRESTLER";
-      if(n.green) greenNameEl.textContent = n.green;
-      else greenNameEl.textContent = "GREEN WRESTLER";
-      return;
+  function mapPeriod(period){
+    // Mixed style: big code + small text
+    if(typeof period === "number"){
+      if(period === 1) return {code:"1", label:"Period 1"};
+      if(period === 2) return {code:"2", label:"Period 2"};
+      if(period === 3) return {code:"3", label:"Period 3"};
+      return {code:String(period), label:`Period ${period}`};
     }
-  }catch(e){}
-  redNameEl.textContent = "RED WRESTLER";
-  greenNameEl.textContent = "GREEN WRESTLER";
-}
-</script>
+    switch(period){
+      case "OT":  return {code:"OT",  label:"Overtime"};
+      case "TB1": return {code:"TB1", label:"Tiebreaker 1"};
+      case "TB2": return {code:"TB2", label:"Tiebreaker 2"};
+      case "UT":  return {code:"UT",  label:"Ultimate TB"};
+      default:    return {code:"", label:""};
+    }
+  }
 
+  function computeWinner(m){
+    const red = m.red || 0;
+    const green = m.green || 0;
+    const diff = red - green;
+    const period = m.period;
+    const time = m.time || 0;
+
+    // Tech fall: 15+ point difference, any time
+    if(diff >= 15) return {winner:"red", reason:"Tech Fall"};
+    if(diff <= -15) return {winner:"green", reason:"Tech Fall"};
+
+    // End of 3rd period: decision
+    if(typeof period === "number" && period === 3 && time <= 0){
+      if(diff > 0) return {winner:"red", reason:"Decision"};
+      if(diff < 0) return {winner:"green", reason:"Decision"};
+    }
+
+    // UT end: user chooses winner via control panel; we don't guess here
+    if(period === "UT" && time <= 0){
+      return null;
+    }
+
+    return null;
+  }
+
+  const socket = io(SERVER, { transports:["websocket","polling"] });
+
+  socket.on("connect", ()=> {
+    // no-op visually, scoreboard is passive
+  });
+
+  socket.on("stateUpdate", (state)=> {
+    const m = state.mats && state.mats[mat];
+    if(!m) return;
+
+    const periodInfo = mapPeriod(m.period ?? 1);
+    periodCodeEl.textContent = periodInfo.code || (m.period ?? "");
+    periodLabelEl.textContent = periodInfo.label || "";
+
+    timerEl.textContent = fmt(m.time ?? 0);
+
+    if(m.running) timerEl.classList.add("timer-running");
+    else timerEl.classList.remove("timer-running");
+
+    redScoreEl.textContent = m.red ?? 0;
+    greenScoreEl.textContent = m.green ?? 0;
+
+    // Winner logic
+    const result = computeWinner(m);
+    winnerBanner.classList.remove("winner-red","winner-green");
+    if(result){
+      winnerBanner.style.display = "inline-block";
+      if(result.winner === "red"){
+        winnerBanner.textContent = `WINNER — RED (${result.reason})`;
+        winnerBanner.classList.add("winner-red");
+      } else {
+        winnerBanner.textContent = `WINNER — GREEN (${result.reason})`;
+        winnerBanner.classList.add("winner-green");
+      }
+    } else {
+      winnerBanner.style.display = "none";
+    }
+  });
+})();
+</script>
 </body>
 </html>
