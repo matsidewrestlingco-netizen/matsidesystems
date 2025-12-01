@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Matside — Welcome</title>
+
+<style>
+:root {
+  --bg:#070809;
+  --panel:#111217;
+  --panel2:#16171d;
+  --accent:#1e88e5;
+  --accent2:#1565c0;
+  --red:#d32f2f;
+  --green:#388e3c;
+  --radius:14px;
+  --text:#e5e5e5;
+  --muted:#8a8f99;
+}
+
+html,body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+}
+
+.container {
+  max-width:800px;
+  margin:0 auto;
+  padding:20px;
+  text-align:center;
+}
+
+.logo {
+  margin-top:20px;
+  height:100px;
+  border-radius:12px;
+}
+
+h1 {
+  margin:20px 0 10px;
+  font-size:32px;
+  font-weight:800;
+}
+
+.subtitle {
+  font-size:16px;
+  color:var(--muted);
+  margin-bottom:30px;
+}
+
+/* BUTTONS */
+.button-grid {
+  display:grid;
+  gap:16px;
+  margin-top:20px;
+}
+
+button.page-btn {
+  width:100%;
+  padding:16px;
+  border-radius:var(--radius);
+  border:0;
+  cursor:pointer;
+  background:var(--accent);
+  color:white;
+  font-size:18px;
+  font-weight:700;
+  transition:0.15s;
+}
+button.page-btn:hover {
+  background:var(--accent2);
+}
+
+/* ADMIN SECTION */
+.admin-box {
+  margin-top:40px;
+  padding:20px;
+  border-radius:var(--radius);
+  background:var(--panel2);
+  display:none; /* will show if password accepted */
+}
+
+.admin-title {
+  text-align:left;
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+.admin-btn {
+  background:#2c2d33;
+  padding:12px;
+  border-radius:var(--radius);
+  border:0;
+  color:white;
+  width:100%;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  margin-top:10px;
+}
+.admin-btn:hover { background:#32343a; }
+
+/* PASSWORD BOX */
+.pass-box {
+  background:var(--panel);
+  padding:20px;
+  border-radius:var(--radius);
+  margin-top:30px;
+}
+.pass-box input {
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:0;
+  background:#0c0d10;
+  color:white;
+  font-size:16px;
+  margin-bottom:10px;
+}
+.pass-box button {
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:0;
+  background:var(--accent);
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+  font-weight:700;
+}
+.pass-box button:hover { background:var(--accent2); }
+
+footer {
+  margin-top:50px;
+  color:var(--muted);
+  font-size:12px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <img src="https://www.matside.org/assets/images/image01.png" class="logo"/>
+
+  <h1>Welcome to Matside</h1>
+  <div class="subtitle">
+    Professional-grade wrestling scoreboard + control system.<br>
+    Built for tournaments, duals, and multi-mat events.
+  </div>
+
+  <!-- USER BUTTONS -->
+  <div class="button-grid">
+    <button class="page-btn" onclick="go('/control.html')">Control Panel</button>
+    <button class="page-btn" onclick="go('/scoreboard.html')">Scoreboard</button>
+    <button class="page-btn" onclick="go('/overview.html')">Overview</button>
+    <button class="page-btn" onclick="go('/hub.html')">Hub</button>
+  </div>
+
+  <!-- ADMIN LOGIN -->
+  <div class="pass-box">
+    <input id="adminPass" type="password" placeholder="Admin Password">
+    <button onclick="unlockAdmin()">Unlock Admin Panel</button>
+    <div id="badpass" style="color:#d32f2f;display:none;margin-top:8px;font-size:14px;">
+      Incorrect password.
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div id="adminPanel" class="admin-box">
+    <div class="admin-title">Admin Tools</div>
+
+    <button class="admin-btn" onclick="go('/admin-events.html')">Manage Events</button>
+    <button class="admin-btn" onclick="go('/admin-results.html')">Match Results</button>
+    <button class="admin-btn" onclick="go('/monitor.html')">System Monitor</button>
+    <button class="admin-btn" onclick="logoutAdmin()">Logout</button>
+  </div>
+
+  <footer>
+    Matside © 2025 — Precision Wrestling Technology
+  </footer>
+
+</div>
+
+<script>
+// NAV
+function go(url){
+  window.location.href = url;
+}
+
+// ADMIN PASSWORD
+const ADMIN_PASSWORD = "MATSIDE2025"; // change any time
+
+function unlockAdmin(){
+  const input = document.getElementById("adminPass").value;
+  const wrong = document.getElementById("badpass");
+  const panel = document.getElementById("adminPanel");
+
+  if(input === ADMIN_PASSWORD){
+    wrong.style.display = "none";
+    panel.style.display = "block";
+  } else {
+    wrong.style.display = "block";
+  }
+}
+
+function logoutAdmin(){
+  document.getElementById("adminPanel").style.display = "none";
+  document.getElementById("adminPass").value = "";
+}
+</script>
+
+</body>
+</html>
