@@ -1,0 +1,147 @@
+/* css/overview.css */
+/* 4-mat overview layout */
+
+.ov-root {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.ov-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ov-title-main {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.ov-title-sub {
+  font-size: 13px;
+  color: var(--ms-muted);
+}
+
+.ov-conn {
+  font-size: 12px;
+  color: var(--ms-muted);
+}
+
+.ov-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .ov-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ov-card {
+  background: var(--ms-surface);
+  border-radius: 18px;
+  padding: 12px 14px 14px;
+  box-shadow: 0 14px 32px rgba(0,0,0,0.85);
+}
+
+.ov-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.ov-mat-label {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.ov-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--ms-muted);
+}
+
+.ov-meta span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #080a0e;
+  border: 1px solid var(--ms-border-subtle);
+}
+
+.ov-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.ov-side {
+  background: var(--ms-surface-strong);
+  border-radius: 14px;
+  padding: 8px 8px 10px;
+}
+
+.ov-side-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.ov-name {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.ov-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ms-muted);
+}
+
+.ov-score {
+  font-size: 40px;
+  font-weight: 800;
+  text-align: center;
+  padding: 12px 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+}
+
+.ov-red .ov-name { color: var(--ms-red); }
+.ov-green .ov-name { color: var(--ms-green); }
+
+.ov-red .ov-score {
+  background: radial-gradient(circle at 0 0, rgba(229,57,53,0.4), transparent 52%), #050609;
+  border-color: rgba(229,57,53,0.65);
+}
+
+.ov-green .ov-score {
+  background: radial-gradient(circle at 100% 0, rgba(67,160,71,0.4), transparent 52%), #050609;
+  border-color: rgba(67,160,71,0.65);
+}
+
+.ov-bottom {
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--ms-muted);
+}
+
+.ov-winner-label {
+  font-weight: 700;
+}
+
+.ov-winner-red { color: var(--ms-red); }
+.ov-winner-green { color: var(--ms-green); }
