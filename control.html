@@ -631,6 +631,57 @@ const socket = io("https://scoreboard-server-er33.onrender.com", {
   transports:["websocket","polling"]
 });
 
+// ======= Presence & Diagnostics: Control Panel =======
+let cpReconnects = 0;
+let cpStart = Date.now();
+let cpFps = 0;
+let cpFrameCount = 0;
+let cpLastFpsSample = performance.now();
+
+// Track reconnects (if using socket.io v4)
+if (socket.io) {
+  socket.io.on("reconnect", () => {
+    cpReconnects++;
+  });
+}
+
+// Simple FPS tracker
+function trackControlFps(ts) {
+  cpFrameCount++;
+  if (ts - cpLastFpsSample >= 1000) {
+    cpFps = cpFrameCount;
+    cpFrameCount = 0;
+    cpLastFpsSample = ts;
+  }
+  requestAnimationFrame(trackControlFps);
+}
+requestAnimationFrame(trackControlFps);
+
+// Heartbeat every 8s
+setInterval(() => {
+  socket.emit("heartbeat", {
+    type: "control",
+    mat: typeof getMat === "function" ? getMat() : 1,
+    ts: Date.now()
+  });
+}, 8000);
+
+// Diagnostics every 15s
+setInterval(() => {
+  const mat = typeof getMat === "function" ? getMat() : 1;
+  const uptime = Math.round((Date.now() - cpStart) / 1000);
+  const mem = performance.memory ? performance.memory.usedJSHeapSize : null;
+
+  socket.emit("clientDiagnostics", {
+    type: "control",
+    mat,
+    fps: cpFps,
+    uptime,
+    reconnects: cpReconnects,
+    usedHeap: mem
+  });
+}, 15000);
+  
 let lastState = null;
 const periodLengthByMat = {1:60,2:60,3:60,4:60};
 const timeline = {1:[],2:[],3:[],4:[]};
