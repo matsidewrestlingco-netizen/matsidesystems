@@ -47,3 +47,4 @@ export function applyScoreState(matState) {
   if (sumRedEl) sumRedEl.textContent = matState.red ?? 0;
   if (sumGreenEl) sumGreenEl.textContent = matState.green ?? 0;
 }
+
