@@ -1,260 +1,811 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Admin Events Editor</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Matside — Admin Events v3.0</title>
 
 <style>
-  :root{
-    --bg:#070809; --panel:#15161a; --panel-soft:#191b20;
-    --muted:#9aa0a6; --accent:#1e88e5;
-    --red:#d32f2f;
-    --radius:12px;
-  }
-  body{
-    background:var(--bg);
-    color:#fff;
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-    margin:0;padding:20px;
-  }
-  .card{
-    background:var(--panel);
-    padding:16px;
-    border-radius:var(--radius);
-    max-width:900px;
-    margin:0 auto;
-    box-shadow:0 6px 18px rgba(0,0,0,.6);
-  }
-  h1{margin-top:0;}
-
-  label{font-size:12px;color:var(--muted);}
-  input{
-    width:100%;
-    padding:8px;
-    border:0;
-    border-radius:8px;
-    margin-bottom:10px;
-    background:#0d0e11;
-    color:#fff;
-  }
-  .btn{
-    padding:10px 14px;
-    border-radius:8px;
-    border:0;
-    cursor:pointer;
-    font-weight:700;
-    margin-right:6px;
-  }
-  .blue{background:var(--accent);color:#fff;}
-  .gray{background:#2a2b2c;color:#fff;}
-  .red{background:var(--red);color:#fff;}
-
-  .event-block{
-    border:1px solid #2a2b2c;
-    padding:12px;
-    border-radius:10px;
-    margin-bottom:12px;
+  :root {
+    --bg: #070809;
+    --panel: rgba(22, 24, 28, 0.9);
+    --border: rgba(255,255,255,0.08);
+    --muted: #9aa0a6;
+    --accent: #1e88e5;
+    --accent-soft: rgba(30,136,229,0.12);
+    --danger: #ff5252;
+    --gold: #fbc02d;
+    --radius: 20px;
   }
 
-  /* LOCK SCREEN */
-  #lock-screen{
-    position:fixed;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:radial-gradient(circle at top, #1a1c22, #050608);
-    z-index:9999;
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    color: #fff;
+    padding: 18px;
   }
-  .lock-card{
-    background:#111318;
-    padding:20px;
-    border-radius:14px;
-    max-width:360px;
-    width:100%;
-    box-shadow:0 12px 40px rgba(0,0,0,.8);
-    text-align:center;
+
+  /* HEADER */
+  .header {
+    max-width: 1200px;
+    margin: 0 auto 16px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
   }
-  .lock-card h2{margin:0 0 10px 0;}
-  .lock-input{margin-top:10px;}
-  .lock-error{color:#ef5350;font-size:12px;height:16px;margin-top:6px;}
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand img {
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .brand-title {
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .header-right {
+    text-align: right;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* FILTER BAR */
+  .filter-bar {
+    max-width: 1200px;
+    margin: 0 auto 16px auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .filter-bar input[type="text"] {
+    background: #0d0f12;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    color: #fff;
+    font-size: 14px;
+    min-width: 220px;
+  }
+
+  .filter-bar select {
+    background: #0d0f12;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .chip {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .chip input {
+    margin: 0;
+  }
+
+  .primary-btn {
+    border: 0;
+    border-radius: 999px;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-weight: 800;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 0 18px rgba(30,136,229,0.6);
+  }
+
+  .primary-btn span {
+    font-size: 16px;
+  }
+
+  /* GRID OF EVENTS */
+  .grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+  }
+
+  .event-card {
+    background: var(--panel);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.5);
+    backdrop-filter: blur(12px);
+    padding: 14px 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .event-name {
+    font-size: 17px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .event-meta {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .event-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--accent-soft);
+    border: 1px solid rgba(30,136,229,0.4);
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .archived-pill {
+    background: rgba(191, 54, 12, 0.15);
+    border-color: rgba(255, 87, 34, 0.6);
+    color: #ffab91;
+  }
+
+  .card-buttons {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .btn {
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .btn-blue {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-gray {
+    background: #15171b;
+    color: #fff;
+    border: 1px solid var(--border);
+  }
+
+  .btn-gold {
+    background: var(--gold);
+    color: #000;
+  }
+
+  .btn-red {
+    background: #3b0000;
+    color: #ff7676;
+    border: 1px solid rgba(255,118,118,0.6);
+  }
+
+  .empty {
+    max-width: 1200px;
+    margin: 30px auto;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* DRAWER */
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+    z-index: 998;
+  }
+  .drawer-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 360px;
+    max-width: 100vw;
+    background: #101116;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.7);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform .25s ease-out;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawer.open {
+    transform: translateX(0);
+  }
+
+  .drawer-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .drawer-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .drawer-close-btn {
+    background: transparent;
+    border: 0;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .drawer-body {
+    padding: 12px 14px 16px;
+    overflow-y: auto;
+    font-size: 13px;
+  }
+
+  .field {
+    margin-bottom: 12px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    background: #0d0f12;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .field small {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .field-row {
+    display: flex;
+    gap: 8px;
+  }
+  .field-row .field {
+    flex: 1;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 10px 0;
+    font-size: 12px;
+  }
+
+  .drawer-footer {
+    padding: 10px 14px 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111316;
+    border-radius: 999px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+  }
+  .toast.show {
+    display: inline-flex;
+  }
+  .toast-ok {
+    color: #a5d6a7;
+  }
+  .toast-err {
+    color: #ef9a9a;
+  }
+
+  /* FOOTER TAG */
+  .footer-tag {
+    max-width: 1200px;
+    margin: 18px auto 0 auto;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+    opacity: 0.7;
+  }
 </style>
 </head>
-
 <body>
 
-<!-- ADMIN PASSWORD GATE -->
-<div id="lock-screen">
-  <div class="lock-card">
-    <h2>Matside Admin Login</h2>
-    <p style="color:#9aa0a6;font-size:13px;">Enter your admin password to manage events.</p>
-
-    <input id="adminPass" type="password" placeholder="Admin Password" class="lock-input"/>
-    <button id="adminSubmit" class="btn blue" style="margin-top:10px;width:100%;">Unlock</button>
-
-    <div id="lockError" class="lock-error"></div>
-
-    <p style="color:#666;font-size:11px;margin-top:18px;">
-      This page is for Matside Administrators only.
-    </p>
+<!-- HEADER -->
+<div class="header">
+  <div class="brand">
+    <img src="https://www.matside.org/assets/images/image01.png" alt="Matside">
+    <div>
+      <div class="brand-title">Matside — Admin Events</div>
+      <div class="subtitle">Manage competition presets, mats, and timing</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div>Backend: events.json · match-results.json</div>
+    <div>Admin Events UI v3.0</div>
   </div>
 </div>
 
-<!-- MAIN PAGE -->
-<div id="app" style="display:none;">
-  <div class="card">
-    <h1>Matside — Admin Events Editor</h1>
-    <p style="color:var(--muted);">
-      Add, edit, or remove events below. Save changes directly to the server or export events.json manually.
-    </p>
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <input id="searchInput" type="text" placeholder="Search events by name…">
+  <select id="sortSelect">
+    <option value="name">Sort: Name (A–Z)</option>
+    <option value="mats">Sort: Mats (low → high)</option>
+  </select>
+  <label class="chip">
+    <input id="showArchivedCheckbox" type="checkbox">
+    <span>Show archived</span>
+  </label>
+  <button id="newEventBtn" class="primary-btn">
+    <span>＋</span> New Event
+  </button>
+</div>
 
-    <h2>Existing Events</h2>
-    <div id="eventsList"></div>
+<!-- EVENTS GRID -->
+<div id="eventsGrid" class="grid"></div>
+<div id="emptyState" class="empty" style="display:none;">
+  No events found. Create your first event using the “New Event” button.
+</div>
 
-    <h2>Add New Event</h2>
-    <label>Event Name</label>
-    <input id="newName" type="text"/>
+<div class="footer-tag">
+  Matside Admin · Events Manager v3.0
+</div>
 
-    <label>Event ID (URL-friendly)</label>
-    <input id="newId" type="text" placeholder="lincoln-vs-north"/>
-
-    <label>Event Password</label>
-    <input id="newPass" type="text"/>
-
-    <label>Number of Mats</label>
-    <input id="newMats" type="number" min="1" max="12"/>
-
-    <label>Default Period (seconds)</label>
-    <input id="newPeriod" type="number" min="30" max="600"/>
-
-    <button class="btn blue" onclick="addEvent()">Add Event</button>
-
-    <h2>Save / Export</h2>
-    <button class="btn gray" onclick="exportJSON()">Download events.json</button>
-    <button class="btn blue" onclick="saveToServer()">Save to Server</button>
-    <div id="saveMsg" style="margin-top:10px;font-size:13px;color:var(--muted);"></div>
+<!-- DRAWER -->
+<div id="drawerBackdrop" class="drawer-backdrop"></div>
+<div id="drawer" class="drawer">
+  <div class="drawer-header">
+    <div class="drawer-title" id="drawerTitle">New Event</div>
+    <button id="drawerCloseBtn" class="drawer-close-btn">✕</button>
   </div>
+  <div class="drawer-body">
+    <div class="field">
+      <label for="eventNameInput">Event Name</label>
+      <input id="eventNameInput" type="text" placeholder="Ex: Holiday Duals, Winter Classic">
+      <small>This name appears in the selection dropdown on the landing page.</small>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="matCountInput">Number of Mats</label>
+        <select id="matCountInput">
+          <option value="1">1 mat</option>
+          <option value="2">2 mats</option>
+          <option value="3">3 mats</option>
+          <option value="4">4 mats</option>
+          <option value="5">5 mats</option>
+          <option value="6">6 mats</option>
+          <option value="7">7 mats</option>
+          <option value="8">8 mats</option>
+        </select>
+        <small>How many mats this event will run.</small>
+      </div>
+      <div class="field">
+        <label for="periodPresetSelect">Regulation Period</label>
+        <select id="periodPresetSelect">
+          <option value="60">1:00</option>
+          <option value="90">1:30</option>
+          <option value="120">2:00</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <small>Default period length used by the control panel.</small>
+      </div>
+    </div>
+
+    <div class="field" id="customPeriodField" style="display:none;">
+      <label for="customPeriodInput">Custom Period (seconds)</label>
+      <input id="customPeriodInput" type="number" min="10" step="5" placeholder="Ex: 75">
+      <small>Enter total seconds (e.g. 75 = 1:15). Used when “Custom” is selected.</small>
+    </div>
+
+    <div class="field">
+      <label for="notesInput">Notes (optional)</label>
+      <input id="notesInput" type="text" placeholder="Ex: Middle School, Collegiate rules, etc.">
+      <small>Internal notes to remind you of configuration details.</small>
+    </div>
+
+    <div class="checkbox-row">
+      <input id="archivedInput" type="checkbox">
+      <label for="archivedInput">Archive this event (hide from normal selection)</label>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button id="cancelBtn" class="btn btn-gray">Cancel</button>
+    <button id="saveEventBtn" class="btn btn-blue">Save Event</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast">
+  <span id="toastIcon">✔</span>
+  <span id="toastText">Saved</span>
 </div>
 
 <script>
-/* ---------- ADMIN PASSWORD GATE ---------- */
+const API_BASE = "https://scoreboard-server-er33.onrender.com";
 
-const ADMIN_PASSWORD = "SuperAdmin2024!";  // 🔥 CHANGE THIS
+let events = [];
+let filteredEvents = [];
+let editingIndex = null;
 
-const lockScreen = document.getElementById("lock-screen");
-const app = document.getElementById("app");
-const lockError = document.getElementById("lockError");
+const eventsGrid = document.getElementById("eventsGrid");
+const emptyState = document.getElementById("emptyState");
 
-function unlockApp(){
-  lockScreen.style.display = "none";
-  app.style.display = "block";
+const searchInput = document.getElementById("searchInput");
+const sortSelect = document.getElementById("sortSelect");
+const showArchivedCheckbox = document.getElementById("showArchivedCheckbox");
+const newEventBtn = document.getElementById("newEventBtn");
+
+// Drawer elements
+const drawer = document.getElementById("drawer");
+const drawerBackdrop = document.getElementById("drawerBackdrop");
+const drawerCloseBtn = document.getElementById("drawerCloseBtn");
+const drawerTitle = document.getElementById("drawerTitle");
+const eventNameInput = document.getElementById("eventNameInput");
+const matCountInput = document.getElementById("matCountInput");
+const periodPresetSelect = document.getElementById("periodPresetSelect");
+const customPeriodField = document.getElementById("customPeriodField");
+const customPeriodInput = document.getElementById("customPeriodInput");
+const notesInput = document.getElementById("notesInput");
+const archivedInput = document.getElementById("archivedInput");
+const cancelBtn = document.getElementById("cancelBtn");
+const saveEventBtn = document.getElementById("saveEventBtn");
+
+// Toast
+const toastEl = document.getElementById("toast");
+const toastIcon = document.getElementById("toastIcon");
+const toastText = document.getElementById("toastText");
+
+/* ---------------- Toast helper ---------------- */
+function showToast(message, isError = false) {
+  toastText.textContent = message;
+  toastIcon.textContent = isError ? "⚠" : "✔";
+  toastEl.classList.toggle("toast-err", isError);
+  toastEl.classList.toggle("toast-ok", !isError);
+  toastEl.classList.add("show");
+  setTimeout(() => {
+    toastEl.classList.remove("show");
+  }, 2800);
 }
 
-document.getElementById("adminSubmit").onclick = function(){
-  const pw = document.getElementById("adminPass").value.trim();
-  if(pw === ADMIN_PASSWORD){
-    unlockApp();
-  } else {
-    lockError.textContent = "Incorrect admin password.";
-  }
-};
+/* ---------------- Drawer helpers ---------------- */
+function openDrawer(isEdit, index) {
+  editingIndex = isEdit ? index : null;
+  if (isEdit && events[index]) {
+    const ev = events[index];
+    drawerTitle.textContent = "Edit Event";
+    eventNameInput.value = ev.name || "";
+    matCountInput.value = (ev.mats || 1).toString();
+    const periodSeconds = ev.periodSeconds || 60;
 
-document.getElementById("adminPass").addEventListener("keydown", e=>{
-  if(e.key === "Enter") document.getElementById("adminSubmit").click();
+    if (periodSeconds === 60 || periodSeconds === 90 || periodSeconds === 120) {
+      periodPresetSelect.value = periodSeconds.toString();
+      customPeriodField.style.display = "none";
+      customPeriodInput.value = "";
+    } else {
+      periodPresetSelect.value = "custom";
+      customPeriodField.style.display = "block";
+      customPeriodInput.value = periodSeconds.toString();
+    }
+
+    notesInput.value = ev.notes || "";
+    archivedInput.checked = !!ev.archived;
+  } else {
+    drawerTitle.textContent = "New Event";
+    eventNameInput.value = "";
+    matCountInput.value = "4";
+    periodPresetSelect.value = "60";
+    customPeriodField.style.display = "none";
+    customPeriodInput.value = "";
+    notesInput.value = "";
+    archivedInput.checked = false;
+  }
+
+  drawer.classList.add("open");
+  drawerBackdrop.classList.add("open");
+}
+
+function closeDrawer() {
+  drawer.classList.remove("open");
+  drawerBackdrop.classList.remove("open");
+}
+
+/* ---------------- Fetch events from server ---------------- */
+async function loadEvents() {
+  try {
+    const res = await fetch(API_BASE + "/events.json");
+    if (!res.ok) throw new Error("Server returned " + res.status);
+    const data = await res.json();
+    events = Array.isArray(data) ? data : [];
+    applyFilters();
+  } catch (err) {
+    console.error("Error loading events:", err);
+    showToast("Error loading events from server", true);
+    events = [];
+    applyFilters();
+  }
+}
+
+/* ---------------- Save events to server ---------------- */
+async function saveEventsToServer() {
+  try {
+    const res = await fetch(API_BASE + "/save-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ events })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Unknown error");
+    }
+
+    showToast("Events saved to server");
+    await loadEvents();
+  } catch (err) {
+    console.error("Save events error:", err);
+    showToast("Error saving events to server", true);
+  }
+}
+
+/* ---------------- Filtering & Sorting ---------------- */
+function applyFilters() {
+  const search = (searchInput.value || "").toLowerCase();
+  const showArchived = showArchivedCheckbox.checked;
+  const sortBy = sortSelect.value;
+
+  filteredEvents = events.filter(ev => {
+    const name = (ev.name || "").toLowerCase();
+    const matchesSearch = !search || name.includes(search);
+    const isArchived = !!ev.archived;
+    if (!showArchived && isArchived) return false;
+    return matchesSearch;
+  });
+
+  if (sortBy === "name") {
+    filteredEvents.sort((a, b) =>
+      (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" })
+    );
+  } else if (sortBy === "mats") {
+    filteredEvents.sort((a, b) => (a.mats || 0) - (b.mats || 0));
+  }
+
+  renderEvents();
+}
+
+/* ---------------- Render ---------------- */
+function renderEvents() {
+  eventsGrid.innerHTML = "";
+  if (filteredEvents.length === 0) {
+    emptyState.style.display = "block";
+    return;
+  }
+  emptyState.style.display = "none";
+
+  filteredEvents.forEach(ev => {
+    const idx = events.indexOf(ev);
+    const card = document.createElement("div");
+    card.className = "event-card";
+
+    const matsLabel = ev.mats != null ? `${ev.mats} mat${ev.mats === 1 ? "" : "s"}` : "—";
+    const periodSec = ev.periodSeconds || 60;
+    const mins = Math.floor(periodSec / 60);
+    const secs = periodSec % 60;
+    const periodLabel = `${mins}:${secs.toString().padStart(2,"0")}`;
+
+    const isArchived = !!ev.archived;
+
+    card.innerHTML = `
+      <div class="event-name">${ev.name || "Untitled Event"}</div>
+      <div class="event-meta">
+        Mats: <strong>${matsLabel}</strong> · Period: <strong>${periodLabel}</strong>
+      </div>
+      <div class="event-pill ${isArchived ? "archived-pill" : ""}">
+        ${isArchived ? "ARCHIVED" : "ACTIVE EVENT"}
+      </div>
+      <div class="event-meta" style="margin-top:6px;">
+        ${ev.notes ? ev.notes : "&nbsp;"}
+      </div>
+      <div class="card-buttons">
+        <button class="btn btn-blue" data-action="edit">✏️ Edit</button>
+        <button class="btn btn-gold" data-action="duplicate">⧉ Duplicate</button>
+        <button class="btn btn-gray" data-action="archive">${isArchived ? "Unarchive" : "Archive"}</button>
+        <button class="btn btn-red" data-action="delete">🗑 Delete</button>
+      </div>
+    `;
+
+    const buttons = card.querySelectorAll("button");
+    buttons.forEach(btn => {
+      const action = btn.dataset.action;
+      if (action === "edit") {
+        btn.addEventListener("click", () => openDrawer(true, idx));
+      } else if (action === "duplicate") {
+        btn.addEventListener("click", () => duplicateEvent(idx));
+      } else if (action === "archive") {
+        btn.addEventListener("click", () => toggleArchiveEvent(idx));
+      } else if (action === "delete") {
+        btn.addEventListener("click", () => deleteEvent(idx));
+      }
+    });
+
+    eventsGrid.appendChild(card);
+  });
+}
+
+/* ---------------- Event operations ---------------- */
+function duplicateEvent(index) {
+  const base = events[index];
+  if (!base) return;
+  const copy = {
+    ...base,
+    id: (Date.now().toString() + "-" + Math.random().toString(16).slice(2)),
+    name: (base.name || "Untitled Event") + " (Copy)",
+    archived: false
+  };
+  events.push(copy);
+  saveEventsToServer();
+}
+
+function toggleArchiveEvent(index) {
+  const ev = events[index];
+  if (!ev) return;
+  ev.archived = !ev.archived;
+  saveEventsToServer();
+}
+
+function deleteEvent(index) {
+  const ev = events[index];
+  if (!ev) return;
+  const name = ev.name || "this event";
+  const ok = confirm(`Delete "${name}"? This cannot be undone.`);
+  if (!ok) return;
+  events.splice(index, 1);
+  saveEventsToServer();
+}
+
+/* ---------------- Drawer Submit ---------------- */
+function onSaveEventClicked() {
+  const name = eventNameInput.value.trim();
+  const matsValue = parseInt(matCountInput.value, 10) || 1;
+  let periodSeconds;
+
+  if (periodPresetSelect.value === "custom") {
+    const custom = parseInt(customPeriodInput.value, 10);
+    if (!custom || custom < 10) {
+      alert("Please enter a valid custom period (at least 10 seconds).");
+      return;
+    }
+    periodSeconds = custom;
+  } else {
+    periodSeconds = parseInt(periodPresetSelect.value, 10);
+  }
+
+  if (!name) {
+    alert("Event name is required.");
+    return;
+  }
+
+  const payload = {
+    name,
+    mats: matsValue,
+    periodSeconds,
+    notes: notesInput.value.trim(),
+    archived: archivedInput.checked
+  };
+
+  // Preserve id if editing
+  if (editingIndex != null && events[editingIndex]) {
+    const existing = events[editingIndex];
+    events[editingIndex] = {
+      ...existing,
+      ...payload
+    };
+  } else {
+    payload.id = Date.now().toString();
+    events.push(payload);
+  }
+
+  closeDrawer();
+  saveEventsToServer();
+}
+
+/* ---------------- Wiring events ---------------- */
+searchInput.addEventListener("input", applyFilters);
+sortSelect.addEventListener("change", applyFilters);
+showArchivedCheckbox.addEventListener("change", applyFilters);
+
+newEventBtn.addEventListener("click", () => openDrawer(false, null));
+drawerCloseBtn.addEventListener("click", closeDrawer);
+drawerBackdrop.addEventListener("click", closeDrawer);
+cancelBtn.addEventListener("click", closeDrawer);
+
+periodPresetSelect.addEventListener("change", () => {
+  if (periodPresetSelect.value === "custom") {
+    customPeriodField.style.display = "block";
+  } else {
+    customPeriodField.style.display = "none";
+  }
 });
 
-/* ---------- EVENTS EDITOR LOGIC ---------- */
+saveEventBtn.addEventListener("click", onSaveEventClicked);
 
-let EVENTS = [];
-
-function render(){
-  const wrap = document.getElementById("eventsList");
-  wrap.innerHTML = "";
-
-  EVENTS.forEach((evt, idx)=>{
-    const d = document.createElement("div");
-    d.className = "event-block";
-    d.innerHTML = `
-      <div><strong>${evt.name}</strong></div>
-      <div style="font-size:12px;color:#999;">
-        ID: ${evt.id} • Mats: ${evt.mats} • Period: ${evt.periodSeconds}s
-      </div>
-
-      <label>Edit Name</label>
-      <input value="${evt.name}" onchange="updateEvent(${idx}, 'name', this.value)" />
-
-      <label>Edit Password</label>
-      <input value="${evt.code}" onchange="updateEvent(${idx}, 'code', this.value)" />
-
-      <label>Edit Mats</label>
-      <input type="number" min="1" max="12" value="${evt.mats}" onchange="updateEvent(${idx}, 'mats', Number(this.value))"/>
-
-      <label>Edit Period Seconds</label>
-      <input type="number" min="30" max="600" value="${evt.periodSeconds}" onchange="updateEvent(${idx}, 'periodSeconds', Number(this.value))"/>
-
-      <button class="btn red" onclick="deleteEvent(${idx})">Delete Event</button>
-    `;
-    wrap.appendChild(d);
-  });
-}
-
-function updateEvent(i, key, value){
-  EVENTS[i][key] = value;
-}
-
-function deleteEvent(i){
-  EVENTS.splice(i,1);
-  render();
-}
-
-function addEvent(){
-  EVENTS.push({
-    id: newId.value.trim(),
-    name: newName.value.trim(),
-    code: newPass.value.trim(),
-    mats: Number(newMats.value),
-    periodSeconds: Number(newPeriod.value)
-  });
-  render();
-}
-
-/* ---------- EXPORT TO FILE ---------- */
-
-function exportJSON(){
-  const blob = new Blob([JSON.stringify({events: EVENTS}, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = "events.json";
-  a.click();
-}
-
-/* ---------- SAVE DIRECTLY TO SERVER ---------- */
-
-function saveToServer(){
-  fetch("https://scoreboard-server-er33.onrender.com/save-events", {
-    method:"POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({events: EVENTS})
-  })
-  .then(r=>r.json())
-  .then(res=>{
-    document.getElementById("saveMsg").textContent = "Saved to server successfully ✔";
-  })
-  .catch(err=>{
-    document.getElementById("saveMsg").textContent = "Error saving to server.";
-  });
-}
-
-/* ---------- LOAD EXISTING events.json ---------- */
-
-fetch("https://scoreboard-server-er33.onrender.com/events.json")
-  .then(r=>r.json())
-  .then(j=>{
-    EVENTS = j.events || [];
-    render();
-  })
-  .catch(()=>alert("Could not load events.json"));
+/* ---------------- Init ---------------- */
+loadEvents();
 </script>
 
 </body>
