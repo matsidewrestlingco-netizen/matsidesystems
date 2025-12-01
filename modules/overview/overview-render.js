@@ -73,3 +73,4 @@ function resetWinnerLabel(mView) {
   if (!mView.winnerEl) return;
   mView.winnerEl.classList.remove("ms-winner-red", "ms-winner-green");
 }
+
