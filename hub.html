@@ -1,133 +1,261 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Matside — Control Hub (v2.5.3)</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Matside — Control Hub v3.0</title>
 
 <style>
   :root {
-    --bg:#070809;
-    --panel:#15161a;
-    --muted:#9aa0a6;
-    --accent:#1e88e5;
-    --red:#d32f2f;
-    --green:#00c853;
-    --gold:#fbc02d;
+    --bg: #070809;
+    --panel: rgba(22, 24, 28, 0.9);
+    --border: rgba(255,255,255,0.08);
+    --muted: #9aa0a6;
+
+    --accent: #1e88e5;
+    --accent-soft: rgba(30,136,229,0.1);
+
+    --red-glow: #ff4444;
+    --green-glow: #66ff66;
+
+    --radius: 20px;
   }
 
-  html, body {
-    margin:0; padding:0;
-    background:var(--bg);
-    font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    color:#fff;
+  body {
+    margin: 0;
+    background: var(--bg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    color: #fff;
+    padding: 18px;
   }
 
-  h1 {
-    text-align:center;
-    font-size:26px;
-    margin:18px 0 4px;
-    font-weight:800;
+  /* HEADER */
+  .header {
+    max-width: 1200px;
+    margin: 0 auto 18px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
   }
 
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand img {
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .brand-title {
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .right-info {
+    text-align: right;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* GRID */
   .grid {
-    max-width:900px;
-    margin:0 auto;
-    padding:12px;
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:14px;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
   }
 
-  @media(max-width:750px){
-    .grid { grid-template-columns:1fr; }
-  }
-
+  /* MAT CARD */
   .mat-card {
-    background:var(--panel);
-    padding:16px;
-    border-radius:12px;
-    box-shadow:0 6px 18px rgba(0,0,0,.45);
+    background: var(--panel);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.5);
+    backdrop-filter: blur(12px);
+    padding: 16px 16px 18px;
+    position: relative;
+    overflow: hidden;
   }
 
-  .mat-title {
-    font-size:20px;
-    font-weight:800;
-    margin-bottom:12px;
-    text-align:center;
+  .mat-label {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 4px;
   }
 
-  button {
-    width:100%;
-    padding:12px 16px;
-    margin-top:8px;
-    border-radius:10px;
-    border:0;
-    font-size:15px;
-    font-weight:700;
-    cursor:pointer;
+  .mat-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--accent-soft);
+    border: 1px solid rgba(30,136,229,0.4);
+    color: var(--muted);
+    margin-bottom: 10px;
   }
 
-  .blue { background:var(--accent); color:#fff; }
-  .gray { background:#2c2d31; color:#fff; }
-  .green { background:var(--green); color:#000; }
-  .gold { background:var(--gold); color:#000; }
-
-  #version-tag {
-    text-align:center;
-    margin:14px 0;
-    font-size:12px;
-    color:#666;
+  .mat-desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 14px;
   }
 
+  .btn-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .btn {
+    border: 0;
+    border-radius: 999px;
+    padding: 11px 14px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 18px rgba(30,136,229,0.6);
+  }
+
+  .btn-secondary {
+    background: #15171b;
+    color: #fff;
+    border: 1px solid var(--border);
+  }
+
+  .pill-red {
+    color: var(--red-glow);
+  }
+
+  .pill-green {
+    color: var(--green-glow);
+  }
+
+  /* FOOTER TAG */
+  .footer-tag {
+    max-width: 1200px;
+    margin: 18px auto 0 auto;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+    opacity: 0.7;
+  }
 </style>
 </head>
-
 <body>
 
-<h1>Matside — Control Hub</h1>
+<div class="header">
+  <div class="brand">
+    <img src="https://www.matside.org/assets/images/image01.png" alt="Matside">
+    <div>
+      <div class="brand-title">Matside Control Hub</div>
+      <div class="subtitle">Quick access to control panels & scoreboards</div>
+    </div>
+  </div>
+
+  <div class="right-info">
+    <div>Scoreboards: v3.2</div>
+    <div>Overview: v3.2 · Control: v2.19+</div>
+  </div>
+</div>
 
 <div class="grid">
+
   <!-- Mat 1 -->
   <div class="mat-card">
-    <div class="mat-title">Mat 1</div>
-    <button class="blue" onclick="openScoreboard(1)">Open Scoreboard</button>
-    <button class="green" onclick="openControl(1)">Open Control Panel</button>
+    <div class="mat-label">Mat 1</div>
+    <div class="mat-pill">Default: Control 1 · Scoreboard 1</div>
+    <div class="mat-desc">
+      Open the control panel for table staff or launch the full scoreboard view for Mat 1.
+    </div>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="control.html?mat=1" target="_blank">
+        ⚙️ Open Control Panel
+      </a>
+      <a class="btn btn-secondary" href="scoreboard.html?mat=1" target="_blank">
+        📺 Open Scoreboard Display
+      </a>
+    </div>
   </div>
 
   <!-- Mat 2 -->
   <div class="mat-card">
-    <div class="mat-title">Mat 2</div>
-    <button class="blue" onclick="openScoreboard(2)">Open Scoreboard</button>
-    <button class="green" onclick="openControl(2)">Open Control Panel</button>
+    <div class="mat-label">Mat 2</div>
+    <div class="mat-pill">Control 2 · Scoreboard 2</div>
+    <div class="mat-desc">
+      Use this for the second mat in your event. Ideal for duals or small tournaments.
+    </div>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="control.html?mat=2" target="_blank">
+        ⚙️ Open Control Panel
+      </a>
+      <a class="btn btn-secondary" href="scoreboard.html?mat=2" target="_blank">
+        📺 Open Scoreboard Display
+      </a>
+    </div>
   </div>
 
   <!-- Mat 3 -->
   <div class="mat-card">
-    <div class="mat-title">Mat 3</div>
-    <button class="blue" onclick="openScoreboard(3)">Open Scoreboard</button>
-    <button class="green" onclick="openControl(3)">Open Control Panel</button>
+    <div class="mat-label">Mat 3</div>
+    <div class="mat-pill">Control 3 · Scoreboard 3</div>
+    <div class="mat-desc">
+      Extra mat for tournaments or special matches. Fully synced with the Matside server.
+    </div>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="control.html?mat=3" target="_blank">
+        ⚙️ Open Control Panel
+      </a>
+      <a class="btn btn-secondary" href="scoreboard.html?mat=3" target="_blank">
+        📺 Open Scoreboard Display
+      </a>
+    </div>
   </div>
 
   <!-- Mat 4 -->
   <div class="mat-card">
-    <div class="mat-title">Mat 4</div>
-    <button class="blue" onclick="openScoreboard(4)">Open Scoreboard</button>
-    <button class="green" onclick="openControl(4)">Open Control Panel</button>
+    <div class="mat-label">Mat 4</div>
+    <div class="mat-pill">Control 4 · Scoreboard 4</div>
+    <div class="mat-desc">
+      Fourth mat for larger events. Opens the same UI you’re already using per mat.
+    </div>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="control.html?mat=4" target="_blank">
+        ⚙️ Open Control Panel
+      </a>
+      <a class="btn btn-secondary" href="scoreboard.html?mat=4" target="_blank">
+        📺 Open Scoreboard Display
+      </a>
+    </div>
   </div>
+
 </div>
 
-<div id="version-tag">v2.5.3</div>
-
-<script>
-function openScoreboard(mat){
-  window.open(`scoreboard.html?mat=${mat}`, "_blank");
-}
-
-function openControl(mat){
-  window.open(`control.html?mat=${mat}`, "_blank");
-}
-</script>
+<div class="footer-tag">
+  Matside Hub · UI Kit v3.2
+</div>
 
 </body>
 </html>
