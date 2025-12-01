@@ -673,32 +673,7 @@ function notifyReload(type, mat) {
 /* init */
 buildGrid();
 </script>
-
-<script type="module">
-  import { initSkinHub, SKINS } from "./modules/ui/skins.js";
-
-  const { setGlobalSkin, initialSkin } = initSkinHub("https://scoreboard-server-er33.onrender.com");
-
-  const selectEl = document.getElementById("skinSelect");
-  const applyBtn = document.getElementById("applySkinBtn");
-  const statusEl = document.getElementById("themeStatus");
-
-  // Populate dropdown from SKINS map
-  const entries = Object.entries(SKINS);
-  selectEl.innerHTML = entries.map(([key, skin]) => {
-    const selected = key === initialSkin ? "selected" : "";
-    return `<option value="${key}" ${selected}>${skin.name}</option>`;
-  }).join("");
-
-  applyBtn.addEventListener("click", () => {
-    const val = selectEl.value;
-    setGlobalSkin(val);
-    if (statusEl) {
-      statusEl.textContent = `Theme "${SKINS[val].name}" applied to all clients.`;
-      setTimeout(() => { statusEl.textContent = ""; }, 3000);
-    }
-  });
-</script>  
+ 
 
 </body>
 </html>
