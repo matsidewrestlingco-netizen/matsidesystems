@@ -1,4 +1,5 @@
 // modules/timeline.js
+
 let timelineList;
 
 export function initTimeline() {
@@ -11,7 +12,11 @@ export function addTimelineEntry(entry) {
   li.className = "timeline-item";
 
   const ts = new Date();
-  const timeStr = ts.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+  const timeStr = ts.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
 
   const header = document.createElement("div");
   header.className = "timeline-item-header";
