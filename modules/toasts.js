@@ -1,5 +1,4 @@
 // modules/toasts.js
-
 let toastEl, toastIcon, toastText;
 
 export function initToasts() {
