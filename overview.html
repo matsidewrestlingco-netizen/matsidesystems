@@ -1,158 +1,117 @@
-<!-- =========================================================
- FILE: overview.html
- Modular Overview v3.3 — 4 mats grid
-========================================================= -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Overview</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matside Overview v3.2.1</title>
 
-<link rel="stylesheet" href="modules/core/ui-kit.css">
+<!-- Correct CSS path -->
+<link rel="stylesheet" href="./modules/core/ui-kit.css?v=3.2.1">
+
+<style>
+  body {
+    background: var(--ms-bg, #050608);
+    color: var(--ms-text, #ffffff);
+    margin: 0;
+    padding: 20px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  }
+
+  .ov-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .ov-card {
+    background: var(--ms-surface);
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .ov-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .ov-timer {
+    text-align: center;
+    font-size: 48px;
+    font-weight: 800;
+    margin: 12px 0;
+  }
+
+  .ov-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 20px;
+  }
+
+  .ov-score {
+    font-size: 36px;
+    font-weight: 700;
+  }
+
+  .ov-red { color: var(--ms-red); }
+  .ov-green { color: var(--ms-green); }
+
+</style>
+
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
 </head>
 <body>
-<div class="ms-page">
-  <div class="ms-header-row">
-    <div class="ms-brand">
-      <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="ms-brand-logo">
-      <div>
-        <div class="ms-brand-title">Matside Overview</div>
-        <div class="ms-header-sub">Live view of all mats</div>
-      </div>
-    </div>
-    <div class="ms-header-sub" id="ov-conn">connecting…</div>
-  </div>
 
-  <div class="ms-mat-grid">
-    <!-- Mat 1 -->
-    <div class="ms-mat-card" data-mat="1">
-      <div class="ms-mat-top">
-        <div class="ms-mat-label">Mat 1</div>
-        <div class="ms-mat-meta">
-          <span>Period <span class="ov-period">1</span></span>
-          <span><span class="ov-time">00:00</span></span>
-        </div>
-      </div>
-      <div class="ms-mat-main">
-        <div class="ms-side ms-side-red">
-          <div class="ms-side-header">
-            <div class="ms-side-name">RED</div>
-            <div class="ms-side-tag">Home</div>
-          </div>
-          <div class="ms-score-box ov-red-score">0</div>
-        </div>
-        <div class="ms-side ms-side-green">
-          <div class="ms-side-header">
-            <div class="ms-side-name">GREEN</div>
-            <div class="ms-side-tag">Visitor</div>
-          </div>
-          <div class="ms-score-box ov-green-score">0</div>
-        </div>
-      </div>
-      <div class="ms-mat-bottom">
-        <div>Running: <span class="ov-running">No</span></div>
-        <div>Winner: <span class="ms-winner-label ov-winner">–</span></div>
-      </div>
-    </div>
+<h1 style="text-align:center; font-weight:800; margin-bottom:20px;">Event Overview</h1>
 
-    <!-- Mat 2 -->
-    <div class="ms-mat-card" data-mat="2">
-      <div class="ms-mat-top">
-        <div class="ms-mat-label">Mat 2</div>
-        <div class="ms-mat-meta">
-          <span>Period <span class="ov-period">1</span></span>
-          <span><span class="ov-time">00:00</span></span>
-        </div>
-      </div>
-      <div class="ms-mat-main">
-        <div class="ms-side ms-side-red">
-          <div class="ms-side-header">
-            <div class="ms-side-name">RED</div>
-            <div class="ms-side-tag">Home</div>
-          </div>
-          <div class="ms-score-box ov-red-score">0</div>
-        </div>
-        <div class="ms-side ms-side-green">
-          <div class="ms-side-header">
-            <div class="ms-side-name">GREEN</div>
-            <div class="ms-side-tag">Visitor</div>
-          </div>
-          <div class="ms-score-box ov-green-score">0</div>
-        </div>
-      </div>
-      <div class="ms-mat-bottom">
-        <div>Running: <span class="ov-running">No</span></div>
-        <div>Winner: <span class="ms-winner-label ov-winner">–</span></div>
-      </div>
-    </div>
-
-    <!-- Mat 3 -->
-    <div class="ms-mat-card" data-mat="3">
-      <div class="ms-mat-top">
-        <div class="ms-mat-label">Mat 3</div>
-        <div class="ms-mat-meta">
-          <span>Period <span class="ov-period">1</span></span>
-          <span><span class="ov-time">00:00</span></span>
-        </div>
-      </div>
-      <div class="ms-mat-main">
-        <div class="ms-side ms-side-red">
-          <div class="ms-side-header">
-            <div class="ms-side-name">RED</div>
-            <div class="ms-side-tag">Home</div>
-          </div>
-          <div class="ms-score-box ov-red-score">0</div>
-        </div>
-        <div class="ms-side ms-side-green">
-          <div class="ms-side-header">
-            <div class="ms-side-name">GREEN</div>
-            <div class="ms-side-tag">Visitor</div>
-          </div>
-          <div class="ms-score-box ov-green-score">0</div>
-        </div>
-      </div>
-      <div class="ms-mat-bottom">
-        <div>Running: <span class="ov-running">No</span></div>
-        <div>Winner: <span class="ms-winner-label ov-winner">–</span></div>
-      </div>
-    </div>
-
-    <!-- Mat 4 -->
-    <div class="ms-mat-card" data-mat="4">
-      <div class="ms-mat-top">
-        <div class="ms-mat-label">Mat 4</div>
-        <div class="ms-mat-meta">
-          <span>Period <span class="ov-period">1</span></span>
-          <span><span class="ov-time">00:00</span></span>
-        </div>
-      </div>
-      <div class="ms-mat-main">
-        <div class="ms-side ms-side-red">
-          <div class="ms-side-header">
-            <div class="ms-side-name">RED</div>
-            <div class="ms-side-tag">Home</div>
-          </div>
-          <div class="ms-score-box ov-red-score">0</div>
-        </div>
-        <div class="ms-side ms-side-green">
-          <div class="ms-side-header">
-            <div class="ms-side-name">GREEN</div>
-            <div class="ms-side-tag">Visitor</div>
-          </div>
-          <div class="ms-score-box ov-green-score">0</div>
-        </div>
-      </div>
-      <div class="ms-mat-bottom">
-        <div>Running: <span class="ov-running">No</span></div>
-        <div>Winner: <span class="ms-winner-label ov-winner">–</span></div>
-      </div>
-    </div>
-  </div>
+<div class="ov-grid">
+  <div class="ov-card" id="mat1"></div>
+  <div class="ov-card" id="mat2"></div>
+  <div class="ov-card" id="mat3"></div>
+  <div class="ov-card" id="mat4"></div>
 </div>
 
-<script type="module" src="modules/overview/overview-main.js"></script>
+<script>
+const socket = io("https://scoreboard-server-er33.onrender.com");
+
+socket.on("stateUpdate", (state) => {
+  for (const mat of [1,2,3,4]) {
+    const box = document.getElementById("mat" + mat);
+    const m = state.mats[mat];
+    if (!m) continue;
+
+    box.innerHTML = `
+      <div class="ov-header">
+        <div>Mat ${mat}</div>
+        <div>Period ${m.period}</div>
+      </div>
+
+      <div class="ov-timer">${format(m.time)}</div>
+
+      <div class="ov-row">
+        <div class="ov-red">RED</div>
+        <div class="ov-score ov-red">${m.red}</div>
+      </div>
+
+      <div class="ov-row">
+        <div class="ov-green">GREEN</div>
+        <div class="ov-score ov-green">${m.green}</div>
+      </div>
+    `;
+  }
+});
+
+function format(s) {
+  const m = Math.floor(s / 60).toString().padStart(2, "0");
+  const sec = (s % 60).toString().padStart(2, "0");
+  return `${m}:${sec}`;
+}
+</script>
+
 </body>
 </html>
