@@ -2,6 +2,7 @@
 import { resetMatOnServer } from "./socketHandler.js";
 import { clearTimeline } from "./timeline.js";
 import { showToast } from "./toasts.js";
+import { getInitialSegment } from "./periodLogic.js";
 
 let drawerLeft, drawerRight, backdropLeft, backdropRight;
 let openLeftBtn, closeLeftBtn, openRightBtn, closeRightBtn;
@@ -31,17 +32,13 @@ export function initDrawers() {
 
   if (resetMatBtn) {
     resetMatBtn.onclick = () => {
-      const ok = confirm("Reset entire mat? Time, period, scores, names, and timeline will be cleared.");
+      const ok = confirm("Reset entire mat? Time, segment, scores, names, and timeline will be cleared.");
       if (!ok) return;
       if (redNameInput) redNameInput.value = "";
       if (greenNameInput) greenNameInput.value = "";
       clearTimeline();
-     import { getInitialSegment } from "./periodLogic.js";
-
-      resetMatOnServer({
-        segmentId: getInitialSegment().id,
-        time: getInitialSegment().time
-    });
+      const seg = getInitialSegment();
+      resetMatOnServer({ segmentId: seg.id, time: seg.time });
       showToast("Mat reset");
     };
   }
