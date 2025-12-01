@@ -408,6 +408,28 @@
   }
 
   .hidden{display:none !important;}
+
+/* SUBMISSION TOAST */
+.submit-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  border: 1px solid #444;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  z-index: 1000000;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.submit-toast.show {
+  opacity: 1;
+}
+.hidden { display:none!important; }
+  
 </style>
 </head>
 <body>
@@ -1079,7 +1101,20 @@ submitMatchBtn.onclick=()=>{
     timestamp:new Date().toISOString()
   };
 
-  socket.emit("matchEnded",resultPayload);
+  socket.emit("matchEnded", resultPayload, (serverResponse)=>{
+  // server acknowledges the save
+  if(serverResponse && serverResponse.ok){
+    socket.emit("matchLogged", {
+      ...resultPayload,
+      winnerName: resultPayload.winner === "red"
+          ? (redNameInput.value.trim() || "Red Wrestler")
+          : (greenNameInput.value.trim() || "Green Wrestler"),
+      methodLabel:{
+        decision:"Decision",tech:"Tech Fall",pin:"Pin",forfeit:"Forfeit"
+      }[resultPayload.method],
+    });
+  }
+});
 
   pushTimeline(mat,{
     label:`Match Ended — Winner: ${chosenWinner.toUpperCase()} (${{
@@ -1127,6 +1162,50 @@ backdropRight.onclick=()=>{
   drawerRight.classList.remove("open");
   backdropRight.classList.remove("open");
 };
+
+/* MATCH LOG CONFIRMATION */
+socket.on("matchLogged", (data) => {
+  showSubmissionToast(data);
+  updateRecentSubmission(data);
+});
+
+/* Toast function */
+function showSubmissionToast(data){
+  const toast = document.getElementById("submitToast");
+  const text = document.getElementById("submitToastText");
+
+  text.textContent = `Submitted: ${data.winnerName} (${data.methodLabel})`;
+  toast.classList.remove("hidden");
+
+  // Fade-in
+  toast.classList.add("show");
+
+  // Hide after 5 seconds
+  setTimeout(()=>{
+    toast.classList.remove("show");
+    setTimeout(()=>toast.classList.add("hidden"), 250);
+  }, 5000);
+}
+
+/* Recent submission box */
+function updateRecentSubmission(data){
+  const box = document.getElementById("recentSubmissionBox");
+
+  box.innerHTML = `
+    <div><strong>${data.winnerName}</strong> (${data.methodLabel})</div>
+    <div>Final: Red ${data.redScore} — Green ${data.greenScore}</div>
+    <div style="color:#777;margin-top:4px;font-size:11px;">
+      Mat ${data.mat} · ${new Date(data.timestamp).toLocaleTimeString()}
+    </div>
+  `;
+}
+  
 </script>
+
+<!-- SUBMISSION TOAST -->
+<div id="submitToast" class="submit-toast hidden">
+  <div id="submitToastText">Match Submitted</div>
+</div>
+  
 </body>
 </html>
