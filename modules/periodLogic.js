@@ -55,4 +55,5 @@ export function getNextSegment(currentId, red, green) {
   if (segment.id === "UT") return null;
 
   return null;
+  
 }
