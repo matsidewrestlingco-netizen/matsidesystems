@@ -1,5 +1,4 @@
 // modules/timeline.js
-
 let timelineList;
 
 export function initTimeline() {
@@ -22,9 +21,7 @@ export function addTimelineEntry(entry) {
   body.className = "timeline-item-body";
 
   let text = entry.label || "";
-  if (entry.color) {
-    text = (entry.color.toUpperCase()) + " · " + text;
-  }
+  if (entry.color) text = entry.color.toUpperCase() + " · " + text;
   if (!text) text = JSON.stringify(entry);
 
   body.textContent = text;
