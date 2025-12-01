@@ -1,9 +1,13 @@
+<!-- ===========================================
+ control.html  (v2.20 — modular + OT engine)
+ Place this at: /control.html in your frontend repo
+=========================================== -->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel (modular v1)</title>
+<title>Matside — Control Panel (v2.20)</title>
 
 <!-- Socket.io -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -447,7 +451,7 @@
       <h4>Reset Mat</h4>
       <button id="resetMatBtn" class="small red" style="width:100%;">Reset Entire Mat</button>
       <div class="drawer-note">
-        Resets time, period, scores, names, and clears the timeline for this mat.
+        Resets time, segment, scores, names, and clears the timeline for this mat.
       </div>
     </div>
 
@@ -493,7 +497,7 @@
   <span id="toastText">Saved</span>
 </div>
 
-<div id="version-tag">v2.19 modular</div>
+<div id="version-tag">v2.20 modular</div>
 
 <!-- MAIN INIT SCRIPT -->
 <script type="module" src="modules/init.js"></script>
