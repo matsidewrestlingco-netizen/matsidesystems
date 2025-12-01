@@ -37,6 +37,7 @@ export function addTimelineEntry(entry) {
   timelineList.prepend(li);
 }
 
+
 export function clearTimeline() {
   if (!timelineList) return;
   timelineList.innerHTML = "";
