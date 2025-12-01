@@ -92,3 +92,4 @@ function submitMatch() {
   closeOverlay();
   resetMatOnServer();
 }
+
