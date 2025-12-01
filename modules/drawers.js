@@ -1,4 +1,5 @@
 // modules/drawers.js
+
 import { resetMatOnServer } from "./socketHandler.js";
 import { clearTimeline } from "./timeline.js";
 import { showToast } from "./toasts.js";
@@ -32,7 +33,9 @@ export function initDrawers() {
 
   if (resetMatBtn) {
     resetMatBtn.onclick = () => {
-      const ok = confirm("Reset entire mat? Time, segment, scores, names, and timeline will be cleared.");
+      const ok = confirm(
+        "Reset entire mat? Time, segment, scores, names, and timeline will be cleared."
+      );
       if (!ok) return;
       if (redNameInput) redNameInput.value = "";
       if (greenNameInput) greenNameInput.value = "";
