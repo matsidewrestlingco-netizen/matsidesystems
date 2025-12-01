@@ -1,8 +1,8 @@
 // modules/endMatch.js
-import { getCurrentMat, getLastState, logMatchResult } from "./socketHandler.js";
+
+import { getCurrentMat, getLastState, logMatchResult, resetMatOnServer } from "./socketHandler.js";
 import { showToast } from "./toasts.js";
 import { addTimelineEntry } from "./timeline.js";
-import { resetMatOnServer } from "./socketHandler.js";
 
 let overlay;
 let winnerButtons = [];
@@ -23,17 +23,17 @@ export function initEndMatch() {
   const endMatchBtn = document.getElementById("endMatchBtn");
   if (endMatchBtn) endMatchBtn.onclick = openOverlay;
 
-  winnerButtons.forEach(btn => {
+  winnerButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       selectedWinner = btn.dataset.winner;
-      winnerButtons.forEach(b => b.classList.toggle("selected", b === btn));
+      winnerButtons.forEach((b) => b.classList.toggle("selected", b === btn));
     });
   });
 
-  resultButtons.forEach(btn => {
+  resultButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       selectedResult = btn.dataset.result;
-      resultButtons.forEach(b => b.classList.toggle("selected", b === btn));
+      resultButtons.forEach((b) => b.classList.toggle("selected", b === btn));
     });
   });
 
@@ -44,8 +44,8 @@ export function initEndMatch() {
 function openOverlay() {
   selectedWinner = null;
   selectedResult = null;
-  winnerButtons.forEach(b => b.classList.remove("selected"));
-  resultButtons.forEach(b => b.classList.remove("selected"));
+  winnerButtons.forEach((b) => b.classList.remove("selected"));
+  resultButtons.forEach((b) => b.classList.remove("selected"));
   if (overlay) overlay.classList.add("show");
 }
 
