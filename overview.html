@@ -1,312 +1,185 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside Overview v3.1</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Matside — Overview v3.1</title>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
 <style>
   :root {
-    --bg: #000;
-    --red: #c6463c;
-    --green: #62c96b;
-    --muted: #bfbfbf;
-    --panel: #101114;
-    --border: #262626;
-  }
+    --bg: #070809;
+    --panel: rgba(22, 24, 28, 0.8);
+    --border: rgba(255,255,255,0.06);
+    --muted: #9aa0a6;
 
-  * { box-sizing: border-box; }
+    --red-back: #1a0000;
+    --red-glow: #ff4444;
+
+    --green-back: #001a00;
+    --green-glow: #66ff66;
+
+    --radius: 18px;
+  }
 
   body {
     margin: 0;
-    padding: 0;
     background: var(--bg);
-    color: white;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-  }
-
-  .wrap {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 16px 20px 24px;
+    color: #fff;
+    padding: 20px;
   }
 
   h1 {
-    margin: 0 0 12px;
-    font-size: 24px;
+    text-align: center;
+    font-size: 28px;
     font-weight: 800;
-    letter-spacing: 0.5px;
+    margin-bottom: 20px;
   }
 
-  .overview-grid {
+  /* GRID LAYOUT */
+  .grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    max-width: 1400px;
+    margin: 0 auto;
   }
 
-  @media (max-width: 900px) {
-    .overview-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
+  /* MAT CARD */
   .mat-card {
     background: var(--panel);
-    border-radius: 16px;
     border: 1px solid var(--border);
-    padding: 12px 16px 16px;
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.7);
-    cursor: pointer;
-    transition: transform 0.12s ease, opacity 0.2s;
+    border-radius: var(--radius);
+    padding: 14px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   }
 
-  .mat-card:hover {
-    transform: scale(1.02);
-    opacity: 0.9;
+  /* TOP ROW (MAT / TIME / PERIOD) */
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
   }
 
-  /* TOP ROW */
-  .mat-top-grid {
-    display: grid;
-    grid-template-columns: 1fr 2fr 1fr;
-    align-items: center;
+  .top-box {
+    background: rgba(255,255,255,0.05);
+    border-radius: var(--radius);
+    padding: 10px 0;
+    text-align: center;
+    font-size: 18px;
     font-weight: 700;
-    font-size: 13px;
-    text-transform: uppercase;
-    color: var(--muted);
+    flex: 1;
+    margin: 0 3px;
   }
 
-  .mat-top-grid .value {
-    font-size: 24px;
-    color: white;
-    margin-top: 2px;
-  }
-
-  .mat-title-center {
-    text-align: center;
-    font-size: 15px;
+  .time-box {
+    font-size: 32px;
     font-weight: 800;
-    letter-spacing: 0.5px;
   }
 
-  /* TIMER */
-  .timer-label {
-    margin-top: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    text-align: center;
-  }
-
-  .time-display {
-    font-size: 40px;
-    font-weight: 800;
-    margin-top: 4px;
-    text-align: center;
-  }
-
-  @keyframes timerPulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-  }
-
-  .timer-running {
-    animation: timerPulse 1s ease-in-out infinite;
-  }
-
-  /* NAMES */
-  .names-row {
-    margin-top: 16px;
+  /* NAME ROW */
+  .name-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    font-size: 16px;
-    font-weight: 700;
+    gap: 12px;
+    margin-bottom: 12px;
   }
 
   .red-name {
-    color: var(--red);
-    text-align: left;
+    color: var(--red-glow);
+    font-weight: 700;
+    font-size: 18px;
+    text-align: center;
   }
 
   .green-name {
-    color: var(--green);
-    text-align: right;
+    color: var(--green-glow);
+    font-weight: 700;
+    font-size: 18px;
+    text-align: center;
   }
 
   /* SCORES */
   .score-row {
-    margin-top: 12px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 12px;
   }
 
   .score-box {
-    font-size: 32px;
-    font-weight: 700;
-    padding: 22px 0;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: var(--radius);
+    padding: 35px 0;
+    font-size: 54px;
+    font-weight: 800;
+    text-align: center;
   }
 
-  .score-box-red {
-    background: var(--red);
+  .red-score {
+    background: var(--red-back);
+    border: 1px solid var(--red-glow);
+    box-shadow: 0 0 12px var(--red-glow);
   }
 
-  .score-box-green {
-    background: var(--green);
-    color: #000;
-  }
-
-  /* META */
-  .meta-row {
-    margin-top: 8px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  .status-pill {
-    padding: 2px 8px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .status-pill.running {
-    border-color: var(--green);
-    color: var(--green);
-  }
-
-  .brand-mini {
-    text-align: right;
-    opacity: 0.8;
-    font-size: 11px;
+  .green-score {
+    background: var(--green-back);
+    border: 1px solid var(--green-glow);
+    box-shadow: 0 0 12px var(--green-glow);
   }
 </style>
 </head>
-
 <body>
-<div class="wrap">
-  <h1>Matside — Overview</h1>
 
-  <div class="overview-grid">
-    <div id="mat-card-1" class="mat-card" onclick="openMat(1)"></div>
-    <div id="mat-card-2" class="mat-card" onclick="openMat(2)"></div>
-    <div id="mat-card-3" class="mat-card" onclick="openMat(3)"></div>
-    <div id="mat-card-4" class="mat-card" onclick="openMat(4)"></div>
-  </div>
+<h1>Matside — Event Overview</h1>
+
+<div class="grid">
+  <!-- 4 Mat Cards -->
+  <div class="mat-card" id="mat1"></div>
+  <div class="mat-card" id="mat2"></div>
+  <div class="mat-card" id="mat3"></div>
+  <div class="mat-card" id="mat4"></div>
 </div>
 
 <script>
-  const SERVER = "https://scoreboard-server-er33.onrender.com";
-  const socket = io(SERVER, { transports: ["websocket", "polling"] });
+const socket = io("https://scoreboard-server-er33.onrender.com");
 
-  function openMat(mat) {
-    window.open(`scoreboard.html?mat=${mat}`, "_blank");
-  }
-
-  function fmt(sec) {
-    sec = Number(sec) || 0;
-    if (sec < 0) sec = 0;
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
-  }
-
-  function labelPeriod(p) {
-    return {
-      1: "1",
-      2: "2",
-      3: "3",
-      4: "OT",
-      5: "TB1",
-      6: "TB2",
-      7: "UT"
-    }[p] || p;
-  }
-
-  function renderMat(matNum, m) {
-    const box = document.getElementById(`mat-card-${matNum}`);
-
-    if (!m) {
-      box.innerHTML = `
-        <div class="mat-top-grid">
-          <div>MAT<div class="value">${matNum}</div></div>
-          <div class="mat-title-center">MATSIDE</div>
-          <div>PERIOD<div class="value">–</div></div>
-        </div>
-        <div class="timer-label">TIME</div>
-        <div class="time-display">--:--</div>
-        <div class="names-row">
-          <div class="red-name">Red Wrestler</div>
-          <div class="green-name">Green Wrestler</div>
-        </div>
-        <div class="score-row">
-          <div class="score-box score-box-red">0</div>
-          <div class="score-box score-box-green">0</div>
-        </div>
-        <div class="meta-row">
-          <div class="status-pill">No Data</div>
-          <div class="brand-mini">Matside</div>
-        </div>
-      `;
-      return;
-    }
-
-    const periodText = labelPeriod(m.period);
-    const redName = m.redName || "Red Wrestler";
-    const greenName = m.greenName || "Green Wrestler";
-
-    box.innerHTML = `
-      <div class="mat-top-grid">
-        <div>MAT<div class="value">${matNum}</div></div>
-        <div class="mat-title-center">MATSIDE SCOREBOARD</div>
-        <div>PERIOD<div class="value">${periodText}</div></div>
-      </div>
-
-      <div class="timer-label">TIME</div>
-      <div class="time-display ${m.running ? "timer-running" : ""}">
-        ${fmt(m.time)}
-      </div>
-
-      <div class="names-row">
-        <div class="red-name">${redName}</div>
-        <div class="green-name">${greenName}</div>
-      </div>
-
-      <div class="score-row">
-        <div class="score-box score-box-red">${m.red}</div>
-        <div class="score-box score-box-green">${m.green}</div>
-      </div>
-
-      <div class="meta-row">
-        <div class="status-pill ${m.running ? "running" : ""}">
-          ${m.running ? "Running" : "Stopped"}
-        </div>
-        <div class="brand-mini">Matside</div>
-      </div>
-    `;
-  }
-
-  socket.on("stateUpdate", (state) => {
-    const mats = state.mats || {};
-    for (let i = 1; i <= 4; i++) {
-      renderMat(i, mats[i]);
-    }
-  });
-
+socket.on("stateUpdate", (state) => {
   for (let i = 1; i <= 4; i++) {
-    renderMat(i, null);
+    renderMat(i, state.mats[i]);
   }
+});
+
+function format(sec) {
+  if (sec == null) return "--:--";
+  const m = Math.floor(sec / 60).toString().padStart(2,"0");
+  const s = (sec % 60).toString().padStart(2,"0");
+  return m + ":" + s;
+}
+
+function renderMat(matNum, mat) {
+  if (!mat) return;
+
+  const root = document.getElementById("mat" + matNum);
+  root.innerHTML = `
+    <div class="top-row">
+      <div class="top-box">MAT ${matNum}</div>
+      <div class="top-box time-box">${format(mat.time)}</div>
+      <div class="top-box">P ${mat.period}</div>
+    </div>
+
+    <div class="name-row">
+      <div class="red-name">${mat.redName || "RED"}</div>
+      <div class="green-name">${mat.greenName || "GREEN"}</div>
+    </div>
+
+    <div class="score-row">
+      <div class="score-box red-score">${mat.red}</div>
+      <div class="score-box green-score">${mat.green}</div>
+    </div>
+  `;
+}
 </script>
+
 </body>
 </html>
