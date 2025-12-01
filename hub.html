@@ -669,6 +669,10 @@ function notifyReload(type, mat) {
   // 'type' is "control" or "scoreboard"
   socket.emit("adminNotifyReload", { type, mat });
 }
+  
+/* init */
+buildGrid();
+</script>
 
 <script type="module">
   import { initSkinHub, SKINS } from "./modules/ui/skins.js";
@@ -694,11 +698,7 @@ function notifyReload(type, mat) {
       setTimeout(() => { statusEl.textContent = ""; }, 3000);
     }
   });
-</script>
-  
-/* init */
-buildGrid();
-</script>
+</script>  
 
 </body>
 </html>
