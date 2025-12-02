@@ -13,20 +13,22 @@
 }
 
 /* ----------------------------------------------------------
-   TOP ROW — MAT / TITLE / PERIOD (much tighter)
+   TOP ROW — CENTER-BIASED MAT / TITLE / PERIOD
 ----------------------------------------------------------- */
 
 .sb-top-row {
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;      /* CENTER the entire group */
   align-items: center;
+  gap: 4vw;                     /* Pull MAT/Period closer to title */
   margin-bottom: 0.5vh;
 }
 
 .sb-mat-box,
 .sb-period-box {
   text-align: center;
+  min-width: 10vw;              /* Keeps them equal in size */
 }
 
 .sb-mat-label,
@@ -43,12 +45,13 @@
   font-weight: 900;
 }
 
+/* Center title but allow side boxes to sit near it */
 .sb-title-box {
   font-size: 2.7vh;
   font-weight: 900;
   text-align: center;
+  white-space: nowrap;
 }
-
 /* ----------------------------------------------------------
    MIDDLE ROW — TIMER (pulled way up, massive font)
 ----------------------------------------------------------- */
