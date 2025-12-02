@@ -1,97 +1,159 @@
-// =======================================================
-// File: /modules/control/match-end.js
-// End-match flow: winner + method selection + emit + toast.
-// Requires control.html to provide modal + buttons.
-// =======================================================
+// modules/control/match-end.js
+// ---------------------------------------------------------
+// Match-End Modal + Submission Module (v2.1)
+// Fully integrated with:
+//   - toast system (ui/toast.js)
+//   - timeline system (timeline/timeline.js)
+//   - reset-mat module (control/reset-mat.js)
+//   - unified socket/state routing
+// ---------------------------------------------------------
 
+import { showToast } from "../ui/toast.js";
+
+/**
+ * Initializes the match-end modal system.
+ * @param {Object} ctx - The control-main context object.
+ */
 export function initMatchEnd(ctx) {
-  const { socket, getCurrentMat, getMatState } = ctx;
+  const {
+    socket,
+    getCurrentMat,
+    getMatState,
+    appendTimeline,
+    resetMat
+  } = ctx;
 
-  const endBtn = document.getElementById("endMatchBtn");
-  const modal = document.getElementById("matchModal");
-  const closeBtn = document.getElementById("closeMatchModal");
-  const toast = document.getElementById("lastMatchToast");
+  // Modal elements
+  const modal = document.getElementById("matchEndModal");
+  const backdrop = document.getElementById("matchEndBackdrop");
 
-  const winnerRedBtn = document.getElementById("endRed");
-  const winnerGreenBtn = document.getElementById("endGreen");
-  const methodButtons = document.querySelectorAll("[data-victory]");
+  const winnerBtns = document.querySelectorAll("[data-winner]");
+  const methodBtns = document.querySelectorAll("[data-method]");
 
-  let selectedWinner = null;
-  let selectedMethod = null;
+  const winnerLabel = document.getElementById("winnerChoice");
+  const methodLabel = document.getElementById("methodChoice");
+
+  const submitBtn = document.getElementById("submitMatchEnd");
+  const cancelBtn = document.getElementById("cancelMatchEnd");
+
+  const debugBox = document.getElementById("matchEndDebug");
+
+  let selectedWinner = null;  // "red" | "green"
+  let selectedMethod = null;  // "decision" | "tech" | "pin" | "ff"
+
+  // ---------------------------------------------------------
+  // Modal open/close
+  // ---------------------------------------------------------
 
   function openModal() {
     selectedWinner = null;
     selectedMethod = null;
-    if (modal) modal.classList.add("active");
+
+    winnerLabel.textContent = "--";
+    methodLabel.textContent = "--";
+
+    modal.classList.add("open");
+    backdrop.classList.add("open");
   }
+
   function closeModal() {
-    if (modal) modal.classList.remove("active");
+    modal.classList.remove("open");
+    backdrop.classList.remove("open");
   }
 
-  function suggestWinner() {
-    const m = getMatState();
-    if (!m) return null;
-    if (m.red > m.green) return "red";
-    if (m.green > m.red) return "green";
-    return null;
-  }
+  document.getElementById("endMatchBtn")?.addEventListener("click", openModal);
 
-  function showToast(msg) {
-    if (!toast) return;
-    toast.textContent = msg;
-    toast.style.display = "block";
-    setTimeout(() => {
-      toast.style.display = "none";
-    }, 3000);
-  }
-
-  winnerRedBtn?.addEventListener("click", () => {
-    selectedWinner = "red";
-  });
-  winnerGreenBtn?.addEventListener("click", () => {
-    selectedWinner = "green";
+  cancelBtn?.addEventListener("click", () => {
+    closeModal();
   });
 
-  methodButtons.forEach(btn => {
+  backdrop?.addEventListener("click", closeModal);
+
+  // ---------------------------------------------------------
+  // Winner selection
+  // ---------------------------------------------------------
+  winnerBtns.forEach(btn => {
     btn.addEventListener("click", () => {
-      selectedMethod = btn.getAttribute("data-victory");
-      submitEnd();
+      selectedWinner = btn.dataset.winner;
+
+      winnerBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      winnerLabel.textContent =
+        selectedWinner === "red" ? "Red Wrestler" : "Green Wrestler";
     });
   });
 
-  function submitEnd() {
-    const mat = getCurrentMat();
-    const m = getMatState();
-    if (!m) return;
+  // ---------------------------------------------------------
+  // Method selection
+  // ---------------------------------------------------------
+  methodBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      selectedMethod = btn.dataset.method;
 
-    let winner = selectedWinner || suggestWinner();
-    if (!winner) {
-      showToast("Select a winner or ensure scores differ.");
+      methodBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      methodLabel.textContent = btn.textContent;
+    });
+  });
+
+  // ---------------------------------------------------------
+  // Submission Handler
+  // ---------------------------------------------------------
+  submitBtn?.addEventListener("click", () => {
+    if (!selectedWinner || !selectedMethod) {
+      showToast("Please choose winner + method", "error");
       return;
     }
 
-    const method = selectedMethod || "decision";
-    const payload = {
+    const mat = getCurrentMat();
+    const state = getMatState(mat);
+
+    if (!state) {
+      showToast("Error: state missing", "error");
+      return;
+    }
+
+    const resultPayload = {
       mat,
-      winner,
-      method,
-      redScore: m.red ?? 0,
-      greenScore: m.green ?? 0,
-      segmentId: m.segmentId ?? `P${m.period || 1}`,
-      timestamp: new Date().toISOString()
+      winner: selectedWinner,
+      method: selectedMethod,
+      redScore: state.red,
+      greenScore: state.green,
+      period: state.period,
+      segment: state.segment,
+      timeRemaining: state.time,
+      timestamp: Date.now()
     };
 
-    socket.emit("matchEnded", payload);
+    // Send to server
+    socket.emit("matchEnded", resultPayload);
 
+    // Timeline logging
+    if (appendTimeline) {
+      appendTimeline(
+        `Match Ended — ${selectedWinner.toUpperCase()} via ${selectedMethod}
+         (${state.red}-${state.green})`
+      );
+    }
+
+    // Toast feedback
     showToast(
-      `Submitted: Mat ${mat} — ${winner.toUpperCase()} via ${method}, ${m.red}-${m.green}`
+      `Submitted: ${selectedWinner.toUpperCase()} via ${selectedMethod}`,
+      "success"
     );
 
+    // Reset mat fully
+    resetMat?.();
+
+    // Close modal
     closeModal();
-  }
 
-  endBtn?.addEventListener("click", openModal);
-  closeBtn?.addEventListener("click", closeModal);
+    // Debug
+    if (debugBox) {
+      debugBox.textContent =
+        JSON.stringify(resultPayload, null, 2);
+    }
+  });
 }
-
-
