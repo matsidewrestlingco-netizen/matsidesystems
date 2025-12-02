@@ -1,95 +1,165 @@
-// =============================================================
-// Scoreboard Render Module (Dark UI Kit)
-// Exports:
-//   initScoreboardView() → creates DOM structure at #scoreboard-root
-//   updateScoreboardView(view, matState, meta) → updates live values
-// =============================================================
+// ================================================
+// FILE: modules/scoreboard/scoreboard-render.js
+// Renders the full-screen Scoreboard 3.2 UI
+// ================================================
 
+function formatTime(seconds) {
+  const s = Math.max(0, Math.floor(seconds ?? 0));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+}
+
+/**
+ * Build the scoreboard DOM and return references
+ * used for updates.
+ */
 export function initScoreboardView() {
   const root = document.getElementById("scoreboard-root");
+  if (!root) {
+    console.error("[scoreboard-render] #scoreboard-root not found");
+    return null;
+  }
+
   root.innerHTML = "";
 
-  // Main container
-  const wrap = document.createElement("div");
-  wrap.className = "sb-wrap";
+  const wrapper = document.createElement("div");
+  wrapper.className = "sb-wrapper";
 
-  wrap.innerHTML = `
-    <div class="sb-top">
-      <div class="sb-block sb-left">
-        <div class="sb-label">MAT</div>
-        <div class="sb-value" id="sb-mat">1</div>
-      </div>
+  // Top row: MAT | TITLE | PERIOD
+  const topRow = document.createElement("div");
+  topRow.className = "sb-top-row";
 
-      <div class="sb-block sb-center">
-        <div class="sb-label">TIME</div>
-        <div class="sb-value" id="sb-time">00:00</div>
-      </div>
+  const matBox = document.createElement("div");
+  matBox.className = "sb-mat-box";
+  const matLabel = document.createElement("div");
+  matLabel.className = "sb-mat-label";
+  matLabel.textContent = "MAT";
+  const matValue = document.createElement("div");
+  matValue.className = "sb-mat-value";
+  matValue.textContent = "1";
+  matBox.appendChild(matLabel);
+  matBox.appendChild(matValue);
 
-      <div class="sb-block sb-right">
-        <div class="sb-label">PERIOD</div>
-        <div class="sb-value" id="sb-period">1</div>
-      </div>
-    </div>
+  const titleBox = document.createElement("div");
+  titleBox.className = "sb-title-box";
+  titleBox.textContent = "MATSIDE SCOREBOARD";
 
-    <div class="sb-names">
-      <div class="sb-name red" id="sb-red-name">RED WRESTLER</div>
-      <div class="sb-name green" id="sb-green-name">GREEN WRESTLER</div>
-    </div>
+  const periodBox = document.createElement("div");
+  periodBox.className = "sb-period-box";
+  const periodLabel = document.createElement("div");
+  periodLabel.className = "sb-period-label";
+  periodLabel.textContent = "PERIOD";
+  const periodValue = document.createElement("div");
+  periodValue.className = "sb-period-value";
+  periodValue.textContent = "1";
+  periodBox.appendChild(periodLabel);
+  periodBox.appendChild(periodValue);
 
-    <div class="sb-scores">
-      <div class="sb-score red" id="sb-red-score">0</div>
-      <div class="sb-score green" id="sb-green-score">0</div>
-    </div>
+  topRow.appendChild(matBox);
+  topRow.appendChild(titleBox);
+  topRow.appendChild(periodBox);
 
-    <div class="sb-footer">
-      <div class="sb-winner" id="sb-winner"></div>
-    </div>
-  `;
+  // Middle row: TIME label + timer
+  const midRow = document.createElement("div");
+  midRow.className = "sb-mid-row";
 
-  root.appendChild(wrap);
+  const timeLabel = document.createElement("div");
+  timeLabel.className = "sb-time-label";
+  timeLabel.textContent = "TIME";
+
+  const timeValue = document.createElement("div");
+  timeValue.className = "sb-timer";
+  timeValue.textContent = "01:00";
+
+  midRow.appendChild(timeLabel);
+  midRow.appendChild(timeValue);
+
+  // Bottom row: RED & GREEN
+  const bottomRow = document.createElement("div");
+  bottomRow.className = "sb-bottom-row";
+
+  const redBox = document.createElement("div");
+  redBox.className = "sb-score-box sb-red";
+
+  const redName = document.createElement("div");
+  redName.className = "sb-name sb-name-red";
+  redName.textContent = "RED WRESTLER";
+
+  const redScore = document.createElement("div");
+  redScore.className = "sb-score sb-score-red";
+  redScore.textContent = "0";
+
+  redBox.appendChild(redName);
+  redBox.appendChild(redScore);
+
+  const greenBox = document.createElement("div");
+  greenBox.className = "sb-score-box sb-green";
+
+  const greenName = document.createElement("div");
+  greenName.className = "sb-name sb-name-green";
+  greenName.textContent = "GREEN WRESTLER";
+
+  const greenScore = document.createElement("div");
+  greenScore.className = "sb-score sb-score-green";
+  greenScore.textContent = "0";
+
+  greenBox.appendChild(greenName);
+  greenBox.appendChild(greenScore);
+
+  bottomRow.appendChild(redBox);
+  bottomRow.appendChild(greenBox);
+
+  wrapper.appendChild(topRow);
+  wrapper.appendChild(midRow);
+  wrapper.appendChild(bottomRow);
+  root.appendChild(wrapper);
 
   return {
     root,
-    matEl: wrap.querySelector("#sb-mat"),
-    timeEl: wrap.querySelector("#sb-time"),
-    periodEl: wrap.querySelector("#sb-period"),
-    redNameEl: wrap.querySelector("#sb-red-name"),
-    greenNameEl: wrap.querySelector("#sb-green-name"),
-    redScoreEl: wrap.querySelector("#sb-red-score"),
-    greenScoreEl: wrap.querySelector("#sb-green-score"),
-    winnerEl: wrap.querySelector("#sb-winner"),
+    matEl: matValue,
+    periodEl: periodValue,
+    timeEl: timeValue,
+    redScoreEl: redScore,
+    greenScoreEl: greenScore,
+    redNameEl: redName,
+    greenNameEl: greenName
   };
 }
 
-export function updateScoreboardView(view, m, meta = {}) {
-  if (!view || !m) return;
+/**
+ * Update the scoreboard for a single mat.
+ */
+export function updateScoreboardView(view, matState, meta = {}) {
+  if (!view || !matState) return;
 
-  const seg = m.segmentName || `P${m.period ?? 1}`;
+  const {
+    matEl,
+    periodEl,
+    timeEl,
+    redScoreEl,
+    greenScoreEl,
+    redNameEl,
+    greenNameEl
+  } = view;
 
-  view.matEl.textContent = meta.mat ?? "1";
-  view.periodEl.textContent = seg;
-  view.timeEl.textContent = formatTime(m.time ?? 0);
-  view.redScoreEl.textContent = m.red ?? 0;
-  view.greenScoreEl.textContent = m.green ?? 0;
+  const mat = meta.mat ?? 1;
+  const period = matState.segmentLabel || matState.segmentId || matState.period || 1;
+  const time = matState.time ?? 0;
 
-  // Names (if provided by control panel)
-  if (m.redName) view.redNameEl.textContent = m.redName;
-  if (m.greenName) view.greenNameEl.textContent = m.greenName;
+  const redScore = matState.red ?? 0;
+  const greenScore = matState.green ?? 0;
+  const redName = matState.redName || "RED WRESTLER";
+  const greenName = matState.greenName || "GREEN WRESTLER";
 
-  // Winner display
-  if (meta.winner && meta.winner !== "none") {
-    view.winnerEl.textContent =
-      meta.winner === "red" ? "RED WINS" : "GREEN WINS";
-    view.winnerEl.style.display = "block";
-  } else {
-    view.winnerEl.style.display = "none";
-  }
+  if (matEl) matEl.textContent = mat;
+  if (periodEl) periodEl.textContent = period;
+  if (timeEl) timeEl.textContent = formatTime(time);
+
+  if (redScoreEl) redScoreEl.textContent = redScore;
+  if (greenScoreEl) greenScoreEl.textContent = greenScore;
+
+  if (redNameEl) redNameEl.textContent = redName;
+  if (greenNameEl) greenNameEl.textContent = greenName;
 }
 
-// Helper
-function formatTime(sec) {
-  sec = Math.max(0, Math.floor(sec));
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
