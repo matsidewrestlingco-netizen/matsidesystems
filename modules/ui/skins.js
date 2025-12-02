@@ -1,28 +1,33 @@
-// modules/ui/skins.js
-// -------------------------------------------------------
-// Global theming system for all clients
-// -------------------------------------------------------
+// ============================================================
+// FILE: modules/ui/skins.js
+// Global theming system for Control Panel, Scoreboard, Overview
+// ============================================================
 
+// ----------------------------------------
+// 1. Available Skins
+// ----------------------------------------
 export const SKINS = {
   "black-glass": {
     name: "Black Glass",
-    cssUrl: "/scoreboard-frontend/css/skins/black-glass.css"
-  },
-  "dark-pro": {
-    name: "Dark Pro",
-    cssUrl: "/scoreboard-frontend/css/skins/dark-pro.css"
-  },
-  "classic": {
-    name: "Classic",
-    cssUrl: "/scoreboard-frontend/css/skins/classic.css"
+    cssUrl: "/css/skins/black-glass.css"
   },
   "blue-glass": {
     name: "Blue Glass",
-    cssUrl: "/scoreboard-frontend/css/skins/blue-glass.css"
+    cssUrl: "/css/skins/blue-glass.css"
+  },
+  "classic": {
+    name: "Classic",
+    cssUrl: "/css/skins/classic.css"
+  },
+  "dark-pro": {
+    name: "Dark Pro",
+    cssUrl: "/css/skins/dark-pro.css"
   }
 };
 
-// Dynamically load a skin CSS file
+// ----------------------------------------
+// 2. Load a skin stylesheet
+// ----------------------------------------
 function applySkin(skinKey) {
   const skin = SKINS[skinKey];
   if (!skin) return;
@@ -34,38 +39,51 @@ function applySkin(skinKey) {
     link.rel = "stylesheet";
     document.head.appendChild(link);
   }
+
   link.href = skin.cssUrl;
 
+  // Save locally
   localStorage.setItem("matside-skin", skinKey);
 }
 
-// Called on scoreboards + overview + control
+// ----------------------------------------
+// 3. Initialize skin system on Scoreboard / Overview / Control
+// ----------------------------------------
 export function initSkinClient(socket) {
-  // Load from local storage at startup
-  const saved = localStorage.getItem("matside-skin");
-  if (saved && SKINS[saved]) {
-    applySkin(saved);
+  // Step 1: Load local skin immediately
+  const local = localStorage.getItem("matside-skin");
+  if (local && SKINS[local]) {
+    applySkin(local);
   }
 
-  // Listen for hub instructions
-  socket?.on("globalSkin", (skinKey) => {
-    if (SKINS[skinKey]) applySkin(skinKey);
-  });
+  // Step 2: Wait for hub broadcast
+  if (socket && socket.on) {
+    socket.on("globalSkin", (skinKey) => {
+      if (SKINS[skinKey]) {
+        applySkin(skinKey);
+      }
+    });
+  }
 }
 
-// Hub page API
+// ----------------------------------------
+// 4. Hub skin controller (used only in hub.html)
+// ----------------------------------------
 export function initSkinHub(serverUrl) {
   const socket = io(serverUrl);
 
   let initialSkin = localStorage.getItem("matside-hub-skin") || "black-glass";
 
   function setGlobalSkin(key) {
+    if (!SKINS[key]) return;
+
     localStorage.setItem("matside-hub-skin", key);
     socket.emit("setGlobalSkin", key);
   }
 
-  return { initialSkin, setGlobalSkin };
-}
-
-  return { setGlobalSkin, initialSkin, socket };
+  return {
+    initialSkin,
+    setGlobalSkin,
+    socket
+  };
 }
