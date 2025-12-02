@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Matside — Scoreboard</title>
 
-<!-- SKIN / THEME -->
+<!-- THEME SYSTEM -->
 <link rel="stylesheet" href="./css/theme.css" />
 <link rel="stylesheet" href="./css/scoreboard.css" />
 
-<!-- Socket.IO -->
+<!-- SOCKET.IO -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
 </head>
@@ -20,16 +20,19 @@
 <!-- MODULES -->
 <script type="module">
 
-/* 1️⃣ Load skin + socket helpers FIRST */
-import { initSkinClient } from "./modules/ui/skins.js";
-import { setServerUrl } from "./modules/core/socket.js";
+// ===============================
+// FIXED: Correct module base path
+// ===============================
+const BASE = "/scoreboard-frontend";
 
-/* Must run before scoreboard-main.js */
+// Correct imports using BASE
+import { initSkinClient } from `${BASE}/modules/ui/skins.js`;
+import { setServerUrl } from `${BASE}/modules/core/socket.js`;
+import `${BASE}/modules/scoreboard/scoreboard-main.js`;
+  
+// INIT SKIN + SERVER
 initSkinClient();
 setServerUrl("https://scoreboard-server-er33.onrender.com");
-
-/* 2️⃣ Now safely load scoreboard logic */
-import "./modules/scoreboard/scoreboard-main.js";
 
 </script>
 
