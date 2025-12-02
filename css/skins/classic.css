@@ -1,74 +1,25 @@
-/* ------------------------------------------
-   CLASSIC MODE — Clean white / bold colors
-   ------------------------------------------ */
-
-:root {
-  --sb-bg: #ffffff;
-  --sb-panel: #f4f4f4;
-  --sb-text: #000000;
-  --sb-accent: #0055cc;
-  --sb-red-bg: #cc0000;
-  --sb-green-bg: #117a00;
-  --sb-muted: #555555;
-}
+/* CLASSIC WRESTLING SCOREBOARD */
 
 body {
-  background: var(--sb-bg);
-  color: var(--sb-text);
-  font-family: "Segoe UI", Arial, sans-serif;
+  background: #111;
 }
 
-/* Layout */
-.scoreboard-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100vh;
-  padding: 20px;
-  box-sizing: border-box;
+.sb-score-box.sb-red {
+  background: #c63b3b;
+  color: #fff;
 }
 
-.scoreboard-top {
-  display: flex;
-  justify-content: space-between;
-  font-size: 22px;
-  color: var(--sb-muted);
+.sb-score-box.sb-green {
+  background: #3ca04a;
+  color: #fff;
 }
 
-.scoreboard-main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 16px;
-  align-items: center;
-  padding-top: 20px;
+.sb-title-box {
+  font-family: "Impact", sans-serif;
+  color: #ddd;
 }
 
-/* Panels */
-.score-box {
-  background: var(--sb-panel);
-  border-radius: 14px;
-  padding: 30px;
-  text-align: center;
-  border: 3px solid #e0e0e0;
-}
-
-.red-wrestler { background: var(--sb-red-bg); color: #fff; }
-.green-wrestler { background: var(--sb-green-bg); color: #fff; }
-
-.score-value {
-  font-size: 110px;
-  font-weight: 900;
-}
-
-.time-display {
-  font-size: 160px;
-  font-weight: 900;
-  color: var(--sb-accent);
-}
-
-.period-display {
-  font-size: 60px;
-  font-weight: 700;
-  text-align: center;
+.sb-timer {
+  font-family: "Impact", sans-serif;
+  color: white;
 }
