@@ -1,27 +1,28 @@
-// ============================================================
-// File: modules/ui/skins.js
-// Global theming system (Scoreboard, Overview, Control Panel)
-// Fully socket-safe — NO top-level returns.
-// ============================================================
-
+// -------------------------------------------------------
+// SKINS — Global theme registry
+// -------------------------------------------------------
 export const SKINS = {
   "dark-pro": {
     name: "Dark Pro",
-    cssUrl: "/skins/dark-pro.css"
+    cssUrl: "./css/skins/dark-pro.css"
   },
   "classic": {
     name: "Classic",
-    cssUrl: "/skins/classic.css"
+    cssUrl: "./css/skins/classic.css"
   },
-  "blueglass": {
+  "blue-glass": {
     name: "Blue Glass",
-    cssUrl: "/skins/blue-glass.css"
+    cssUrl: "./css/skins/blue-glass.css"
+  },
+  "black-glass": {
+    name: "Black Glass",
+    cssUrl: "./css/skins/black-glass.css"
   }
 };
 
-// ------------------------------------------------------------
-// Apply <link> stylesheet for a theme
-// ------------------------------------------------------------
+// -------------------------------------------------------
+// Apply theme stylesheet
+// -------------------------------------------------------
 export function applySkin(skinKey) {
   const skin = SKINS[skinKey];
   if (!skin) return;
@@ -38,55 +39,33 @@ export function applySkin(skinKey) {
   localStorage.setItem("matside-skin", skinKey);
 }
 
-// ------------------------------------------------------------
-// Wire socket listener (safe wrapper)
-// ------------------------------------------------------------
-function wireSkinSocket(socket) {
-  if (!socket || !socket.on) return;
-  socket.on("globalSkin", key => applySkin(key));
-}
-
-// ------------------------------------------------------------
-// Initialize client theming
-// SAFE even if socket is undefined at first load.
-// ------------------------------------------------------------
+// -------------------------------------------------------
+// Client-side skin loader (scoreboard, overview, control)
+// -------------------------------------------------------
 export function initSkinClient(socket) {
-  // 1. Apply local setting immediately
-  const saved = localStorage.getItem("matside-skin");
-  if (saved) applySkin(saved);
+  const local = localStorage.getItem("matside-skin");
+  if (local) applySkin(local);
 
-  // 2. If socket exists immediately → wire it
-  if (socket && socket.on) {
-    wireSkinSocket(socket);
-    return;
+  // Listen for admin-applied global theme
+  if (socket) {
+    socket.on("globalSkin", (skinKey) => {
+      applySkin(skinKey);
+    });
   }
-
-  // 3. If no socket yet, poll briefly until scoreboard-main sets it
-  let attempts = 0;
-  const poll = setInterval(() => {
-    attempts++;
-    const s = window.__matside_socket;
-    if (s) {
-      clearInterval(poll);
-      wireSkinSocket(s);
-    }
-    if (attempts > 20) clearInterval(poll);
-  }, 150);
 }
 
-// ------------------------------------------------------------
-// Hub-side skin controller
-// ------------------------------------------------------------
+// -------------------------------------------------------
+// Hub (admin) theme controller
+// -------------------------------------------------------
 export function initSkinHub(serverUrl) {
   const socket = io(serverUrl);
 
-  const initialSkin =
-    localStorage.getItem("matside-hub-skin") || "dark-pro";
+  let initialSkin = localStorage.getItem("matside-hub-skin") || "dark-pro";
 
   function setGlobalSkin(key) {
     localStorage.setItem("matside-hub-skin", key);
     socket.emit("setGlobalSkin", key);
   }
 
-  return { initialSkin, setGlobalSkin };
+  return { setGlobalSkin, initialSkin, socket };
 }
