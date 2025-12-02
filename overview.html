@@ -1,265 +1,30 @@
-<!doctype html>
-<html lang="en" data-skin="">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Matside — Mat Overview</title>
+  <title>Matside — Overview</title>
+
+  <link rel="stylesheet" href="./css/overview.css" />
+  <link rel="stylesheet" href="./css/theme.css" />
+  <link id="skinStylesheet" rel="stylesheet" />
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <link rel="stylesheet" href="./modules/core/ui-kit.css" />
-
-  <style>
-    body {
-      margin: 0;
-      background: var(--ms-bg, #05060a);
-      color: var(--ms-text, #f8f9ff);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
-    }
-
-    .ov-wrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 16px;
-    }
-
-    .ov-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-
-    .ov-title {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .ov-conn {
-      font-size: 13px;
-      color: var(--ms-text-muted, #c7cbe4);
-    }
-
-    .ov-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-    @media (max-width: 900px) {
-      .ov-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .ms-mat-card {
-      background: var(--ms-panel, #10121a);
-      border-radius: 16px;
-      padding: 12px 14px 14px;
-      box-shadow: 0 14px 32px rgba(0,0,0,0.7);
-    }
-
-    .ov-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      color: var(--ms-text-muted, #c7cbe4);
-      margin-bottom: 6px;
-    }
-
-    .ov-mat-pill {
-      padding: 3px 10px;
-      border-radius: 999px;
-      background: var(--ms-panel-soft, #151826);
-      font-size: 12px;
-    }
-
-    .ov-main-row {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .ov-time {
-      font-size: 32px;
-      font-weight: 800;
-      text-align: left;
-    }
-
-    .ov-period {
-      font-size: 14px;
-      font-weight: 600;
-      text-align: right;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--ms-text-muted,#c7cbe4);
-    }
-
-    .ov-scores-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-    }
-
-    .ov-side {
-      border-radius: 12px;
-      padding: 6px 8px 8px;
-      text-align: center;
-    }
-    .ov-side.red {
-      background: linear-gradient(135deg, rgba(255,82,82,0.1), rgba(255,82,82,0.3));
-      border: 1px solid rgba(255,82,82,0.5);
-    }
-    .ov-side.green {
-      background: linear-gradient(135deg, rgba(102,255,153,0.08), rgba(102,255,153,0.25));
-      border: 1px solid rgba(102,255,153,0.45);
-    }
-
-    .ov-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--ms-text-muted, #c7cbe4);
-      margin-bottom: 2px;
-    }
-
-    .ov-red-score,
-    .ov-green-score {
-      font-size: 26px;
-      font-weight: 800;
-    }
-
-    .ov-running {
-      font-size: 11px;
-      margin-top: 4px;
-      color: var(--ms-text-muted, #c7cbe4);
-    }
-
-    .ov-winner {
-      margin-top: 6px;
-      font-size: 12px;
-      color: var(--ms-gold, #fbc02d);
-      text-align: center;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-  </style>
 </head>
+
 <body>
-  <div class="ov-wrap">
-    <header class="ov-header">
-      <div class="ov-title">Matside — Mat Overview</div>
-      <div class="ov-conn">Status: <span id="ov-conn">connecting…</span></div>
-    </header>
-
-    <section class="ov-grid">
-      <!-- Mat 1 -->
-      <article class="ms-mat-card" data-mat="1">
-        <div class="ov-card-header">
-          <span class="ov-mat-pill">Mat 1</span>
-          <span class="ov-running"></span>
-        </div>
-        <div class="ov-main-row">
-          <div class="ov-time">01:00</div>
-          <div class="ov-period">Period 1</div>
-        </div>
-        <div class="ov-scores-row">
-          <div class="ov-side red">
-            <div class="ov-label">Red</div>
-            <div class="ov-red-score">0</div>
-          </div>
-          <div class="ov-side green">
-            <div class="ov-label">Green</div>
-            <div class="ov-green-score">0</div>
-          </div>
-        </div>
-        <div class="ov-winner"></div>
-      </article>
-
-      <!-- Mat 2 -->
-      <article class="ms-mat-card" data-mat="2">
-        <div class="ov-card-header">
-          <span class="ov-mat-pill">Mat 2</span>
-          <span class="ov-running"></span>
-        </div>
-        <div class="ov-main-row">
-          <div class="ov-time">01:00</div>
-          <div class="ov-period">Period 1</div>
-        </div>
-        <div class="ov-scores-row">
-          <div class="ov-side red">
-            <div class="ov-label">Red</div>
-            <div class="ov-red-score">0</div>
-          </div>
-          <div class="ov-side green">
-            <div class="ov-label">Green</div>
-            <div class="ov-green-score">0</div>
-          </div>
-        </div>
-        <div class="ov-winner"></div>
-      </article>
-
-      <!-- Mat 3 -->
-      <article class="ms-mat-card" data-mat="3">
-        <div class="ov-card-header">
-          <span class="ov-mat-pill">Mat 3</span>
-          <span class="ov-running"></span>
-        </div>
-        <div class="ov-main-row">
-          <div class="ov-time">01:00</div>
-          <div class="ov-period">Period 1</div>
-        </div>
-        <div class="ov-scores-row">
-          <div class="ov-side red">
-            <div class="ov-label">Red</div>
-            <div class="ov-red-score">0</div>
-          </div>
-          <div class="ov-side green">
-            <div class="ov-label">Green</div>
-            <div class="ov-green-score">0</div>
-          </div>
-        </div>
-        <div class="ov-winner"></div>
-      </article>
-
-      <!-- Mat 4 -->
-      <article class="ms-mat-card" data-mat="4">
-        <div class="ov-card-header">
-          <span class="ov-mat-pill">Mat 4</span>
-          <span class="ov-running"></span>
-        </div>
-        <div class="ov-main-row">
-          <div class="ov-time">01:00</div>
-          <div class="ov-period">Period 1</div>
-        </div>
-        <div class="ov-scores-row">
-          <div class="ov-side red">
-            <div class="ov-label">Red</div>
-            <div class="ov-red-score">0</div>
-          </div>
-          <div class="ov-side green">
-            <div class="ov-label">Green</div>
-            <div class="ov-green-score">0</div>
-          </div>
-        </div>
-        <div class="ov-winner"></div>
-      </article>
-    </section>
-  </div>
+  <div id="overview-root"></div>
 
   <script type="module">
-    import { getSocketUrl } from "./modules/core/socket.js";
+    import { setServerUrl, getSocket } from "./modules/core/socket.js";
     import { initSkinClient } from "./modules/ui/skins.js";
+    import "./modules/overview/overview-main.js";
 
-    if (!localStorage.getItem("matside-skin")) {
-      localStorage.setItem("matside-skin", "dark-pro");
-    }
+    setServerUrl("https://scoreboard-server-er33.onrender.com");
 
-    const skinSocket = io(getSocketUrl(), { transports: ["websocket"] });
-    initSkinClient(skinSocket);
+    setTimeout(() => {
+      initSkinClient(getSocket());
+    }, 150);
   </script>
-
-  <script type="module" src="./modules/overview/overview-main.js"></script>
 </body>
 </html>
