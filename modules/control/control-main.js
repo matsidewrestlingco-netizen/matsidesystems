@@ -1,8 +1,10 @@
 // =======================================================
 // File: /modules/control/control-main.js
-// Master orchestrator for the control panel.
-// NOTE: This does NOT auto-run. Call initControlMain() from control.html.
+// Fully updated for v2.20 modular architecture
+// Uses universal segmentLabel module
 // =======================================================
+
+import { segmentLabel } from "../core/period-name.js";
 
 export function initControlMain({
   serverUrl,
@@ -15,12 +17,12 @@ export function initControlMain({
   const matSelect = document.getElementById("matSelect");
   const connEl = document.getElementById("conn");
   const sumMatEl = document.getElementById("sumMat");
-  const sumSegEl = document.getElementById("sumSeg") || null;
+  const sumSegEl = document.getElementById("sumSeg");
   const sumTimeEl = document.getElementById("sumTime");
   const sumRedEl = document.getElementById("sumRed");
   const sumGreenEl = document.getElementById("sumGreen");
 
-  let currentMat = parseInt(matSelect?.value || "1", 10) || 1;
+  let currentMat = parseInt(matSelect?.value || "1", 10);
   let mats = {}; // server truth
 
   function getCurrentMat() {
@@ -42,88 +44,75 @@ export function initControlMain({
     return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
   }
 
+  // -------------------------------------------------------
+  // Render Summary (Top Bar)
+  // -------------------------------------------------------
   function renderSummary() {
     const m = getMatState();
     if (!m) return;
 
-    if (sumMatEl) sumMatEl.textContent = String(currentMat);
-
-    if (sumSegEl) {
-      const segId = m.segmentId || null;
-      let segLabel;
-
-      // If we have a segmentId like "REG1", "REG2", "REG3" → show "1", "2", "3"
-      if (segId && segId.startsWith("REG")) {
-        const num = parseInt(segId.slice(3), 10);
-        segLabel = Number.isFinite(num) ? String(num) : "1";
-      } else if (segId) {
-        // For OT / TB1 / TB2 / UT, keep the label as-is
-        segLabel = segId;
-      } else {
-        // Fallback to numeric period if segmentId is missing
-        segLabel = String(m.period || 1);
-      }
-
-      sumSegEl.textContent = segLabel;
-    }
-
-    if (sumTimeEl) sumTimeEl.textContent = formatTime(m.time ?? 0);
-    if (sumRedEl) sumRedEl.textContent = String(m.red ?? 0);
-    if (sumGreenEl) sumGreenEl.textContent = String(m.green ?? 0);
+    sumMatEl.textContent = String(currentMat);
+    sumSegEl.textContent = segmentLabel(m.segmentId, m.period);
+    sumTimeEl.textContent = formatTime(m.time ?? 0);
+    sumRedEl.textContent = String(m.red ?? 0);
+    sumGreenEl.textContent = String(m.green ?? 0);
   }
 
-  // Socket wiring
+  // -------------------------------------------------------
+  // Socket.io wiring
+  // -------------------------------------------------------
   socket.on("connect", () => {
-    if (connEl) connEl.textContent = "connected";
+    connEl.textContent = "connected";
   });
 
   socket.on("disconnect", () => {
-    if (connEl) connEl.textContent = "disconnected";
+    connEl.textContent = "disconnected";
   });
 
   socket.on("stateUpdate", payload => {
     if (payload && payload.mats) {
       mats = payload.mats;
       renderSummary();
+
       if (typeof onStateUpdate === "function") {
         onStateUpdate({ mats, currentMat });
       }
     }
   });
 
+  // -------------------------------------------------------
   // Mat selector
-  if (matSelect) {
-    matSelect.addEventListener("change", () => {
-      currentMat = parseInt(matSelect.value || "1", 10) || 1;
-      renderSummary();
-    });
-  }
+  // -------------------------------------------------------
+  matSelect.addEventListener("change", () => {
+    currentMat = parseInt(matSelect.value || "1", 10);
+    renderSummary();
+  });
 
-  // Hook timer buttons (simple emit-only; server keeps truth)
-  const startBtn = document.getElementById("startBtn");
-  const stopBtn = document.getElementById("stopBtn");
-  const resetTimerBtn = document.getElementById("resetTimerBtn");
-
-  startBtn?.addEventListener("click", () => {
+  // -------------------------------------------------------
+  // Timer controls
+  // -------------------------------------------------------
+  document.getElementById("startBtn").addEventListener("click", () => {
     updateState(getCurrentMat(), { running: true });
   });
 
-  stopBtn?.addEventListener("click", () => {
+  document.getElementById("stopBtn").addEventListener("click", () => {
     updateState(getCurrentMat(), { running: false });
   });
 
-  resetTimerBtn?.addEventListener("click", () => {
+  document.getElementById("resetTimerBtn").addEventListener("click", () => {
     const m = getMatState();
     const resetTime = m?.segmentDefaultTime ?? 60;
     updateState(getCurrentMat(), { running: false, time: resetTime });
   });
 
+  // -------------------------------------------------------
   // Scoring buttons
+  // -------------------------------------------------------
   document.querySelectorAll("[data-color][data-pts]").forEach(btn => {
     btn.addEventListener("click", () => {
       const color = btn.getAttribute("data-color");
-      const pts = parseInt(btn.getAttribute("data-pts") || "0", 10) || 0;
-      if (!color || !pts) return;
+      const pts = parseInt(btn.getAttribute("data-pts"));
+
       socket.emit("addPoints", {
         mat: getCurrentMat(),
         color,
@@ -132,21 +121,21 @@ export function initControlMain({
     });
   });
 
-  const subRed = document.getElementById("subRed");
-  const subGreen = document.getElementById("subGreen");
-  const resetScores = document.getElementById("resetScores");
-
-  subRed?.addEventListener("click", () => {
+  document.getElementById("subRed")?.addEventListener("click", () => {
     socket.emit("subPoint", { mat: getCurrentMat(), color: "red" });
   });
-  subGreen?.addEventListener("click", () => {
+
+  document.getElementById("subGreen")?.addEventListener("click", () => {
     socket.emit("subPoint", { mat: getCurrentMat(), color: "green" });
   });
-  resetScores?.addEventListener("click", () => {
+
+  document.getElementById("resetScores")?.addEventListener("click", () => {
     updateState(getCurrentMat(), { red: 0, green: 0 });
   });
 
-  // Context object for other modules
+  // -------------------------------------------------------
+  // Create context object for other modules
+  // -------------------------------------------------------
   const ctx = {
     socket,
     getCurrentMat,
@@ -155,7 +144,9 @@ export function initControlMain({
     formatTime
   };
 
-  // Initialize optional modules if provided
+  // -------------------------------------------------------
+  // Initialize optional modules (plug-ins)
+  // -------------------------------------------------------
   if (modules.matchEnd) modules.matchEnd(ctx);
   if (modules.resetMat) modules.resetMat(ctx);
   if (modules.rightDrawer) modules.rightDrawer(ctx);
