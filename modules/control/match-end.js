@@ -1,206 +1,130 @@
-// =======================================================
-// FILE: modules/control/match-end.js
-// Clean, self-contained modal for ending a match
-// No dependencies on HTML elements being pre-existing.
-// =======================================================
+// ======================================================================
+// modules/control/match-end.js
+// Handles the "End Match" modal, winner selection, and server submission.
+// Exports: initMatchEnd(ctx)
+// ======================================================================
 
-export function matchEnd(ctx) {
-  const { getMatState, getCurrentMat, socket } = ctx;
+export function initMatchEnd(ctx) {
+  const { socket, getCurrentMat, getMatState } = ctx;
 
-  // Create modal container once
-  let modal = document.createElement("div");
-  modal.id = "matchEndModal";
-  modal.style.position = "fixed";
-  modal.style.inset = "0";
-  modal.style.background = "rgba(0,0,0,0.65)";
-  modal.style.display = "none";
-  modal.style.zIndex = "99999";
-  modal.style.justifyContent = "center";
-  modal.style.alignItems = "center";
-  modal.style.fontFamily = "system-ui, sans-serif";
+  // ---- Elements ----
+  const openBtn = document.getElementById("endMatchBtn");
+  const modal = document.getElementById("matchEndModal");
+  const backdrop = document.getElementById("matchEndBackdrop");
 
-  modal.innerHTML = `
-    <div style="
-      background:#111;
-      padding:20px;
-      width:90%;
-      max-width:360px;
-      border-radius:12px;
-      color:#fff;
-      box-shadow:0 0 25px rgba(0,0,0,0.5);
-    ">
-      <h2 style="margin-top:0;font-size:20px;text-align:center;">
-        Finalize Match
-      </h2>
+  const redBtn = document.getElementById("winnerRed");
+  const greenBtn = document.getElementById("winnerGreen");
 
-      <div id="endMatchSummary" style="
-        text-align:center;
-        font-size:15px;
-        margin-bottom:12px;
-        opacity:0.85;
-      ">
-        —
-      </div>
+  const decBtn = document.getElementById("resultDec");
+  const tfBtn = document.getElementById("resultTF");
+  const pinBtn = document.getElementById("resultPin");
+  const ffBtn = document.getElementById("resultFF");
 
-      <div style="font-size:14px;margin-bottom:6px;">Select Winner:</div>
-      <div style="display:flex;gap:8px;margin-bottom:14px;">
-        <button id="winnerRedBtn" style="
-          flex:1;background:#c62828;color:#fff;
-          padding:10px;border:0;border-radius:8px;
-          font-weight:600;cursor:pointer;
-        ">Red</button>
+  const submitBtn = document.getElementById("submitMatchEnd");
+  const cancelBtn = document.getElementById("cancelMatchEnd");
 
-        <button id="winnerGreenBtn" style="
-          flex:1;background:#2e7d32;color:#fff;
-          padding:10px;border:0;border-radius:8px;
-          font-weight:600;cursor:pointer;
-        ">Green</button>
-      </div>
-
-      <div style="font-size:14px;margin-bottom:6px;">Victory Method:</div>
-      <div style="
-        display:flex;flex-wrap:wrap;gap:8px;
-        margin-bottom:14px;
-      ">
-        <button class="methodBtn" data-method="Decision"
-          style="flex:1;border:0;border-radius:8px;padding:10px;
-          background:#424242;color:#fff;cursor:pointer;">Decision</button>
-
-        <button class="methodBtn" data-method="Tech Fall"
-          style="flex:1;border:0;border-radius:8px;padding:10px;
-          background:#424242;color:#fff;cursor:pointer;">Tech Fall</button>
-
-        <button class="methodBtn" data-method="Pin"
-          style="flex:1;border:0;border-radius:8px;padding:10px;
-          background:#424242;color:#fff;cursor:pointer;">Pin</button>
-
-        <button class="methodBtn" data-method="Forfeit"
-          style="flex:1;border:0;border-radius:8px;padding:10px;
-          background:#424242;color:#fff;cursor:pointer;">Forfeit</button>
-      </div>
-
-      <button id="endMatchSubmit" style="
-        width:100%;padding:12px;border:0;border-radius:8px;
-        background:#1e88e5;color:#fff;font-weight:700;
-        cursor:pointer;margin-bottom:10px;
-      ">Submit</button>
-
-      <button id="endMatchCancel" style="
-        width:100%;padding:10px;border:0;border-radius:8px;
-        background:#555;color:#fff;cursor:pointer;
-      ">Cancel</button>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  // Elements inside modal
-  const summaryEl = modal.querySelector("#endMatchSummary");
-  const winnerRedBtn = modal.querySelector("#winnerRedBtn");
-  const winnerGreenBtn = modal.querySelector("#winnerGreenBtn");
-  const submitBtn = modal.querySelector("#endMatchSubmit");
-  const cancelBtn = modal.querySelector("#endMatchCancel");
-
+  // ---- Internal state ----
   let selectedWinner = null;
-  let selectedMethod = null;
+  let selectedResult = null;
 
-  // Winner selection
-  winnerRedBtn.onclick = () => {
+  function openModal() {
+    const m = getMatState();
+    if (!m) return;
+
+    // Reset selections
+    selectedWinner = null;
+    selectedResult = null;
+
+    redBtn.classList.remove("sel");
+    greenBtn.classList.remove("sel");
+    decBtn.classList.remove("sel");
+    tfBtn.classList.remove("sel");
+    pinBtn.classList.remove("sel");
+    ffBtn.classList.remove("sel");
+
+    backdrop.classList.add("open");
+    modal.classList.add("open");
+  }
+
+  function closeModal() {
+    backdrop.classList.remove("open");
+    modal.classList.remove("open");
+  }
+
+  // ---- Winner selection ----
+  redBtn?.addEventListener("click", () => {
     selectedWinner = "red";
-    winnerRedBtn.style.opacity = "1";
-    winnerGreenBtn.style.opacity = "0.5";
-  };
-  winnerGreenBtn.onclick = () => {
-    selectedWinner = "green";
-    winnerGreenBtn.style.opacity = "1";
-    winnerRedBtn.style.opacity = "0.5";
-  };
-
-  // Method buttons
-  modal.querySelectorAll(".methodBtn").forEach(btn => {
-    btn.onclick = () => {
-      selectedMethod = btn.dataset.method;
-      modal.querySelectorAll(".methodBtn").forEach(b => {
-        b.style.opacity = b === btn ? "1" : "0.45";
-      });
-    };
+    redBtn.classList.add("sel");
+    greenBtn.classList.remove("sel");
   });
 
-  // Cancel
-  cancelBtn.onclick = () => {
-    modal.style.display = "none";
-  };
+  greenBtn?.addEventListener("click", () => {
+    selectedWinner = "green";
+    greenBtn.classList.add("sel");
+    redBtn.classList.remove("sel");
+  });
 
-  // Submit
-  submitBtn.onclick = async () => {
-    if (!selectedWinner || !selectedMethod) {
-      alert("Please select a winner and victory method.");
+  // ---- Result type selection ----
+  function selectResult(type, btn, all) {
+    selectedResult = type;
+    all.forEach(b => b.classList.remove("sel"));
+    btn.classList.add("sel");
+  }
+
+  const resultButtons = [decBtn, tfBtn, pinBtn, ffBtn];
+
+  decBtn?.addEventListener("click", () =>
+    selectResult("decision", decBtn, resultButtons)
+  );
+  tfBtn?.addEventListener("click", () =>
+    selectResult("tech-fall", tfBtn, resultButtons)
+  );
+  pinBtn?.addEventListener("click", () =>
+    selectResult("pin", pinBtn, resultButtons)
+  );
+  ffBtn?.addEventListener("click", () =>
+    selectResult("forfeit", ffBtn, resultButtons)
+  );
+
+  // ---- Submit ----
+  submitBtn?.addEventListener("click", () => {
+    if (!selectedWinner || !selectedResult) {
+      alert("Select a winner and match result.");
       return;
     }
 
     const mat = getCurrentMat();
     const state = getMatState(mat);
 
-    const result = {
+    const payload = {
       mat,
       winner: selectedWinner,
-      method: selectedMethod,
-      redScore: state.red,
-      greenScore: state.green,
+      result: selectedResult,
+      red: state.red,
+      green: state.green,
+      period: state.period,
       segmentId: state.segmentId,
       timestamp: Date.now()
     };
 
-    // Send to server
-    fetch("https://scoreboard-server-er33.onrender.com/save-match-result", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(result)
-    });
+    socket.emit("matchEnded", payload);
 
-    // Reset mat via socket
-    socket.emit("updateState", {
-      mat,
-      updates: {
-        red: 0,
-        green: 0,
-        running: false,
-        time: 60,
-        segmentId: "REG1",
-        period: 1
-      }
-    });
+    closeModal();
 
-    modal.style.display = "none";
-  };
+    // toast (if module present)
+    if (window.showToast) {
+      const name =
+        selectedWinner === "red" ? state.redName || "Red" : state.greenName || "Green";
 
-  // Main button = open modal
-  const btn = document.getElementById("endMatchBtn");
-  if (btn) {
-    btn.onclick = () => {
-      const m = getMatState(getCurrentMat());
-      summaryEl.textContent = `Red ${m.red} — ${m.green} Green`;
+      showToast(`${name} wins by ${selectedResult}`, 4000);
+    }
+  });
 
-      // auto-suggest winner
-      if (m.red > m.green) {
-        winnerRedBtn.style.opacity = "1";
-        winnerGreenBtn.style.opacity = "0.5";
-        selectedWinner = "red";
-      } else if (m.green > m.red) {
-        winnerGreenBtn.style.opacity = "1";
-        winnerRedBtn.style.opacity = "0.5";
-        selectedWinner = "green";
-      } else {
-        winnerGreenBtn.style.opacity = "1";
-        winnerRedBtn.style.opacity = "1";
-        selectedWinner = null;
-      }
+  // ---- Cancel ----
+  cancelBtn?.addEventListener("click", closeModal);
 
-      // reset method
-      selectedMethod = null;
-      modal.querySelectorAll(".methodBtn").forEach(b => b.style.opacity = "1");
+  // ---- Open button ----
+  openBtn?.addEventListener("click", openModal);
 
-      modal.style.display = "flex";
-    };
-  }
+  return { openModal, closeModal };
 }
