@@ -1,9 +1,6 @@
 <!-- ===========================
 FILE: /modules/overview/overview-render.js
 =========================== -->
-<script type="module">
-// NOTE: remove this <script> wrapper when saving the JS file;
-// it's only here so everything fits in one code block.
 
 /* ================================================
    Overview Renderer — 4 mini scoreboards (auto-scale)
@@ -176,4 +173,3 @@ export function updateOverviewView(view, matsState = {}) {
     cardRefs.greenScore.textContent = s.green ?? 0;
   }
 }
-</script>
