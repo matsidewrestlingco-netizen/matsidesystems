@@ -1,17 +1,33 @@
-// ================================================
-// FILE: modules/overview/overview-render.js
-// Renders 4-mat Overview 3.2 UI
-// ================================================
+<!-- ===========================
+FILE: /modules/overview/overview-render.js
+=========================== -->
+<script type="module">
+// NOTE: remove this <script> wrapper when saving the JS file;
+// it's only here so everything fits in one code block.
 
-function formatTimeOv(seconds) {
+/* ================================================
+   Overview Renderer — 4 mini scoreboards (auto-scale)
+   ================================================ */
+
+function formatTime(seconds) {
   const s = Math.max(0, Math.floor(seconds ?? 0));
   const m = Math.floor(s / 60);
   const r = s % 60;
   return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
 }
 
+function prettySegment(seg) {
+  if (!seg) return "";
+  if (seg.startsWith("REG")) return seg.replace("REG", "");
+  if (seg.startsWith("OT")) return "OT";
+  if (seg.startsWith("TB")) return seg.toUpperCase();
+  if (seg.startsWith("UT")) return "UT";
+  return seg;
+}
+
 /**
- * Build overview layout for 4 mats, return refs per mat.
+ * Build a 2x2 responsive grid of "mini scoreboards".
+ * Returns a view object with references per-mat.
  */
 export function initOverviewView() {
   const root = document.getElementById("overview-root");
@@ -22,8 +38,8 @@ export function initOverviewView() {
 
   root.innerHTML = "";
 
-  const wrap = document.createElement("div");
-  wrap.className = "ov-wrapper";
+  const wrapper = document.createElement("div");
+  wrapper.className = "ov-wrapper";
 
   const grid = document.createElement("div");
   grid.className = "ov-grid";
@@ -34,62 +50,95 @@ export function initOverviewView() {
     const card = document.createElement("div");
     card.className = "ov-card";
 
-    const top = document.createElement("div");
-    top.className = "ov-card-top";
+    // TOP ROW
+    const topRow = document.createElement("div");
+    topRow.className = "ov-top-row";
 
+    const matBox = document.createElement("div");
+    matBox.className = "ov-mat-box";
     const matLabel = document.createElement("div");
     matLabel.className = "ov-mat-label";
-    matLabel.textContent = `MAT ${m}`;
+    matLabel.textContent = "MAT";
+    const matValue = document.createElement("div");
+    matValue.className = "ov-mat-value";
+    matValue.textContent = String(m);
+    matBox.appendChild(matLabel);
+    matBox.appendChild(matValue);
 
-    const periodEl = document.createElement("div");
-    periodEl.className = "ov-period";
-    periodEl.textContent = "1";
+    const titleBox = document.createElement("div");
+    titleBox.className = "ov-title-box";
+    titleBox.textContent = "MATSIDE";
 
-    const timeEl = document.createElement("div");
-    timeEl.className = "ov-time";
-    timeEl.textContent = "01:00";
+    const periodBox = document.createElement("div");
+    periodBox.className = "ov-period-box";
+    const periodLabel = document.createElement("div");
+    periodLabel.className = "ov-period-label";
+    periodLabel.textContent = "PERIOD";
+    const periodValue = document.createElement("div");
+    periodValue.className = "ov-period-value";
+    periodValue.textContent = "1";
+    periodBox.appendChild(periodLabel);
+    periodBox.appendChild(periodValue);
 
-    top.appendChild(matLabel);
-    top.appendChild(periodEl);
-    top.appendChild(timeEl);
+    topRow.appendChild(matBox);
+    topRow.appendChild(titleBox);
+    topRow.appendChild(periodBox);
 
-    const mid = document.createElement("div");
-    mid.className = "ov-card-mid";
+    // MID ROW (TIME)
+    const midRow = document.createElement("div");
+    midRow.className = "ov-mid-row";
 
+    const timeLabel = document.createElement("div");
+    timeLabel.className = "ov-time-label";
+    timeLabel.textContent = "TIME";
+
+    const timeValue = document.createElement("div");
+    timeValue.className = "ov-timer";
+    timeValue.textContent = "01:00";
+
+    midRow.appendChild(timeLabel);
+    midRow.appendChild(timeValue);
+
+    // BOTTOM ROW (RED / GREEN)
+    const bottomRow = document.createElement("div");
+    bottomRow.className = "ov-bottom-row";
+
+    const redBox = document.createElement("div");
+    redBox.className = "ov-score-box ov-red";
     const redName = document.createElement("div");
     redName.className = "ov-name ov-name-red";
     redName.textContent = "RED";
-
-    const greenName = document.createElement("div");
-    greenName.className = "ov-name ov-name-green";
-    greenName.textContent = "GREEN";
-
-    mid.appendChild(redName);
-    mid.appendChild(greenName);
-
-    const bottom = document.createElement("div");
-    bottom.className = "ov-card-bottom";
-
     const redScore = document.createElement("div");
     redScore.className = "ov-score ov-score-red";
     redScore.textContent = "0";
+    redBox.appendChild(redName);
+    redBox.appendChild(redScore);
 
+    const greenBox = document.createElement("div");
+    greenBox.className = "ov-score-box ov-green";
+    const greenName = document.createElement("div");
+    greenName.className = "ov-name ov-name-green";
+    greenName.textContent = "GREEN";
     const greenScore = document.createElement("div");
     greenScore.className = "ov-score ov-score-green";
     greenScore.textContent = "0";
+    greenBox.appendChild(greenName);
+    greenBox.appendChild(greenScore);
 
-    bottom.appendChild(redScore);
-    bottom.appendChild(greenScore);
+    bottomRow.appendChild(redBox);
+    bottomRow.appendChild(greenBox);
 
-    card.appendChild(top);
-    card.appendChild(mid);
-    card.appendChild(bottom);
+    // Compose card
+    card.appendChild(topRow);
+    card.appendChild(midRow);
+    card.appendChild(bottomRow);
     grid.appendChild(card);
 
     mats[m] = {
       card,
-      periodEl,
-      timeEl,
+      matValue,
+      periodValue,
+      timeValue,
       redName,
       greenName,
       redScore,
@@ -97,32 +146,34 @@ export function initOverviewView() {
     };
   }
 
-  wrap.appendChild(grid);
-  root.appendChild(wrap);
+  wrapper.appendChild(grid);
+  root.appendChild(wrapper);
 
   return { root, mats };
 }
 
 /**
- * Update all 4 mats in overview.
+ * Update 4 mat cards from matsState.
  */
 export function updateOverviewView(view, matsState = {}) {
   if (!view || !view.mats) return;
 
   for (let m = 1; m <= 4; m += 1) {
-    const v = view.mats[m];
+    const cardRefs = view.mats[m];
     const s = matsState[m];
-    if (!v || !s) continue;
 
-    const period = s.segmentLabel || s.segmentId || s.period || 1;
-    const time = s.time ?? 0;
+    if (!cardRefs || !s) continue;
 
-    v.periodEl.textContent = period;
-    v.timeEl.textContent = formatTimeOv(time);
+    const seg = s.segmentLabel || s.segmentId || s.period;
+    const niceSegment = prettySegment(seg);
 
-    v.redName.textContent = s.redName || "RED";
-    v.greenName.textContent = s.greenName || "GREEN";
-    v.redScore.textContent = s.red ?? 0;
-    v.greenScore.textContent = s.green ?? 0;
+    cardRefs.matValue.textContent = String(m);
+    cardRefs.periodValue.textContent = niceSegment;
+    cardRefs.timeValue.textContent = formatTime(s.time ?? 0);
+    cardRefs.redName.textContent = s.redName || "RED";
+    cardRefs.greenName.textContent = s.greenName || "GREEN";
+    cardRefs.redScore.textContent = s.red ?? 0;
+    cardRefs.greenScore.textContent = s.green ?? 0;
   }
 }
+</script>
