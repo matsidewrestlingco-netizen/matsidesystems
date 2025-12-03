@@ -17,6 +17,37 @@
   --ms-radius-pill: 999px;
 }
 
+.server-status {
+  font-size: 12px;
+  color: var(--ms-muted, #aaa);
+  margin-top: 6px;
+  text-align: right;
+}
+
+.status-pill {
+  background: #111;
+  border: 1px solid #333;
+  padding: 3px 8px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-pill .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #777;
+}
+
+.server-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
 /* Smooth fade for all major components */
 .fade-in {
   animation: fadeIn 0.6s ease-out forwards;
