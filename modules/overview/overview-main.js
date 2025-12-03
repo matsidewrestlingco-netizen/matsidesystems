@@ -1,7 +1,9 @@
-// ================================================
-// FILE: modules/overview/overview-main.js
-// Socket wiring for 4-mat overview
-// ================================================
+<!-- ===========================
+FILE: /modules/overview/overview-main.js
+=========================== -->
+<script type="module">
+// NOTE: remove this <script> wrapper when saving the JS file.
+
 import { initSocketClient } from "../core/socket.js";
 import { initOverviewView, updateOverviewView } from "./overview-render.js";
 
@@ -9,8 +11,8 @@ const view = initOverviewView();
 const connEl = document.getElementById("ov-conn");
 
 function handleStateUpdate(state) {
-  if (connEl) connEl.textContent = "connected";
   if (!state || !state.mats || !view) return;
+  if (connEl) connEl.textContent = "connected";
   updateOverviewView(view, state.mats);
 }
 
@@ -19,3 +21,4 @@ initSocketClient({
   mat: null,
   onState: handleStateUpdate
 });
+</script>
