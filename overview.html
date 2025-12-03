@@ -1,22 +1,20 @@
-<!-- ===========================
-FILE: /overview.html
-=========================== -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Matside — Overview</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matside — Event Overview</title>
 
-  <!-- Base theme + overview layout -->
-  <link rel="stylesheet" href="/scoreboard-frontend/css/theme.css" />
-  <link rel="stylesheet" href="/scoreboard-frontend/css/overview.css" />
+<!-- THEMES -->
+<link rel="stylesheet" href="./css/theme.css" />
+<link rel="stylesheet" href="./css/overview.css" />
 
-  <!-- Socket.IO -->
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<!-- Socket.IO -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
-  <div id="overview-page">
+
+<div id="overview-page">
     <header class="ov-header">
       <div class="ov-header-title">Matside — Event Overview</div>
       <div class="ov-header-status">
@@ -24,26 +22,21 @@ FILE: /overview.html
       </div>
     </header>
 
-    <main id="overview-root"></main>
-  </div>
+<script type="module">
+import { setServerUrl, getSocket } from "./modules/core/socket.js";
+import { initSkinClient } from "./modules/ui/skins.js";
 
-  <script type="module">
-    import { setServerUrl, getSocket } from "./modules/core/socket.js";
-    import { initSkinClient } from "./modules/ui/skins.js";
+// 1. Set server URL
+setServerUrl("https://scoreboard-server-er33.onrender.com");
 
-    // 1) Point to your server
-    setServerUrl("https://scoreboard-server-er33.onrender.com");
+// 2. Load the overview logic
+import "./modules/overview/overview-main.js";
 
-    // 2) Apply local skin immediately (no socket needed yet)
-    initSkinClient(null);
+// 3. Skin system activates after socket is created
+setTimeout(() => {
+  initSkinClient(getSocket());
+}, 100);
+</script>
 
-    // 3) Wire overview logic (socket + rendering)
-    import "./modules/overview/overview-main.js";
-
-    // 4) Once socket exists, bind live skin updates
-    setTimeout(() => {
-      initSkinClient(getSocket());
-    }, 300);
-  </script>
 </body>
 </html>
