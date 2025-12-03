@@ -1,6 +1,3 @@
-<!-- ===========================
-FILE: /modules/overview/overview-main.js
-=========================== -->
 
 import { initSocketClient } from "../core/socket.js";
 import { initOverviewView, updateOverviewView } from "./overview-render.js";
