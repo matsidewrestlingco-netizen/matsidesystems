@@ -1,230 +1,483 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Control Panel v4.0</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Matside — Control Panel (v2.17)</title>
 
-<!-- Socket.IO -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
 <style>
   :root {
-    --bg: #0d0f11;
-    --card: #16191d;
-    --border: #22272e;
-    --text: #ffffff;
-    --muted: #8b949e;
-    --accent: #2d8cf0;
-    --red: #d84242;
-    --green: #3ebd5d;
-    --gold: #f1c40f;
-    --radius: 14px;
-    --gap: 14px;
+    --bg:#070809; --panel:#15161a; --muted:#9aa0a6;
+    --accent:#1e88e5; --red:#d32f2f; --green:#00c853; --gold:#fbc02d;
+    --radius:12px; --gap:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:var(--bg);color:#fff;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  }
+  body{
+    min-height:100vh;
+  }
+  .header-bar{
+    background:#070809;
+    border-bottom:1px solid #111215;
+  }
+  .header-inner{
+    max-width:1100px;
+    margin:0 auto;
+    padding:4px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-logo{height:42px;border-radius:8px;}
+  .brand-title{font-size:18px;font-weight:700;}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:14px;}
+
+  .icon-btn{
+    height:38px;width:38px;
+    border-radius:50%;border:2px solid #2f3135;
+    background:#0e1012;color:#fff;font-size:18px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
   }
 
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto;
+  select{
+    padding:8px 10px;border-radius:8px;border:0;
+    background:#0e1012;color:#fff;
   }
 
-  /* Header */
-  .header {
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 14px;
+  .top-bar{
+    display:flex;align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+    gap:12px;
   }
-  .header img {
-    height: 44px;
-    border-radius: 6px;
+  .brand-mini{
+    display:flex;align-items:center;gap:8px;
   }
-  .header-title {
-    font-size: 20px;
-    font-weight: 700;
+  .brand-mini img{height:22px;border-radius:6px;}
+  .brand-mini-title{
+    font-size:14px;font-weight:600;color:var(--muted);
   }
 
-  /* Layout */
-  .wrap {
-    padding: 18px;
-    max-width: 1200px;
-    margin: 0 auto;
+  .status{
+    font-size:12px;
+    color:var(--ms-muted);
   }
 
-  /* Summary Bar */
-  .summary {
-    display: flex;
-    justify-content: space-between;
-    background: var(--card);
-    padding: 14px;
-    border-radius: var(--radius);
-    font-size: 16px;
-    margin-bottom: 18px;
-    border: 1px solid var(--border);
+  .summary{
+    margin-top:8px;
+    padding:10px 12px;
+    border-radius:16px;
+    background:linear-gradient(135deg,#15171c,#0d1015);
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+    box-shadow:0 12px 28px rgba(0,0,0,.8);
+  }
+  .summary strong{font-weight:800;}
+  .redText{color:var(--red);}
+  .greenText{color:var(--green);}
+
+  /* Flashing timer while running */
+  @keyframes timerPulse{
+    0%{opacity:1;}
+    50%{opacity:.55;}
+    100%{opacity:1;}
+  }
+  .timer-running{animation:timerPulse 1.2s infinite ease-in-out;}
+
+  .grid{
+    display:grid;
+    grid-template-columns:2fr 3fr;
+    gap:var(--gap);
+  }
+  @media(max-width:900px){
+    .grid{grid-template-columns:1fr;}
   }
 
-  /* Cards */
-  .card {
-    background: var(--card);
-    border-radius: var(--radius);
-    padding: 16px;
-    border: 1px solid var(--border);
+  .card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:0 8px 22px rgba(0,0,0,.7);
+    border:1px solid #202127;
   }
-  .card h3 {
-    margin: 0 0 12px 0;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gap);
+  .card h3{
+    margin:0 0 10px 0;
+    font-size:15px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--muted);
   }
 
-  /* Timer Card */
-  .timer-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gap);
+  button{
+    border:0;border-radius:10px;
+    padding:9px 12px;
+    font-weight:700;
+    cursor:pointer;
+    font-size:14px;
   }
-  .timer-group {
-    background: #1d2127;
-    padding: 12px;
-    border-radius: 12px;
-    border: 1px solid #2c323a;
-    text-align: center;
+  .small{padding:8px 10px;font-size:13px;}
+  .btn-wide{min-width:120px;}
+
+  .blue{background:var(--accent);color:#fff;}
+  .gray{background:#2a2b2c;color:#fff;}
+  .red{background:var(--red);color:#fff;}
+  .green{background:var(--green);color:#fff;}
+  .gold{background:var(--gold);color:#000;}
+
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+
+  .score-columns{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
   }
-  .timer-group h4 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    color: var(--muted);
+  @media(max-width:600px){
+    .score-columns{grid-template-columns:1fr;}
   }
 
-  /* Buttons */
-  button {
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--text);
+  .scoring-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;
   }
-  .btn-wide { width: 100%; }
-
-  .red { background: var(--red); }
-  .green { background: var(--green); }
-  .blue { background: var(--accent); }
-  .gray { background: #2b2f36; }
-  .gold { background: var(--gold); color: #000; }
-
-  .scoring-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+  @media(max-width:450px){
+    .scoring-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
   }
 
-  /* Timeline */
-  #timelineBox {
-    margin-top: 20px;
-    padding: 14px;
-    border-radius: var(--radius);
-    background: var(--card);
-    border: 1px solid var(--border);
-    height: 220px;
-    overflow-y: auto;
-    font-size: 14px;
+  /* Timer layout balance */
+  .timer-layout{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  @media (max-width: 800px){
+    .timer-layout{
+      grid-template-columns:1fr;
+    }
+  }
+  .timer-group{
+    background:#10131a;
+    border-radius:10px;
+    border:1px solid #252a33;
+    padding:10px 12px;
+  }
+  .timer-group h4{
+    margin:0 0 8px 0;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--muted);
   }
 
-  /* Modal */
-  #matchModal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    display: none;
-    align-items: center;
-    justify-content: center;
+  /* Timeline box */
+  #timelineBox{
+    max-height:220px;
+    overflow-y:auto;
+    background:#0b0c0f;
+    border-radius:10px;
+    padding:8px;
+    font-size:12px;
+    border:1px solid #202127;
   }
-  .modal-inner {
-    background: var(--card);
-    padding: 20px;
-    border-radius: var(--radius);
-    width: 300px;
-    text-align: center;
+
+  .timeline-item{
+    padding:4px 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .timeline-item:last-child{
+    border-bottom:none;
+  }
+
+  /* Last Match card */
+  .last-match-card{
+    margin-top:14px;
+    background:linear-gradient(135deg,#15171c,#101218);
+    border-radius:var(--radius);
+    padding:10px 12px;
+    border:1px solid #2b323b;
+    font-size:13px;
+  }
+  .last-match-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6px;
+  }
+  .last-badge{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    padding:2px 6px;
+    border-radius:999px;
+    background:#22262e;
+    color:var(--muted);
+  }
+  .last-match-main{
+    font-size:14px;
+  }
+  .last-match-meta{
+    margin-top:4px;
+    font-size:11px;
+    color:var(--muted);
   }
 
   /* Toast */
-  #toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--accent);
-    padding: 12px 18px;
-    border-radius: 10px;
-    font-weight: 700;
-    display: none;
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:10px;
+    transform:translateX(-50%);
+    background:#1e88e5;
+    color:#fff;
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+    display:none;
+    align-items:center;
+    gap:6px;
+    box-shadow:0 8px 22px rgba(0,0,0,.7);
+    z-index:9999;
   }
 
+  /* Match modal */
+  .modal-backdrop{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.65);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9998;
+  }
+  .modal-backdrop.open{display:flex;}
+
+  .modal{
+    background:#15171c;
+    border-radius:14px;
+    padding:14px 16px 16px;
+    width:280px;
+    border:1px solid #2a2f38;
+    box-shadow:0 20px 40px rgba(0,0,0,.9);
+    font-size:13px;
+  }
+  .modal h3{
+    margin:0 0 6px 0;
+    font-size:15px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .modal-section{margin-top:10px;}
+  .modal-section h4{
+    margin:0 0 4px 0;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+  }
+  .pill-row{
+    display:flex;flex-wrap:wrap;gap:6px;
+  }
+  .pill-btn{
+    padding:5px 9px;
+    font-size:12px;
+    border-radius:999px;
+    background:#262a32;
+    color:#fff;
+    border:1px solid transparent;
+  }
+  .pill-btn.active{
+    border-color:var(--accent);
+    background:#1b2330;
+  }
+
+  .drawer-input{
+    width:100%;
+    padding:7px 9px;
+    border-radius:8px;
+    border:1px solid #272a33;
+    background:#0e1013;
+    color:#fff;
+    font-size:13px;
+  }
+
+  /* RIGHT DRAWER */
+  .drawer-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.35);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s;
+    z-index:9998;
+  }
+  .drawer-backdrop.open{
+    opacity:1;
+    pointer-events:auto;
+  }
+  #drawerRight{
+    position:fixed;
+    top:0;right:0;
+    height:100%;width:320px;
+    max-width:80vw;
+    background:#101116;
+    border-left:1px solid #202127;
+    z-index:9999;
+    transform:translateX(100%);
+    transition:transform .2s;
+    display:flex;flex-direction:column;
+  }
+  #drawerRight.open{
+    transform:translateX(0);
+  }
+  .drawer-header{
+    padding:10px 12px;
+    border-bottom:1px solid #202127;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .drawer-title{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+  }
+  .drawer-close-btn{
+    border-radius:50%;
+    border:1px solid #343741;
+    background:#14151a;
+    color:#fff;
+    width:26px;height:26px;
+    cursor:pointer;
+    font-size:14px;
+  }
+  .drawer-body{
+    padding:10px 12px;
+    font-size:13px;
+    overflow-y:auto;
+  }
+  .drawer-section{
+    margin-bottom:16px;
+  }
+  .drawer-section h4{
+    margin:0 0 6px 0;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+  }
+  .drawer-note{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  /* Version tag */
+  #version-tag{
+    position:fixed;
+    bottom:6px;
+    right:10px;
+    font-size:11px;
+    color:#666;
+    opacity:0.75;
+    pointer-events:none;
+    user-select:none;
+    font-weight:600;
+    z-index:99999;
+  }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <img src="https://www.matside.org/assets/images/image01.png" />
-  <div class="header-title">Matside — Control Panel</div>
+<div class="header-bar">
+  <div class="header-inner">
+    <img src="https://www.matside.org/assets/images/image01.png" class="brand-logo" alt="Matside"/>
+    <div class="brand-title">Matside</div>
+  </div>
 </div>
 
 <div class="wrap">
 
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="brand-mini">
+      <img src="https://www.matside.org/assets/images/image01.png" alt="Matside mini"/>
+      <div class="brand-mini-title">Control Panel</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div>
+        <label for="matSelect" style="font-size:12px;color:var(--muted);">Mat</label>
+        <select id="matSelect">
+          <option value="1">Mat 1</option>
+          <option value="2">Mat 2</option>
+          <option value="3">Mat 3</option>
+          <option value="4">Mat 4</option>
+        </select>
+      </div>
+      <div class="status">Status: <span id="conn">connecting…</span></div>
+      <button id="openDrawerRight" class="icon-btn" title="Match Settings">⚙️</button>
+    </div>
+  </div>
+
   <!-- SUMMARY -->
   <div class="summary">
     <div>Mat: <strong id="sumMat">1</strong></div>
-    <div>Period: <strong id="sumPeriod">1</strong></div>
+    <div>Period: <strong id="sumSeg">REG1</strong></div>
     <div>Time: <strong id="sumTime">01:00</strong></div>
-    <div>Red: <strong id="sumRed">0</strong></div>
-    <div>Green: <strong id="sumGreen">0</strong></div>
-
-    <div>Status:
-      <strong id="conn">connecting…</strong>
-    </div>
-
-    <select id="matSelect">
-      <option value="1">Mat 1</option>
-      <option value="2">Mat 2</option>
-      <option value="3">Mat 3</option>
-      <option value="4">Mat 4</option>
-    </select>
+    <div>Red: <strong id="sumRed" class="redText">0</strong></div>
+    <div>Green: <strong id="sumGreen" class="greenText">0</strong></div>
   </div>
 
-  <!-- MAIN GRID -->
+  <!-- LAST MATCH CARD -->
+  <div class="last-match-card">
+    <div class="last-match-header">
+      <div>Last Match Result</div>
+      <div class="last-badge">Most Recent</div>
+    </div>
+    <div class="last-match-main">
+      <div id="lastMatchWinner"><em>No match submitted yet.</em></div>
+      <div id="lastMatchScore"></div>
+    </div>
+    <div class="last-match-meta" id="lastMatchMeta"></div>
+  </div>
+
   <div class="grid">
 
     <!-- TIMER CARD -->
     <div class="card">
       <h3>Timer</h3>
-
       <div class="timer-layout">
-
-        <!-- Column 1 -->
         <div class="timer-group">
-          <h4>Run Controls</h4>
-          <button id="startBtn" class="blue btn-wide">Start</button><br><br>
-          <button id="stopBtn" class="gray btn-wide">Stop</button><br><br>
-          <button id="resetTimerBtn" class="gold btn-wide">Reset Timer</button>
+          <h4>Clock</h4>
+          <div class="row">
+            <button id="startBtn" class="blue btn-wide">Start</button>
+            <button id="stopBtn" class="gray btn-wide">Stop</button>
+          </div>
+          <div class="row" style="margin-top:6px;">
+            <button id="resetTimerBtn" class="gray btn-wide">Reset Timer</button>
+          </div>
         </div>
-
-        <!-- Column 2 -->
         <div class="timer-group">
-          <h4>Match Controls</h4>
-          <button id="endMatchBtn" class="red btn-wide">End Match</button><br><br>
-          <button id="nextPeriodBtn" class="blue btn-wide">Next Period</button><br><br>
-          <button id="prevPeriodBtn" class="gray btn-wide">Prev Period</button>
+          <h4>Match Flow</h4>
+          <div class="row">
+            <button id="endMatchBtn" class="gold btn-wide">End Match</button>
+          </div>
+          <div class="row" style="margin-top:6px;">
+            <span style="color:var(--muted);font-size:12px;">End match, choose winner &amp; method.</span>
+          </div>
         </div>
-
       </div>
     </div>
 
@@ -232,185 +485,347 @@
     <div class="card">
       <h3>Scoring</h3>
 
-      <div class="scoring-grid">
-        <button class="red" data-color="red" data-pts="1">E1</button>
-        <button class="red" data-color="red" data-pts="2">R2</button>
-        <button class="red" data-color="red" data-pts="3">T3</button>
-        <button class="red" data-color="red" data-pts="2">N2</button>
-        <button class="red" data-color="red" data-pts="3">N3</button>
-        <button class="red" data-color="red" data-pts="4">N4</button>
+      <div class="score-columns">
 
-        <button class="green" data-color="green" data-pts="1">E1</button>
-        <button class="green" data-color="green" data-pts="2">R2</button>
-        <button class="green" data-color="green" data-pts="3">T3</button>
-        <button class="green" data-color="green" data-pts="2">N2</button>
-        <button class="green" data-color="green" data-pts="3">N3</button>
-        <button class="green" data-color="green" data-pts="4">N4</button>
+        <!-- RED -->
+        <div>
+          <div class="status" style="margin-bottom:4px;">Red Wrestler</div>
+          <div class="scoring-grid">
+            <button class="red small" data-color="red" data-pts="1">E1 (+1)</button>
+            <button class="red small" data-color="red" data-pts="2">R2 (+2)</button>
+            <button class="red small" data-color="red" data-pts="3">T3 (+3)</button>
+            <button class="red small" data-color="red" data-pts="2">N2 (+2)</button>
+            <button class="red small" data-color="red" data-pts="3">N3 (+3)</button>
+            <button class="red small" data-color="red" data-pts="4">N4 (+4)</button>
+          </div>
+        </div>
+
+        <!-- GREEN -->
+        <div>
+          <div class="status" style="margin-bottom:4px;">Green Wrestler</div>
+          <div class="scoring-grid">
+            <button class="green small" data-color="green" data-pts="1">E1 (+1)</button>
+            <button class="green small" data-color="green" data-pts="2">R2 (+2)</button>
+            <button class="green small" data-color="green" data-pts="3">T3 (+3)</button>
+            <button class="green small" data-color="green" data-pts="2">N2 (+2)</button>
+            <button class="green small" data-color="green" data-pts="3">N3 (+3)</button>
+            <button class="green small" data-color="green" data-pts="4">N4 (+4)</button>
+          </div>
+        </div>
+
       </div>
 
-      <br>
-      <button id="subRed" class="gray">-1 Red</button>
-      <button id="resetScores" class="gold">Reset</button>
-      <button id="subGreen" class="gray">-1 Green</button>
+      <div class="row" style="margin-top:10px;">
+        <button id="subRed" class="small gray">-1 Red</button>
+        <button id="resetScores" class="small gold">Reset Scores</button>
+        <button id="subGreen" class="small gray">-1 Green</button>
+      </div>
 
     </div>
-
   </div>
 
   <!-- TIMELINE -->
-  <h3 style="margin-top: 18px;">Match Timeline</h3>
+  <h3 style="margin-top:14px;">Match Timeline</h3>
   <div id="timelineBox"></div>
 
 </div>
 
-<!-- MATCH MODAL -->
-<div id="matchModal">
-  <div class="modal-inner">
-    <h3>End Match</h3>
-    <p>Select Winner:</p>
+<!-- RIGHT DRAWER -->
+<div id="drawerRight">
+  <div class="drawer-header">
+    <div class="drawer-title">Match Settings</div>
+    <button class="drawer-close-btn" id="closeDrawerRight">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <h4>Wrestler Names</h4>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div>
+          <label>Red</label>
+          <input id="redNameInput" type="text" class="drawer-input" placeholder="Red wrestler name">
+        </div>
+        <div>
+          <label>Green</label>
+          <input id="greenNameInput" type="text" class="drawer-input" placeholder="Green wrestler name">
+        </div>
+      </div>
+      <div class="drawer-note">
+        Names are local to this device for now; we can wire them to the display later.
+      </div>
+    </div>
 
-    <button id="redWin" class="red btn-wide">Red Wins</button><br><br>
-    <button id="greenWin" class="green btn-wide">Green Wins</button><br><br>
-    <button id="cancelEnd" class="gray btn-wide">Cancel</button>
+    <div class="drawer-section">
+      <h4>Reset Mat</h4>
+      <button id="resetMatBtn" class="small red" style="width:100%;">Reset Entire Mat</button>
+      <div class="drawer-note">
+        Resets period, timer, scores &amp; timeline for this mat only.
+      </div>
+    </div>
+  </div>
+</div>
+<div id="backdropRight" class="drawer-backdrop"></div>
+
+<!-- MATCH END MODAL -->
+<div id="matchModalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <h3>End Match</h3>
+
+    <div class="modal-section">
+      <h4>Winner</h4>
+      <div class="pill-row">
+        <button class="pill-btn" data-winner="red" id="winnerRedBtn">Red</button>
+        <button class="pill-btn" data-winner="green" id="winnerGreenBtn">Green</button>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <h4>Result Type</h4>
+      <div class="pill-row">
+        <button class="pill-btn" data-method="decision">Decision</button>
+        <button class="pill-btn" data-method="tech_fall">Tech Fall</button>
+        <button class="pill-btn" data-method="pin">Pin</button>
+        <button class="pill-btn" data-method="forfeit">Forfeit</button>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <h4>Confirm</h4>
+      <div class="row">
+        <button id="confirmMatchBtn" class="blue" style="flex:1;">Submit Result</button>
+        <button id="cancelMatchBtn" class="gray" style="flex:1;">Cancel</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- TOAST -->
-<div id="toast"></div>
+<div id="toast" class="toast">
+  <span id="toastIcon">✔</span>
+  <span id="toastText">Saved</span>
+</div>
 
-<script>
-// ======================================================
-// SOCKET + STATE
-// ======================================================
-const socket = io("https://scoreboard-server-er33.onrender.com");
-let mats = {};
-let currentMat = 1;
+<div id="version-tag">v2.20 modular</div>
 
-socket.on("connect", () => {
-  document.getElementById("conn").textContent = "connected";
-});
-socket.on("disconnect", () => {
-  document.getElementById("conn").textContent = "disconnected";
-});
+<script type="module">
+  // Minimal modular-style init (socket + basic wiring)
+  const socket = io("https://scoreboard-server-er33.onrender.com");
+  let mats = {};
+  let currentMat = 1;
 
-socket.on("stateUpdate", payload => {
-  if (!payload.mats) return;
-  mats = payload.mats;
-  renderSummary();
-  renderTimeline();
-});
+  const matSelect = document.getElementById("matSelect");
+  const connEl = document.getElementById("conn");
+  const sumMatEl = document.getElementById("sumMat");
+  const sumSegEl = document.getElementById("sumSeg");
+  const sumTimeEl = document.getElementById("sumTime");
+  const sumRedEl = document.getElementById("sumRed");
+  const sumGreenEl = document.getElementById("sumGreen");
+  const timelineBox = document.getElementById("timelineBox");
 
-// ======================================================
-// UI UPDATE
-// ======================================================
-function renderSummary() {
-  const m = mats[currentMat];
-  if (!m) return;
+  // Drawer elements
+  const drawerRight = document.getElementById("drawerRight");
+  const backdropRight = document.getElementById("backdropRight");
+  const openDrawerRightBtn = document.getElementById("openDrawerRight");
+  const closeDrawerRightBtn = document.getElementById("closeDrawerRight");
 
-  document.getElementById("sumMat").textContent = currentMat;
-  document.getElementById("sumPeriod").textContent = m.segmentId || m.period;
-  document.getElementById("sumTime").textContent = formatTime(m.time);
-  document.getElementById("sumRed").textContent = m.red;
-  document.getElementById("sumGreen").textContent = m.green;
-}
+  // Toast
+  const toastEl = document.getElementById("toast");
+  const toastTextEl = document.getElementById("toastText");
 
-function renderTimeline() {
-  const box = document.getElementById("timelineBox");
-  const m = mats[currentMat];
-  if (!m || !m.timeline) return;
+  function showToast(msg){
+    toastTextEl.textContent = msg;
+    toastEl.style.display = "flex";
+    setTimeout(()=>{toastEl.style.display="none";},2000);
+  }
 
-  box.innerHTML = m.timeline.map(t => `<div>${t}</div>`).join("");
-}
+  function formatTime(sec){
+    const s = Math.max(0,Math.floor(sec||0));
+    const m = Math.floor(s/60);
+    const r = s%60;
+    return `${String(m).padStart(2,"0")}:${String(r).padStart(2,"0")}`;
+  }
 
-function formatTime(sec) {
-  const s = Math.max(0, Math.floor(sec));
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${String(m).padStart(2,"0")}:${String(r).padStart(2,"0")}`;
-}
+  function renderSummary(){
+    const m = mats[currentMat];
+    if(!m) return;
+    sumMatEl.textContent = String(currentMat);
+    sumSegEl.textContent = m.segmentId || `P${m.period||1}`;
+    sumTimeEl.textContent = formatTime(m.time);
+    sumRedEl.textContent = String(m.red||0);
+    sumGreenEl.textContent = String(m.green||0);
+  }
 
-// ======================================================
-// MAT SELECTOR
-// ======================================================
-document.getElementById("matSelect").addEventListener("change", e => {
-  currentMat = parseInt(e.target.value);
-  renderSummary();
-});
+  function renderTimeline(){
+    const m = mats[currentMat];
+    if(!m||!m.timeline){timelineBox.innerHTML="";return;}
+    timelineBox.innerHTML = m.timeline.map(line=>`<div class="timeline-item">${line}</div>`).join("");
+  }
 
-// ======================================================
-// TIMER CONTROLS
-// ======================================================
-document.getElementById("startBtn").onclick = () => {
-  socket.emit("updateState", { mat: currentMat, updates: { running: true } });
-};
-document.getElementById("stopBtn").onclick = () => {
-  socket.emit("updateState", { mat: currentMat, updates: { running: false } });
-};
-document.getElementById("resetTimerBtn").onclick = () => {
-  socket.emit("updateState", { mat: currentMat, updates: { time: 60, running: false } });
-};
-
-// ======================================================
-// PERIOD CONTROLS
-// ======================================================
-document.getElementById("nextPeriodBtn").onclick = () => {
-  socket.emit("updateState", { mat: currentMat, updates: { segmentId: "REG2", period: 2 }});
-};
-document.getElementById("prevPeriodBtn").onclick = () => {
-  socket.emit("updateState", { mat: currentMat, updates: { segmentId: "REG1", period: 1 }});
-};
-
-// ======================================================
-// SCORING
-// ======================================================
-document.querySelectorAll("[data-color][data-pts]").forEach(btn => {
-  btn.onclick = () => {
-    const color = btn.dataset.color;
-    const pts = parseInt(btn.dataset.pts);
-    socket.emit("addPoints", { mat: currentMat, color, pts });
-  };
-});
-document.getElementById("subRed").onclick = () => {
-  socket.emit("subPoint", { mat: currentMat, color: "red" });
-};
-document.getElementById("subGreen").onclick = () => {
-  socket.emit("subPoint", { mat: currentMat, color: "green" });
-};
-document.getElementById("resetScores").onclick = () => {
-  socket.emit("updateState", { mat: currentMat, updates: { red: 0, green: 0 }});
-};
-
-// ======================================================
-// MATCH END MODAL
-// ======================================================
-const modal = document.getElementById("matchModal");
-
-document.getElementById("endMatchBtn").onclick = () => modal.style.display = "flex";
-document.getElementById("cancelEnd").onclick = () => modal.style.display = "none";
-
-document.getElementById("redWin").onclick = () => submitMatch("red");
-document.getElementById("greenWin").onclick = () => submitMatch("green");
-
-function submitMatch(winner) {
-  modal.style.display = "none";
-  socket.emit("matchEnded", {
-    mat: currentMat,
-    winner,
-    ts: Date.now()
+  socket.on("connect",()=>{
+    if(connEl) connEl.textContent="connected";
   });
-  showToast(`Match submitted — ${winner.toUpperCase()} wins`);
-}
+  socket.on("disconnect",()=>{
+    if(connEl) connEl.textContent="disconnected";
+  });
+  socket.on("stateUpdate",(payload)=>{
+    if(!payload||!payload.mats) return;
+    mats = payload.mats;
+    renderSummary();
+    renderTimeline();
+  });
 
-// ======================================================
-// TOAST SYSTEM
-// ======================================================
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.display = "block";
-  setTimeout(() => t.style.display = "none", 3000);
-}
+  matSelect.addEventListener("change",()=>{
+    currentMat = parseInt(matSelect.value,10)||1;
+    renderSummary();
+    renderTimeline();
+  });
 
+  // Timer controls
+  document.getElementById("startBtn").onclick=()=>socket.emit("updateState",{mat:currentMat,updates:{running:true}});
+  document.getElementById("stopBtn").onclick=()=>socket.emit("updateState",{mat:currentMat,updates:{running:false}});
+  document.getElementById("resetTimerBtn").onclick=()=>{
+    const m = mats[currentMat]||{};
+    const resetTime = m.segmentDefaultTime ?? 60;
+    socket.emit("updateState",{mat:currentMat,updates:{time:resetTime,running:false}});
+  };
+
+  // Scoring controls
+  document.querySelectorAll("[data-color][data-pts]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const color = btn.getAttribute("data-color");
+      const pts = parseInt(btn.getAttribute("data-pts")||"0",10);
+      if(!color||!pts) return;
+      socket.emit("addPoints",{mat:currentMat,color,pts});
+    });
+  });
+
+  document.getElementById("subRed").onclick=()=>socket.emit("subPoint",{mat:currentMat,color:"red"});
+  document.getElementById("subGreen").onclick=()=>socket.emit("subPoint",{mat:currentMat,color:"green"});
+  document.getElementById("resetScores").onclick=()=>socket.emit("updateState",{mat:currentMat,updates:{red:0,green:0}});
+
+  // Right drawer
+  openDrawerRightBtn.onclick=()=>{
+    drawerRight.classList.add("open");
+    backdropRight.classList.add("open");
+  };
+  closeDrawerRightBtn.onclick=()=>{
+    drawerRight.classList.remove("open");
+    backdropRight.classList.remove("open");
+  };
+  backdropRight.onclick=()=>{
+    drawerRight.classList.remove("open");
+    backdropRight.classList.remove("open");
+  };
+
+  // Match end modal
+  const matchBackdrop = document.getElementById("matchModalBackdrop");
+  const endMatchBtn = document.getElementById("endMatchBtn");
+  const cancelMatchBtn = document.getElementById("cancelMatchBtn");
+  const confirmMatchBtn = document.getElementById("confirmMatchBtn");
+  const winnerRedBtn = document.getElementById("winnerRedBtn");
+  const winnerGreenBtn = document.getElementById("winnerGreenBtn");
+  const methodButtons = Array.from(document.querySelectorAll(".pill-btn[data-method]"));
+
+  let selectedWinner = null;
+  let selectedMethod = "decision";
+
+  function openMatchModal(){
+    const m = mats[currentMat]||{};
+    if((m.red||0) > (m.green||0)){
+      selectedWinner="red";
+      winnerRedBtn.classList.add("active");
+      winnerGreenBtn.classList.remove("active");
+    }else if((m.green||0) > (m.red||0)){
+      selectedWinner="green";
+      winnerGreenBtn.classList.add("active");
+      winnerRedBtn.classList.remove("active");
+    }else{
+      selectedWinner=null;
+      winnerRedBtn.classList.remove("active");
+      winnerGreenBtn.classList.remove("active");
+    }
+    selectedMethod="decision";
+    methodButtons.forEach(b=>b.classList.remove("active"));
+    const def=methodButtons.find(b=>b.dataset.method==="decision");
+    if(def) def.classList.add("active");
+    matchBackdrop.classList.add("open");
+  }
+
+  function closeMatchModal(){
+    matchBackdrop.classList.remove("open");
+  }
+
+  endMatchBtn.onclick=openMatchModal;
+  cancelMatchBtn.onclick=closeMatchModal;
+
+  winnerRedBtn.onclick=()=>{
+    selectedWinner="red";
+    winnerRedBtn.classList.add("active");
+    winnerGreenBtn.classList.remove("active");
+  };
+  winnerGreenBtn.onclick=()=>{
+    selectedWinner="green";
+    winnerGreenBtn.classList.add("active");
+    winnerRedBtn.classList.remove("active");
+  };
+
+  methodButtons.forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      selectedMethod = btn.dataset.method;
+      methodButtons.forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  const lastWinnerEl = document.getElementById("lastMatchWinner");
+  const lastScoreEl = document.getElementById("lastMatchScore");
+  const lastMetaEl = document.getElementById("lastMatchMeta");
+
+  confirmMatchBtn.onclick=()=>{
+    const m = mats[currentMat]||{};
+    if(!selectedWinner){
+      showToast("Select a winner first");
+      return;
+    }
+    const payload={
+      mat:currentMat,
+      winner:selectedWinner,
+      method:selectedMethod,
+      redScore:m.red||0,
+      greenScore:m.green||0,
+      segmentId:m.segmentId||`P${m.period||1}`,
+      ts:Date.now()
+    };
+    socket.emit("matchEnded",payload);
+    closeMatchModal();
+    showToast("Match submitted");
+    const winnerName = selectedWinner==="red"?"Red Wrestler":"Green Wrestler";
+    lastWinnerEl.textContent = `${winnerName} wins by ${selectedMethod.replace("_"," ")}`;
+    lastScoreEl.textContent = `Red ${payload.redScore} — Green ${payload.greenScore}`;
+    lastMetaEl.textContent = `Mat ${currentMat}, Segment ${payload.segmentId}`;
+  };
+
+  // Reset mat
+  document.getElementById("resetMatBtn").onclick=()=>{
+    const updates={
+      period:1,
+      segmentId:"REG1",
+      time:60,
+      running:false,
+      red:0,
+      green:0,
+      timeline:[]
+    };
+    socket.emit("updateState",{mat:currentMat,updates});
+    showToast("Mat reset");
+  };
+
+  // Names (local only)
+  const redNameInput = document.getElementById("redNameInput");
+  const greenNameInput = document.getElementById("greenNameInput");
+
+  // Could be wired to server in future
+  redNameInput?.addEventListener("change",()=>{showToast("Red name updated (local)");});
+  greenNameInput?.addEventListener("change",()=>{showToast("Green name updated (local)");});
 </script>
 
 </body>
