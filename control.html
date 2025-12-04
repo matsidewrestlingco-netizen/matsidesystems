@@ -1,9 +1,9 @@
-<!doctype html>
+  <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel (v3.3)</title>
+<title>Matside — Control Panel (v3.5)</title>
 
 <link rel="stylesheet" href="./css/theme.css" />
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -87,24 +87,6 @@
     font-weight: 600;
   }
 
-  .icon-btn {
-    height: 40px;
-    width: 40px;
-    border-radius: 999px;
-    border: 1px solid rgba(51,65,85,0.9);
-    background: radial-gradient(circle at top, #020617 0%, #020617 70%, #020617 100%);
-    color: #f97316;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 18px;
-    box-shadow: 0 10px 26px rgba(0,0,0,0.7);
-  }
-  .icon-btn:hover {
-    border-color: rgba(148,163,184,0.9);
-  }
-
   /* SERVER STATUS PILL */
   .status-block {
     text-align: right;
@@ -174,14 +156,11 @@
     animation: timerPulse 1.2s infinite ease-in-out;
   }
 
-  /* GRID LAYOUT */
-  .grid {
-    display: grid;
-    grid-template-columns: 1.2fr 1.8fr;
-    gap: 18px;
-  }
-  @media (max-width: 900px) {
-    .grid { grid-template-columns: 1fr; }
+  /* CARDS & STACK */
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   .card {
@@ -195,6 +174,11 @@
     margin: 0 0 10px 0;
     font-size: 18px;
     color: var(--ms-title);
+  }
+  .card-sub {
+    font-size: 13px;
+    color: var(--ms-muted);
+    margin-bottom: 10px;
   }
 
   .row {
@@ -253,7 +237,25 @@
     letter-spacing: 0.03em;
   }
 
-  /* SCORING GRID */
+  /* FIELDS */
+  input[type="text"],
+  input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(51,65,85,0.8);
+    background: #020617;
+    color: var(--ms-title);
+    box-sizing: border-box;
+    font-size: 13px;
+  }
+
+  label {
+    font-size: 12px;
+    color: var(--ms-muted);
+  }
+
+  /* SCORING */
   .score-columns {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -271,112 +273,9 @@
     .scoring-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   }
 
-  /* DRAWERS */
-  .drawer-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.55);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.18s ease-out;
-    z-index: 998;
-  }
-  .drawer-backdrop.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .drawer-panel {
-    position: fixed;
-    top: 0;
-    height: 100%;
-    width: 320px;
-    max-width: 86vw;
-    background: radial-gradient(circle at top, #15161b 0%, #020308 60%, #000 100%);
-    border-radius: 0;
-    border-left: 1px solid rgba(148,163,184,0.4);
-    border-right: 1px solid rgba(148,163,184,0.4);
-    box-shadow: 0 0 80px rgba(0,0,0,0.95);
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    transform: translateX(100%);
-    transition: transform 0.22s ease-out;
-  }
-  #drawerLeft {
-    left: 0;
-    right: auto;
-    transform: translateX(-100%);
-    border-right: 1px solid rgba(148,163,184,0.4);
-    border-left: none;
-  }
-  #drawerLeft.open { transform: translateX(0); }
-  #drawerRight {
-    right: 0;
-    left: auto;
-    transform: translateX(100%);
-  }
-  #drawerRight.open { transform: translateX(0); }
-
-  .drawer-header {
-    padding: 12px 14px;
-    border-bottom: 1px solid rgba(30,64,175,0.6);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .drawer-title {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ms-title);
-  }
-  .drawer-close {
-    border: 0;
-    border-radius: 999px;
-    width: 30px;
-    height: 30px;
-    background: #020617;
-    color: var(--ms-muted);
-    cursor: pointer;
-  }
-  .drawer-body {
-    padding: 12px 14px 16px;
-    font-size: 13px;
-    color: var(--ms-muted);
-    overflow-y: auto;
-  }
-  .drawer-section {
-    margin-bottom: 18px;
-  }
-  .drawer-section h4 {
-    margin: 0 0 6px 0;
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ms-muted);
-  }
-  .drawer-note {
-    font-size: 12px;
-    color: var(--ms-muted);
-    margin-top: 4px;
-  }
-  input[type="text"],
-  input[type="number"] {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(51,65,85,0.8);
-    background: #020617;
-    color: var(--ms-title);
-    box-sizing: border-box;
-    font-size: 13px;
-  }
-
-  /* Timeline list */
+  /* TIMELINE */
   .timeline-list {
-    max-height: 220px;
+    max-height: 260px;
     overflow-y: auto;
     background: #020617;
     border-radius: 14px;
@@ -394,6 +293,16 @@
     color: var(--ms-muted);
     font-size: 11px;
     margin-top: 2px;
+  }
+
+  /* LAST MATCH CARD */
+  #lastMatchCard {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #020617;
+    border: 1px solid rgba(30,64,175,0.6);
+    font-size: 13px;
   }
 
   /* END MATCH MODAL */
@@ -527,16 +436,6 @@
     color: var(--ms-muted);
   }
 
-  /* Last match card */
-  #lastMatchCard {
-    margin-top: 16px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    background: #020617;
-    border: 1px solid rgba(30,64,175,0.6);
-    font-size: 13px;
-  }
-
   /* Version tag */
   #version-tag {
     position: fixed;
@@ -567,7 +466,7 @@
 
   <!-- TOP BAR -->
   <div class="top-bar">
-    <button id="openDrawerLeft" class="icon-btn" title="Timer Settings">⚡</button>
+    <div></div>
 
     <div class="top-mid">
       <label>Mat</label>
@@ -590,8 +489,6 @@
       </div>
       <div id="serverMeta">Last update: —</div>
     </div>
-
-    <button id="openDrawerRight" class="icon-btn" title="Match Settings">⚙️</button>
   </div>
 
   <!-- SUMMARY -->
@@ -603,12 +500,15 @@
     <div>Green: <strong id="sumGreen" class="greenText">0</strong></div>
   </div>
 
-  <!-- GRID -->
-  <div class="grid">
+  <!-- STACKED CARDS -->
+  <div class="stack">
 
     <!-- TIMER CARD -->
     <div class="card">
       <h3>Timer</h3>
+      <div class="card-sub">
+        Control the clock, set regulation / OT times, and keep periods flowing.
+      </div>
       <div class="row">
         <button id="startBtn" class="blue btn-wide">Start</button>
         <button id="stopBtn" class="gray btn-wide">Stop</button>
@@ -618,6 +518,33 @@
         <button id="resetTimerBtn" class="gray btn-wide">Reset Timer</button>
       </div>
 
+      <div style="margin-top:14px;">
+        <strong style="font-size:13px;color:var(--ms-muted);letter-spacing:0.08em;text-transform:uppercase;">
+          Regulation Presets
+        </strong>
+        <div class="row" style="margin-top:6px;">
+          <button class="small gray preset-btn" data-seconds="60">1:00</button>
+          <button class="small gray preset-btn" data-seconds="90">1:30</button>
+          <button class="small gray preset-btn" data-seconds="120">2:00</button>
+        </div>
+        <div class="card-sub" style="margin-top:4px;">
+          Sets the base regulation period length for this mat.
+        </div>
+      </div>
+
+      <div style="margin-top:8px;">
+        <strong style="font-size:13px;color:var(--ms-muted);letter-spacing:0.08em;text-transform:uppercase;">
+          Custom Time
+        </strong>
+        <div class="row" style="margin-top:6px;">
+          <input id="customTimeInput" type="text" placeholder="mm:ss or seconds">
+          <button id="applyCustomTimeBtn" class="small blue">Apply</button>
+        </div>
+        <div class="card-sub" style="margin-top:4px;">
+          Applies only to the current period / overtime segment.
+        </div>
+      </div>
+
       <div id="lastMatchCard" class="hidden">
         <div id="lastMatchWinner"></div>
         <div id="lastMatchScore"></div>
@@ -625,10 +552,36 @@
       </div>
     </div>
 
+    <!-- NAMES + RESET CARD -->
+    <div class="card">
+      <h3>Match Info</h3>
+      <div class="card-sub">
+        Keep track of who is wrestling and reset the mat when the bout is complete.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <label>Red Wrestler</label>
+          <input id="redNameInput" type="text" placeholder="Red wrestler name">
+        </div>
+        <div>
+          <label>Green Wrestler</label>
+          <input id="greenNameInput" type="text" placeholder="Green wrestler name">
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button id="resetMatBtn" class="small red">Reset Entire Mat</button>
+      </div>
+      <div class="card-sub" style="margin-top:4px;">
+        Resets time, period, scores, names, and timeline for this mat.
+      </div>
+    </div>
+
     <!-- SCORING CARD -->
     <div class="card">
       <h3>Scoring</h3>
-
+      <div class="card-sub">
+        Use quick buttons for the most common scoring actions.
+      </div>
       <div class="score-columns">
         <div>
           <div class="status" style="margin-bottom:4px;">Red Wrestler</div>
@@ -660,72 +613,18 @@
         <button id="subGreen" class="small gray">-1 Green</button>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- LEFT DRAWER -->
-<div id="drawerLeft" class="drawer-panel">
-  <div class="drawer-header">
-    <div class="drawer-title">Timer Settings</div>
-    <button id="closeDrawerLeft" class="drawer-close">✕</button>
-  </div>
-  <div class="drawer-body">
-    <div class="drawer-section">
-      <h4>Regulation Presets</h4>
-      <div class="row">
-        <button class="small gray preset-btn" data-seconds="60">1:00</button>
-        <button class="small gray preset-btn" data-seconds="90">1:30</button>
-        <button class="small gray preset-btn" data-seconds="120">2:00</button>
+    <!-- TIMELINE CARD -->
+    <div class="card">
+      <h3>Match Timeline</h3>
+      <div class="card-sub">
+        Every scoring change, period end, and OT transition is logged here for this mat.
       </div>
-      <div class="drawer-note">
-        Sets the base regulation period length for this mat.
-      </div>
-    </div>
-
-    <div class="drawer-section">
-      <h4>Custom Time</h4>
-      <input id="customTimeInput" type="text" placeholder="mm:ss or seconds">
-      <button id="applyCustomTimeBtn" class="small blue" style="margin-top:6px;width:100%;">Apply Custom Time</button>
-      <div class="drawer-note">
-        Applies only to the current period / overtime segment.
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- RIGHT DRAWER -->
-<div id="drawerRight" class="drawer-panel">
-  <div class="drawer-header">
-    <div class="drawer-title">Match Settings</div>
-    <button id="closeDrawerRight" class="drawer-close">✕</button>
-  </div>
-  <div class="drawer-body">
-    <div class="drawer-section">
-      <h4>Wrestler Names</h4>
-      <label style="font-size:12px;">Red Wrestler</label>
-      <input id="redNameInput" type="text" placeholder="Red wrestler name">
-      <label style="font-size:12px;margin-top:8px;display:block;">Green Wrestler</label>
-      <input id="greenNameInput" type="text" placeholder="Green wrestler name">
-      <div class="drawer-note">Names save per mat on this device and clear when you reset the mat.</div>
-    </div>
-
-    <div class="drawer-section">
-      <h4>Reset Mat</h4>
-      <button id="resetMatBtn" class="small red" style="width:100%;">Reset Entire Mat</button>
-      <div class="drawer-note">
-        Resets time, period, scores, names, and timeline for this mat.
-      </div>
-    </div>
-
-    <div class="drawer-section">
-      <h4>Match Timeline</h4>
       <div id="timelineList" class="timeline-list"></div>
     </div>
+
   </div>
 </div>
-
-<div id="backdropLeft" class="drawer-backdrop"></div>
-<div id="backdropRight" class="drawer-backdrop"></div>
 
 <!-- END MATCH MODAL -->
 <div id="endMatchModal">
@@ -774,9 +673,10 @@
   <div id="matchPopupBody"></div>
 </div>
 
-<div id="version-tag">v3.3</div>
+<div id="version-tag">v3.5</div>
 
 <script>
+/* SOCKET + STATE */
 const socket = io("https://scoreboard-server-er33.onrender.com", {
   transports:["websocket","polling"]
 });
@@ -791,7 +691,7 @@ function currentMat(){
   return parseInt(document.getElementById("matSelect").value,10) || 1;
 }
 
-/* SERVER STATUS ELEMENTS */
+/* SERVER STATUS */
 const serverPill = document.getElementById("serverStatusPill");
 const serverText = document.getElementById("serverStatusText");
 const serverMeta = document.getElementById("serverMeta");
@@ -981,7 +881,8 @@ function maybeHandleEndOfPeriod(state){
   if(period === "UT"){
     pushTimeline(mat,{
       label:`UT ended — choose winner manually (End Match)`,
-      timeStr:fmt(m.time||0)
+      timeStr:fmt(m.time||0),
+      period:"UT",red,green
     });
   }
 }
@@ -1020,7 +921,6 @@ document.querySelectorAll(".score-btn").forEach(btn=>{
 
 document.getElementById("subRed").onclick = ()=>{
   const mat = currentMat();
-<|diff_marker|> ADD A1000
   socket.emit("subPoint",{mat,color:"red"});
   pushTimeline(mat,{
     label:"RED -1",
@@ -1041,7 +941,6 @@ document.getElementById("subGreen").onclick = ()=>{
     green:lastState ? (lastState.mats?.[mat]?.green ?? 0) : 0
   });
 };
-<|diff_marker|> ADD A1020
 document.getElementById("resetScores").onclick = ()=>{
   const mat = currentMat();
   socket.emit("updateState",{mat,updates:{red:0,green:0}});
@@ -1062,7 +961,6 @@ document.querySelectorAll(".preset-btn").forEach(btn=>{
     periodLengthByMat[mat] = sec;
     socket.emit("updateState",{
       mat,
-<|diff_marker|> ADD A1040
       updates:{ time:sec, running:false }
     });
     showToast(`Period length set to ${fmt(sec)}`);
@@ -1083,7 +981,6 @@ document.getElementById("applyCustomTimeBtn").onclick = ()=>{
   }else{
     sec = parseInt(val,10)||0;
   }
-<|diff_marker|> ADD A1060
   sec = Math.max(0,sec);
   const mat = currentMat();
   socket.emit("updateState",{
@@ -1104,7 +1001,6 @@ function pushTimeline(mat, ev){
   });
   if(timeline[mat].length>80) timeline[mat].shift();
   renderTimeline(mat);
-<|diff_marker|> ADD A1080
 }
 function renderTimeline(mat){
   const list = document.getElementById("timelineList");
@@ -1124,43 +1020,13 @@ function renderTimeline(mat){
     list.appendChild(div);
   });
 }
+
 /* MAT SELECTOR CHANGE */
 document.getElementById("matSelect").addEventListener("change",()=>{
   if(lastState) updateUI(lastState);
   renderTimeline(currentMat());
+  loadNames();
 });
-
-/* DRAWERS */
-const drawerLeft = document.getElementById("drawerLeft");
-const drawerRight = document.getElementById("drawerRight");
-const backdropLeft = document.getElementById("backdropLeft");
-const backdropRight = document.getElementById("backdropRight");
-
-document.getElementById("openDrawerLeft").onclick = ()=>{
-  drawerLeft.classList.add("open");
-  backdropLeft.classList.add("open");
-};
-document.getElementById("closeDrawerLeft").onclick = ()=>{
-  drawerLeft.classList.remove("open");
-  backdropLeft.classList.remove("open");
-};
-backdropLeft.onclick = ()=>{
-  drawerLeft.classList.remove("open");
-  backdropLeft.classList.remove("open");
-};
-
-document.getElementById("openDrawerRight").onclick = ()=>{
-  drawerRight.classList.add("open");
-  backdropRight.classList.add("open");
-};
-document.getElementById("closeDrawerRight").onclick = ()=>{
-  drawerRight.classList.remove("open");
-  backdropRight.classList.remove("open");
-};
-backdropRight.onclick = ()=>{
-  drawerRight.classList.remove("open");
-  backdropRight.classList.remove("open");
-};
 
 /* NAMES (local per mat) */
 const redNameInput = document.getElementById("redNameInput");
@@ -1172,7 +1038,11 @@ function loadNames(){
   const mat = currentMat();
   try{
     const raw = localStorage.getItem(storageKey(mat));
-    if(!raw) return;
+    if(!raw) {
+      redNameInput.value = "";
+      greenNameInput.value = "";
+      return;
+    }
     const obj = JSON.parse(raw);
     redNameInput.value = obj.red || "";
     greenNameInput.value = obj.green || "";
@@ -1188,7 +1058,6 @@ function saveNames(){
 }
 redNameInput.addEventListener("change",saveNames);
 greenNameInput.addEventListener("change",saveNames);
-document.getElementById("matSelect").addEventListener("change",loadNames);
 loadNames();
 
 /* RESET MAT */
@@ -1372,4 +1241,3 @@ submitMatchBtn.onclick = async ()=>{
 
 </body>
 </html>
-  
