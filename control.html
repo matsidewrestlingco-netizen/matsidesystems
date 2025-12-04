@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel (v3.2)</title>
+<title>Matside — Control Panel (v3.3)</title>
 
 <!-- Socket.IO -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -90,6 +90,43 @@
   .status{
     color:var(--muted);
     font-size:13px;
+  }
+
+  /* SERVER STATUS PILL */
+  .status-block{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    font-size:12px;
+    min-width:150px;
+  }
+  .status-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:#11141a;
+    padding:3px 8px;
+    border-radius:999px;
+    border:1px solid #1d1f26;
+    font-size:12px;
+    color:#fff;
+  }
+  .status-pill .dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#777;
+  }
+  .status-pill.connected .dot{
+    background:#43a047;
+  }
+  .status-pill.disconnected .dot{
+    background:#e53935;
+  }
+  #serverMeta{
+    font-size:11px;
+    margin-top:2px;
+    color:var(--muted);
   }
 
   /* SUMMARY */
@@ -490,6 +527,18 @@
       <div class="status">Status: <span id="conn">connecting…</span></div>
     </div>
 
+    <!-- NEW: SERVER STATUS BLOCK -->
+    <div class="status-block">
+      <div>
+        Server:
+        <span id="serverStatusPill" class="status-pill">
+          <span class="dot" id="serverDot"></span>
+          <span id="serverStatusText">Connecting…</span>
+        </span>
+      </div>
+      <div id="serverMeta">Last update: —</div>
+    </div>
+
     <button id="openDrawerRight" class="icon-btn" title="Match Settings">⚙️</button>
   </div>
 
@@ -677,7 +726,7 @@
   <div id="matchPopupBody"></div>
 </div>
 
-<div id="version-tag">v3.2</div>
+<div id="version-tag">v3.3</div>
 
 <script>
 const socket = io("https://scoreboard-server-er33.onrender.com", {
@@ -694,20 +743,43 @@ function currentMat(){
   return parseInt(document.getElementById("matSelect").value,10) || 1;
 }
 
+/* SERVER STATUS ELEMENTS */
+const serverPill = document.getElementById("serverStatusPill");
+const serverText = document.getElementById("serverStatusText");
+const serverMeta = document.getElementById("serverMeta");
+
+function setServerStatus(connected){
+  if(!serverPill || !serverText) return;
+  if(connected){
+    serverPill.classList.add("connected");
+    serverPill.classList.remove("disconnected");
+    serverText.textContent = "Connected";
+  }else{
+    serverPill.classList.remove("connected");
+    serverPill.classList.add("disconnected");
+    serverText.textContent = "Disconnected";
+  }
+}
+
 socket.on("connect", () => {
   const el = document.getElementById("conn");
   if(el) el.textContent = "connected";
+  setServerStatus(true);
 });
 
 socket.on("disconnect", () => {
   const el = document.getElementById("conn");
   if(el) el.textContent = "disconnected";
+  setServerStatus(false);
 });
 
 socket.on("stateUpdate", (state)=>{
   lastState = state;
   updateUI(state);
   maybeHandleEndOfPeriod(state);
+  if(serverMeta){
+    serverMeta.textContent = "Last update: " + new Date().toLocaleTimeString();
+  }
 });
 
 /* Helpers */
