@@ -1,142 +1,167 @@
-/* ==========================================================
-   SCOREBOARD — ULTRA TIGHT COMPETITION MODE (v3.4)
-   ========================================================== */
+/* ===========================================
+ * FILE: css/scoreboard.css
+ * BLACK-GLASS full-screen scoreboard
+ * =========================================== */
 
-.sb-wrapper {
+#scoreboard-root {
   width: 100vw;
   height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  padding: 1.5vh 2vw;
   box-sizing: border-box;
+  padding: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* ----------------------------------------------------------
-   TOP ROW — CENTER-BIASED MAT / TITLE / PERIOD
------------------------------------------------------------ */
-
-.sb-top-row {
+.sb-wrapper {
   width: 100%;
+  height: 100%;
+  max-width: 1920px;
+  max-height: 1080px;
+  border-radius: 32px;
+  border: 1px solid rgba(148,163,184,0.18);
+  background: radial-gradient(circle at top, #14151b 0%, #050608 55%, #000 100%);
+  box-shadow:
+    0 32px 120px rgba(0,0,0,0.85),
+    0 0 0 1px rgba(15,23,42,0.8);
+  padding: 32px 40px 36px;
+  box-sizing: border-box;
   display: flex;
-  justify-content: center;      /* CENTER the entire group */
-  align-items: center;
-  gap: 4vw;                     /* Pull MAT/Period closer to title */
-  margin-bottom: 0.5vh;
+  flex-direction: column;
+}
+
+/* Top row: MAT — TITLE — PERIOD */
+.sb-top-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: flex-start;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--ms-muted);
 }
 
 .sb-mat-box,
 .sb-period-box {
-  text-align: center;
-  min-width: 10vw;              /* Keeps them equal in size */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .sb-mat-label,
 .sb-period-label {
-  font-size: 1.8vh;
-  opacity: 0.7;
-  font-weight: 600;
-  margin-bottom: 0.2vh;
+  font-size: 13px;
+  opacity: 0.9;
 }
 
 .sb-mat-value,
 .sb-period-value {
-  font-size: 3.5vh;
-  font-weight: 900;
+  margin-top: 6px;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--ms-title);
 }
 
-/* Center title but allow side boxes to sit near it */
 .sb-title-box {
-  font-size: 2.7vh;
-  font-weight: 900;
   text-align: center;
-  white-space: nowrap;
+  font-size: 22px;
+  letter-spacing: 0.22em;
+  color: var(--ms-title);
 }
-/* ----------------------------------------------------------
-   MIDDLE ROW — TIMER (pulled way up, massive font)
------------------------------------------------------------ */
 
+/* Middle row timer */
 .sb-mid-row {
-  text-align: center;
-  margin-top: 1vh;     /* much tighter */
-  margin-bottom: 0.5vh;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .sb-time-label {
-  font-size: 1.8vh;
-  opacity: 0.7;
-  font-weight: 600;
-  margin-bottom: 0.2vh;
+  font-size: 18px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ms-muted);
+  margin-bottom: 8px;
 }
 
 .sb-timer {
-  font-size: 17vh;     /* COMP MODE: MASSIVE TIMER */
-  font-weight: 900;
+  font-size: 144px;
+  font-weight: 800;
   line-height: 1;
-  text-shadow: 0 0 30px rgba(255,255,255,0.65);
+  color: #ffffff;
+  text-align: center;
+  text-shadow:
+    0 0 20px rgba(255,255,255,0.9),
+    0 0 90px rgba(255,255,255,0.95);
 }
 
-/* ----------------------------------------------------------
-   BOTTOM — RED & GREEN SCORE BOXES
-   Huge numbers, pulled up, minimal padding
------------------------------------------------------------ */
-
+/* Bottom row scores */
 .sb-bottom-row {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  gap: 1vw;
-  margin-top: 0.5vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 18px;
 }
 
 .sb-score-box {
-  flex: 1;
-  border-radius: 16px;
-  padding: 1.2vh 1vw;
+  border-radius: 26px;
+  background: radial-gradient(circle at top, #17181d 0%, #050608 65%, #000 100%);
+  border: 1px solid rgba(148,163,184,0.25);
+  box-shadow: 0 20px 70px rgba(0,0,0,0.9);
+  padding: 18px 24px 24px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  text-align: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
 
-  min-height: 20vh; /* tighter */
+/* Red/Green tint outlines */
+.sb-score-box.sb-red {
+  box-shadow:
+    0 0 0 1px rgba(239,68,68,0.45),
+    0 18px 60px rgba(0,0,0,0.9);
+}
+.sb-score-box.sb-green {
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,0.45),
+    0 18px 60px rgba(0,0,0,0.9);
 }
 
 .sb-name {
-  font-size: 2.8vh;
-  font-weight: 700;
-  margin-bottom: 0.4vh;
+  font-size: 20px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ms-muted);
+  text-align: center;
+  margin-bottom: 8px;
 }
 
 .sb-score {
-  font-size: 14vh;   /* COMP MODE: ENORMOUS SCORE */
-  font-weight: 900;
-  line-height: 0.9;
+  font-size: 110px;
+  font-weight: 800;
+  text-align: center;
+  color: #ffffff;
 }
 
-/* ----------------------------------------------------------
-   OPTIONAL GLOW (depends on theme)
------------------------------------------------------------ */
-.sb-red {
-  box-shadow: 0 0 20px rgba(200,0,0,0.2);
-}
-
-.sb-green {
-  box-shadow: 0 0 20px rgba(0,180,0,0.2);
-}
-
-/* ----------------------------------------------------------
-   RESPONSIVENESS
------------------------------------------------------------ */
-
+/* Responsive adjustments for smaller screens */
 @media (max-width: 900px) {
-  .sb-timer { font-size: 12vh; }
-  .sb-score { font-size: 10vh; }
-  .sb-name { font-size: 2.4vh; }
-}
+  .sb-wrapper {
+    padding: 16px;
+    border-radius: 20px;
+  }
 
-@media (max-width: 600px) {
-  .sb-bottom-row {
-    flex-direction: column;
-    gap: 2vh;
+  .sb-timer {
+    font-size: 90px;
+  }
+
+  .sb-score {
+    font-size: 70px;
+  }
+
+  .sb-title-box {
+    font-size: 16px;
   }
 }
