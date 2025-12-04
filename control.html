@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel (v3.1)</title>
+<title>Matside — Control Panel (v3.2)</title>
 
+<!-- Socket.IO -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
 <style>
   :root{
-    /* Match scoreboard/overview theme */
     --bg:#000;
     --panel:#101114;
     --border:#262626;
@@ -677,7 +677,7 @@
   <div id="matchPopupBody"></div>
 </div>
 
-<div id="version-tag">v3.1</div>
+<div id="version-tag">v3.2</div>
 
 <script>
 const socket = io("https://scoreboard-server-er33.onrender.com", {
@@ -698,6 +698,7 @@ socket.on("connect", () => {
   const el = document.getElementById("conn");
   if(el) el.textContent = "connected";
 });
+
 socket.on("disconnect", () => {
   const el = document.getElementById("conn");
   if(el) el.textContent = "disconnected";
@@ -709,6 +710,7 @@ socket.on("stateUpdate", (state)=>{
   maybeHandleEndOfPeriod(state);
 });
 
+/* Helpers */
 function fmt(sec){
   sec = Math.max(0, sec || 0);
   const m = String(Math.floor(sec/60)).padStart(2,"0");
@@ -723,6 +725,7 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove("show"),2000);
 }
 
+/* UI update */
 function updateUI(state){
   const mat = currentMat();
   const m = state.mats?.[mat];
@@ -739,6 +742,7 @@ function updateUI(state){
   else timeEl.classList.remove("timer-running");
 }
 
+/* OT + auto period progression */
 function maybeHandleEndOfPeriod(state){
   const mat = currentMat();
   const m = state.mats?.[mat];
@@ -949,7 +953,9 @@ document.getElementById("applyCustomTimeBtn").onclick = ()=>{
 
   let sec = 0;
   if(val.includes(":")){
-    const [m,s] = val.split(":").map(x=>parseInt(x,10)||0);
+    const parts = val.split(":");
+    const m = parseInt(parts[0],10)||0;
+    const s = parseInt(parts[1],10)||0;
     sec = m*60 + s;
   }else{
     sec = parseInt(val,10)||0;
@@ -963,7 +969,7 @@ document.getElementById("applyCustomTimeBtn").onclick = ()=>{
   showToast(`Custom time set to ${fmt(sec)}`);
 };
 
-/* TIMELINE (local-only, per browser) */
+/* TIMELINE (local only) */
 function pushTimeline(mat, ev){
   timeline[mat].push({
     label:ev.label,
@@ -983,10 +989,11 @@ function renderTimeline(mat){
   events.slice().reverse().forEach(ev=>{
     const div = document.createElement("div");
     div.className = "timeline-item";
+    const periodLabel = ev.period ? `Period ${ev.period}` : "";
     div.innerHTML = `
       <div class="timeline-main">${ev.label}</div>
       <div class="timeline-meta">
-        ${ev.timeStr} · Period ${ev.period} · Red ${ev.red} – Green ${ev.green}
+        ${ev.timeStr || "—"} · ${periodLabel} · Red ${ev.red ?? 0} – Green ${ev.green ?? 0}
       </div>
     `;
     list.appendChild(div);
@@ -1001,13 +1008,11 @@ function updateLastMatchUI(result){
   const sEl = document.getElementById("lastMatchScore");
   const mEl = document.getElementById("lastMatchMeta");
 
-  const winnerName = result.winner === "red"
-    ? (result.redName || "Red Wrestler")
-    : (result.greenName || "Green Wrestler");
+  const redName = result.redName || "Red Wrestler";
+  const greenName = result.greenName || "Green Wrestler";
 
-  const loserName = result.winner === "red"
-    ? (result.greenName || "Green Wrestler")
-    : (result.redName || "Red Wrestler");
+  const winnerName = result.winner === "red" ? redName : greenName;
+  const loserName = result.winner === "red" ? greenName : redName;
 
   const winnerScore = result.winner === "red" ? result.redScore : result.greenScore;
   const loserScore = result.winner === "red" ? result.greenScore : result.redScore;
@@ -1023,12 +1028,10 @@ function updateLastMatchUI(result){
 function showMatchPopup(result){
   const popup = document.getElementById("matchPopup");
   const body = document.getElementById("matchPopupBody");
-  const winnerName = result.winner === "red"
-    ? (result.redName || "Red Wrestler")
-    : (result.greenName || "Green Wrestler");
-  const loserName = result.winner === "red"
-    ? (result.greenName || "Green Wrestler")
-    : (result.redName || "Red Wrestler");
+  const redName = result.redName || "Red Wrestler";
+  const greenName = result.greenName || "Green Wrestler";
+  const winnerName = result.winner === "red" ? redName : greenName;
+  const loserName = result.winner === "red" ? greenName : redName;
 
   body.textContent = `${winnerName} def. ${loserName} ${result.redScore}-${result.greenScore} (${result.method}) on Mat ${result.mat}`;
 
@@ -1037,7 +1040,7 @@ function showMatchPopup(result){
   _matchPopupTimer = setTimeout(()=>{popup.style.display="none";},5000);
 }
 
-/* NAMES (local to browser, per mat) */
+/* NAMES (local per mat) */
 const redNameInput = document.getElementById("redNameInput");
 const greenNameInput = document.getElementById("greenNameInput");
 
