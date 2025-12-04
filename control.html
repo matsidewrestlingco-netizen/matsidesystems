@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel v4.0 (Monolithic)</title>
+<title>Matside — Control Panel v4.1 (Monolithic)</title>
 
 <!-- Socket.IO -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -276,26 +276,107 @@
     flex:1;
   }
 
-  /* Timeline */
-  #timelineBox{
-    max-height:260px;
-    overflow-y:auto;
-    background:#0b0c0f;
-    border-radius:10px;
-    padding:8px;
-    border:1px solid #202127;
+  /* Last match card */
+  .last-match-card{
+    margin-top:12px;
+    background:linear-gradient(135deg,#15171c,#101218);
+    border-radius:var(--radius);
+    padding:10px 12px;
+    border:1px solid #2b323b;
+    font-size:13px;
+  }
+  .last-match-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:4px;
+  }
+  .last-badge{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    padding:2px 6px;
+    border-radius:999px;
+    background:#22262e;
+    color:var(--muted);
+  }
+  .last-match-main{
+    font-size:13px;
+  }
+  .last-match-meta{
+    margin-top:3px;
+    font-size:11px;
+    color:var(--muted);
+  }
+
+  /* ================================
+     FULL-WIDTH HORIZONTAL TIMELINE
+     ================================ */
+  .timeline-bar{
+    margin-top:12px;
+    background:#0b0d13;
+    border-radius:16px;
+    padding:10px 12px 12px;
+    border:1px solid #20232d;
+    box-shadow:0 10px 24px rgba(0,0,0,.8);
+  }
+  .timeline-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:6px;
+  }
+  .timeline-title{
+    font-size:14px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+  }
+  .timeline-hint{
+    font-size:11px;
+    color:var(--muted);
+    opacity:0.85;
+  }
+  #timelineStream{
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    padding:6px 2px 2px 2px;
+    scroll-snap-type:x mandatory;
+  }
+  .timeline-card{
+    flex:0 0 auto;
+    min-width:190px;
+    max-width:240px;
+    background:var(--panel);
+    border-radius:12px;
+    padding:8px 10px;
+    border:1px solid var(--border);
+    box-shadow:0 6px 16px rgba(0,0,0,.8);
+    scroll-snap-align:start;
     font-size:12px;
   }
-  .timeline-item{
-    padding:4px 0;
-    border-bottom:1px solid rgba(255,255,255,0.04);
+  .tl-type{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--accent);
+    margin-bottom:2px;
   }
-  .timeline-item:last-child{
-    border-bottom:none;
+  .tl-body{
+    font-size:13px;
   }
-  .timeline-meta{
+  .tl-time{
+    margin-top:4px;
+    font-size:11px;
     color:var(--muted);
-    font-size:10px;
+  }
+  .timeline-empty{
+    font-size:12px;
+    color:var(--muted);
+    opacity:0.85;
+    padding:4px 2px;
   }
 
   /* Toast */
@@ -357,39 +438,6 @@
   }
   .suggest-line{
     margin-top:4px;
-    font-size:11px;
-    color:var(--muted);
-  }
-
-  /* Last match card */
-  .last-match-card{
-    margin-top:12px;
-    background:linear-gradient(135deg,#15171c,#101218);
-    border-radius:var(--radius);
-    padding:10px 12px;
-    border:1px solid #2b323b;
-    font-size:13px;
-  }
-  .last-match-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:4px;
-  }
-  .last-badge{
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:.08em;
-    padding:2px 6px;
-    border-radius:999px;
-    background:#22262e;
-    color:var(--muted);
-  }
-  .last-match-main{
-    font-size:13px;
-  }
-  .last-match-meta{
-    margin-top:3px;
     font-size:11px;
     color:var(--muted);
   }
@@ -463,6 +511,15 @@
       <em>No match submitted yet.</em>
     </div>
     <div class="last-match-meta" id="lastMatchMeta"></div>
+  </div>
+
+  <!-- FULL-WIDTH HORIZONTAL TIMELINE -->
+  <div class="timeline-bar">
+    <div class="timeline-header">
+      <div class="timeline-title">Timeline</div>
+      <div class="timeline-hint">Live event stream for this mat.</div>
+    </div>
+    <div id="timelineStream"></div>
   </div>
 
   <!-- MAIN GRID -->
@@ -601,12 +658,6 @@
         </div>
       </div>
 
-      <!-- TIMELINE -->
-      <div class="card" style="margin-top:var(--gap);">
-        <h3>Match Timeline</h3>
-        <div id="timelineBox"></div>
-      </div>
-
     </div>
 
   </div>
@@ -657,7 +708,7 @@
   <span id="toastText">Saved</span>
 </div>
 
-<div id="version-tag">Control v4.0 (Monolithic)</div>
+<div id="version-tag">Control v4.1 (Monolithic)</div>
 
 <script>
   // =========================
@@ -676,7 +727,8 @@
   const sumTimeEl   = document.getElementById("sumTime");
   const sumRedEl    = document.getElementById("sumRed");
   const sumGreenEl  = document.getElementById("sumGreen");
-  const timelineBox = document.getElementById("timelineBox");
+
+  const timelineStream = document.getElementById("timelineStream");
 
   const redNameInput   = document.getElementById("redNameInput");
   const greenNameInput = document.getElementById("greenNameInput");
@@ -732,25 +784,45 @@
   }
 
   function renderTimeline(){
+    if(!timelineStream) return;
     const m = getMatState();
     const list = (m && Array.isArray(m.timeline)) ? m.timeline : [];
     if(!list.length){
-      timelineBox.innerHTML = `<div class="timeline-item"><em>No events yet.</em></div>`;
+      timelineStream.innerHTML = `<div class="timeline-empty"><em>No events yet.</em></div>`;
       return;
     }
-    timelineBox.innerHTML = list.map(item=>{
+
+    timelineStream.innerHTML = list.map(item=>{
+      let text = "";
+      let ts   = Date.now();
       if(typeof item === "string"){
-        return `<div class="timeline-item">${item}</div>`;
+        text = item;
+      }else if(item && item.text){
+        text = item.text;
+        ts   = item.ts || ts;
+      }else{
+        text = String(item);
       }
-      if(item && item.text){
-        const t = new Date(item.ts||Date.now()).toLocaleTimeString();
-        return `<div class="timeline-item">
-          <div>${item.text}</div>
-          <div class="timeline-meta">${t}</div>
-        </div>`;
-      }
-      return `<div class="timeline-item">${String(item)}</div>`;
+
+      // crude classification
+      let type = "Event";
+      if(text.toLowerCase().includes("match ended")) type = "Match End";
+      else if(text.toLowerCase().includes("reset")) type = "Reset";
+      else if(text.toLowerCase().includes("period")) type = "Period";
+
+      const t = new Date(ts).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"});
+
+      return `
+        <div class="timeline-card">
+          <div class="tl-type">${type}</div>
+          <div class="tl-body">${text}</div>
+          <div class="tl-time">${t}</div>
+        </div>
+      `;
     }).join("");
+
+    // auto-scroll to latest
+    timelineStream.scrollLeft = timelineStream.scrollWidth;
   }
 
   function showToast(message){
@@ -761,7 +833,6 @@
 
   socket.on("connect",()=>{
     connEl.textContent = "connected";
-    // register for hub, if used
     socket.emit("registerDevice",{ type:"control", mat:currentMat });
   });
   socket.on("disconnect",()=>{
@@ -812,6 +883,9 @@
       const pts   = parseInt(btn.getAttribute("data-pts")||"0",10);
       if(!color || !pts) return;
       socket.emit("addPoints",{ mat:currentMat, color, pts });
+
+      // optional future: addTimelineEvent for scoring
+      // for now scoreboard state comes from server only
     });
   });
 
@@ -1023,7 +1097,7 @@
     socket.emit("matchEnded", payload);
 
     // Append basic timeline entry client-side
-    const nowText = new Date(payload.ts).toLocaleTimeString();
+    const now = Date.now();
     const newLine = {
       text:`Match ended: ${selectedWinner.toUpperCase()} by ${selectedMethod.replace("_"," ")} (${red}–${green})`,
       ts:payload.ts
@@ -1048,7 +1122,7 @@
       `${winnerName} wins by ${selectedMethod.replace("_"," ")} (${red}–${green})`;
 
     lastMatchMetaEl.textContent =
-      `Mat ${currentMat}, Segment ${prettySegment(segment)} — ${nowText}`;
+      `Mat ${currentMat}, Segment ${prettySegment(segment)} — ${new Date(payload.ts).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})}`;
 
     // Auto-reset mat after submission
     const resetUpdates = {
@@ -1059,7 +1133,10 @@
       running:false,
       red:0,
       green:0,
-      timeline:[...existing, { text:"Mat auto-reset after match submission.", ts:Date.now() }]
+      timeline:[
+        ...existing,
+        { text:"Mat auto-reset after match submission.", ts:now }
+      ]
     };
     socket.emit("updateState",{ mat:currentMat, updates:resetUpdates });
 
