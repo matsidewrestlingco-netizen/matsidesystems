@@ -131,6 +131,24 @@
   }
 }
 
+/* Center wrestler names */
+.sb-name,
+.sb-name-red,
+.sb-name-green {
+  text-align: center !important;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  display: flex;
+}
+
+/* Ensure score number is centered too */
+.sb-score {
+  text-align: center !important;
+  width: 100%;
+  display: block;
+}
+
 @media (max-width: 800px) {
   #scoreboard-root {
     padding: 1rem;
