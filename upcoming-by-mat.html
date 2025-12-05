@@ -3,143 +3,115 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Upcoming Matches By Mat</title>
+<title>Matside — Upcoming Matches by Mat (v3)</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
 <style>
-/* ------------------------ */
-/* GLOBAL DARK MATSIDE THEME */
-/* ------------------------ */
+/* ------------------ GLOBAL THEME ------------------ */
 
 body {
   margin: 0;
   padding: 20px;
-  background: radial-gradient(ellipse at center, #0d0d0d 0%, #000000 100%);
-  color: #f5f5f5 !important;
-  font-family: "Inter", Arial, sans-serif;
+  background: #0a0a0a;
+  font-family: "Inter", sans-serif;
+  color: #e6e6e6;
 }
 
 h1 {
   text-align: center;
-  font-size: 32px;
-  color: #ffffff;
-  margin-bottom: 28px;
-  text-shadow: 0 0 12px rgba(255,255,255,0.8);
+  margin-bottom: 20px;
+  text-shadow: 0 0 12px rgba(255,255,255,0.35);
 }
 
-/* ------------------------ */
-/* GRID LAYOUT */
-/* ------------------------ */
+/* ------------------ MAT GRID ------------------ */
 
-.mat-grid {
+.mat-container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 28px;
+  gap: 18px;
+  margin-top: 20px;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* ------------------------ */
-/* MAT CARDS */
-/* ------------------------ */
-
-.mat-card {
-  padding: 20px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 0 22px rgba(255,255,255,0.05);
+.mat-column {
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 0 25px rgba(255,255,255,0.03);
 }
 
-.mat-card h2 {
+/* Header */
+.mat-title {
   text-align: center;
   font-size: 22px;
-  letter-spacing: 1px;
-  margin-bottom: 18px;
-  text-shadow: 0 0 10px rgba(255,255,255,0.5);
+  font-weight: 700;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #333;
+  text-shadow: 0 0 12px rgba(255,255,255,0.45);
 }
 
-/* ------------------------ */
-/* TIER TITLES */
-/* ------------------------ */
+/* ------------------ MATCH BLOCKS ------------------ */
 
-.tier-title {
-  margin-top: 16px;
-  margin-bottom: 8px;
-  font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  opacity: 0.85;
-  padding-bottom: 4px;
-}
-
-.now-wrestling-title {
-  color: #ff6b6b;
-  text-shadow: 0 0 10px rgba(255,80,80,0.8);
-}
-
-.on-deck-title {
-  color: #6db4ff;
-  text-shadow: 0 0 10px rgba(80,150,255,0.7);
-}
-
-.in-hole-title {
-  color: #ffd66b;
-  text-shadow: 0 0 10px rgba(255,200,80,0.7);
-}
-
-.upcoming-title {
-  color: #ffffff;
-  opacity: 0.7;
-  text-shadow: 0 0 6px rgba(255,255,255,0.4);
-}
-
-/* ------------------------ */
-/* MATCH CARDS */
-/* ------------------------ */
-
-.match-item {
-  padding: 12px 14px;
-  margin-bottom: 10px;
+.match-block {
+  padding: 12px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
-  backdrop-filter: blur(4px);
-  box-shadow: 0 0 10px rgba(255,255,255,0.05);
-  font-size: 14px;
+  background: #222;
+  margin-bottom: 10px;
+  border: 1px solid #333;
 }
 
-.match-item strong {
+.match-block.now {
+  border-color: #ff4444;
+  background: rgba(255, 68, 68, 0.15);
+  box-shadow: 0 0 12px rgba(255, 68, 68, 0.35);
+}
+
+.match-block.deck {
+  border-color: #3a77ff;
+  background: rgba(58, 119, 255, 0.15);
+  box-shadow: 0 0 12px rgba(58, 119, 255, 0.35);
+}
+
+.match-block.hole {
+  border-color: #ffaa33;
+  background: rgba(255, 170, 51, 0.15);
+  box-shadow: 0 0 12px rgba(255, 170, 51, 0.35);
+}
+
+.match-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.match-line {
   font-size: 15px;
-  text-shadow: 0 0 6px rgba(255,255,255,0.6);
+  margin-bottom: 2px;
+  opacity: 0.9;
 }
 
-.now-wrestling {
-  border-left: 4px solid #ff4b4b;
-  box-shadow: 0 0 14px rgba(255,60,60,0.4);
+.divider {
+  margin: 10px 0;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
 }
 
-.on-deck {
-  border-left: 4px solid #3f8cff;
-  box-shadow: 0 0 14px rgba(60,130,255,0.4);
-}
+/* Group labels: Now / On Deck / In The Hole / Queue */
 
-.in-hole {
-  border-left: 4px solid #ffb84b;
-  box-shadow: 0 0 14px rgba(255,180,60,0.4);
-}
-
-/* ------------------------ */
-/* EMPTY STATE */
-/* ------------------------ */
-
-.empty-text {
-  margin: 8px 0 18px;
-  font-size: 13px;
-  opacity: 0.55;
-  text-shadow: 0 0 4px rgba(255,255,255,0.3);
+.group-title {
+  font-size: 16px;
+  margin-bottom: 8px;
+  opacity: 0.8;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 </style>
@@ -147,19 +119,18 @@ h1 {
 
 <body>
 
-<h1>MATSIDE — UPCOMING MATCHES BY MAT</h1>
+<h1>Upcoming Matches by Mat</h1>
 
-<div class="mat-grid">
-  <div class="mat-card"><h2>Mat 1</h2><div id="mat-1"></div></div>
-  <div class="mat-card"><h2>Mat 2</h2><div id="mat-2"></div></div>
-  <div class="mat-card"><h2>Mat 3</h2><div id="mat-3"></div></div>
-  <div class="mat-card"><h2>Mat 4</h2><div id="mat-4"></div></div>
+<div class="mat-container">
+  <div id="mat-1" class="mat-column"></div>
+  <div id="mat-2" class="mat-column"></div>
+  <div id="mat-3" class="mat-column"></div>
+  <div id="mat-4" class="mat-column"></div>
 </div>
 
 <script>
-////////////////////////////////////////////////////
-// FIREBASE INIT
-////////////////////////////////////////////////////
+/* ------------------ FIREBASE INIT ------------------ */
+
 const firebaseConfig = {
   apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
   authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
@@ -172,78 +143,102 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-////////////////////////////////////////////////////
-// REAL-TIME LISTENER
-////////////////////////////////////////////////////
-db.collection("matchLibrary").onSnapshot(snapshot => {
-  const matches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+/* ------------------ LIVE LISTENER ------------------ */
 
+db.collection("matchLibrary").onSnapshot(snapshot => {
+  const all = snapshot.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(m => !m.completed); // hide completed matches
+
+  // Group by mat
   const mats = { 1: [], 2: [], 3: [], 4: [] };
 
-  matches.forEach(m => {
-    const mat = Number(m.assignedMat);
-    if (mat >= 1 && mat <= 4) mats[mat].push(m);
+  all.forEach(m => {
+    if (m.assignedMat >= 1 && m.assignedMat <= 4) {
+      mats[m.assignedMat].push(m);
+    }
   });
 
+  // SORT BY BOUT NUMBER (your chosen system)
   for (let m = 1; m <= 4; m++) {
-    mats[m].sort((a, b) => (a.queueIndex ?? 9999) - (b.queueIndex ?? 9999));
+    mats[m].sort((a, b) => Number(a.bout) - Number(b.bout));
   }
 
-  for (let m = 1; m <= 4; m++) renderMat(m, mats[m]);
+  // Render each mat
+  for (let m = 1; m <= 4; m++) {
+    renderMat(m, mats[m]);
+  }
 });
 
-////////////////////////////////////////////////////
-// RENDER A MAT COLUMN
-////////////////////////////////////////////////////
+/* ------------------ RENDER A MAT COLUMN ------------------ */
+
 function renderMat(matNum, list) {
-  const root = document.getElementById(`mat-${matNum}`);
-  root.innerHTML = "";
+  const el = document.getElementById("mat-" + matNum);
+  el.innerHTML = `
+    <div class="mat-title">Mat ${matNum}</div>
+  `;
 
   if (!list.length) {
-    root.innerHTML = `<div class="empty-text">No upcoming matches</div>`;
+    el.innerHTML += `<div style="opacity:0.5;text-align:center;">No upcoming matches</div>`;
     return;
   }
 
-  const now = list[0] || null;
-  const onDeck = list[1] || null;
-  const inHole = list[2] || null;
-  const upcoming = list.slice(3);
+  // Extract tiers
+  const now = list[0];
+  const deck = list[1];
+  const hole = list[2];
+  const queue = list.slice(3);
 
-  root.innerHTML += `<div class="tier-title now-wrestling-title">Now Wrestling</div>`;
-  now ? root.appendChild(item(now, "now-wrestling")) :
-    root.innerHTML += `<div class="empty-text">— None —</div>`;
+  // Now Wrestling
+  if (now) {
+    el.innerHTML += `
+      <div class="group-title">Now Wrestling</div>
+      ${block(now, "now")}
+      <div class="divider"></div>
+    `;
+  }
 
-  root.innerHTML += `<div class="tier-title on-deck-title">On Deck</div>`;
-  onDeck ? root.appendChild(item(onDeck, "on-deck")) :
-    root.innerHTML += `<div class="empty-text">— None —</div>`;
+  // On Deck
+  if (deck) {
+    el.innerHTML += `
+      <div class="group-title">On Deck</div>
+      ${block(deck, "deck")}
+      <div class="divider"></div>
+    `;
+  }
 
-  root.innerHTML += `<div class="tier-title in-hole-title">In The Hole</div>`;
-  inHole ? root.appendChild(item(inHole, "in-hole")) :
-    root.innerHTML += `<div class="empty-text">— None —</div>`;
+  // In the Hole
+  if (hole) {
+    el.innerHTML += `
+      <div class="group-title">In The Hole</div>
+      ${block(hole, "hole")}
+      <div class="divider"></div>
+    `;
+  }
 
-  root.innerHTML += `<div class="tier-title upcoming-title">Upcoming</div>`;
-  if (!upcoming.length) {
-    root.innerHTML += `<div class="empty-text">— None —</div>`;
-  } else {
-    upcoming.forEach(m => root.appendChild(item(m)));
+  // Remaining Queue
+  if (queue.length) {
+    el.innerHTML += `<div class="group-title">Queue</div>`;
+    queue.forEach(m => {
+      el.innerHTML += block(m, "");
+    });
   }
 }
 
-////////////////////////////////////////////////////
-// MATCH CARD COMPONENT
-////////////////////////////////////////////////////
-function item(match, cls = "") {
-  const div = document.createElement("div");
-  div.className = `match-item ${cls}`;
+/* ------------------ MATCH BLOCK UI ------------------ */
 
-  div.innerHTML = `
-    <div><strong>Bout ${match.bout}</strong> — ${match.weight || "?"} lbs</div>
-    <div>${match.red.name} (${match.red.team}) vs ${match.green.name} (${match.green.team})</div>
-    <div class="match-meta">Round: ${match.round}</div>
+function block(m, cls) {
+  return `
+    <div class="match-block ${cls}">
+      <div class="match-title">Bout ${m.bout} ${m.weight ? `— ${m.weight}` : ""}</div>
+      <div class="match-line">${m.red?.name || ""} (${m.red?.team || ""})</div>
+      <div class="match-line">vs</div>
+      <div class="match-line">${m.green?.name || ""} (${m.green?.team || ""})</div>
+    </div>
   `;
-
-  return div;
 }
+
 </script>
+
 </body>
 </html>
