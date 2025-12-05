@@ -14,21 +14,36 @@
     body {
       margin: 0;
       padding: 0;
-      background: #111;
+      background: #0e0e0e;
       font-family: "Inter", sans-serif;
       color: #eee;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
+      flex-direction: column;
+    }
+
+    .logo-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      margin-top: -20px;
+    }
+
+    .logo-wrapper img {
+      width: 200px;
+      max-width: 70%;
+      height: auto;
+      filter: drop-shadow(0 0 6px rgba(255,255,255,0.25));
     }
 
     .card {
-      background: #1e1e1e;
-      padding: 24px 26px;
-      border-radius: 12px;
-      width: 320px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      background: #1c1c1c;
+      padding: 28px 30px;
+      border-radius: 14px;
+      width: 330px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.55);
       border: 1px solid #333;
     }
 
@@ -36,13 +51,15 @@
       margin: 0 0 4px;
       font-size: 20px;
       text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.5px;
     }
 
     .subtitle {
       font-size: 12px;
-      opacity: 0.7;
+      opacity: 0.65;
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     label {
@@ -60,12 +77,12 @@
       border-radius: 6px;
       border: 1px solid #444;
       color: #eee;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     button {
       width: 100%;
-      padding: 9px 10px;
+      padding: 10px 10px;
       border-radius: 20px;
       border: none;
       background: #3a77ff;
@@ -79,18 +96,18 @@
 
     button:hover {
       background: #5a8cff;
-      box-shadow: 0 0 10px rgba(90,140,255,0.6);
+      box-shadow: 0 0 10px rgba(90,140,255,0.55);
     }
 
     .toggle {
       font-size: 12px;
       margin-top: 10px;
       text-align: center;
-      opacity: 0.8;
+      opacity: 0.85;
     }
 
     .toggle span {
-      color: #3a77ff;
+      color: #5a8cff;
       cursor: pointer;
       text-decoration: underline;
     }
@@ -100,28 +117,18 @@
       color: #ff8080;
       margin-top: 6px;
       min-height: 16px;
+      text-align: center;
     }
   </style>
 </head>
+
 <body>
 
-<!-- Matside Logo -->
-<div style="
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 24px;
-  margin-top: -10px;
-">
+<!-- Logo -->
+<div class="logo-wrapper">
   <img 
     src="https://raw.githubusercontent.com/matsidewrestlingco-netizen/scoreboard-frontend/refs/heads/main/assets/image01.png"
     alt="Matside Logo"
-    style="
-      width: 180px;
-      max-width: 60%;
-      height: auto;
-      filter: drop-shadow(0 0 6px rgba(255,255,255,0.25));
-    "
   />
 </div>
 
@@ -146,7 +153,7 @@
 </div>
 
 <script>
-  // Firebase config — same project as admin-control
+  /* ---------- Firebase Initialization ---------- */
   const firebaseConfig = {
     apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
     authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
@@ -155,9 +162,10 @@
     messagingSenderId: "898197416726",
     appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
   };
+
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
-  const db   = firebase.firestore();
+  const db = firebase.firestore();
 
   let mode = "login"; // or "signup"
 
@@ -184,9 +192,11 @@
     setMode(mode === "login" ? "signup" : "login");
   });
 
+  /* ---------- Auth Form Submission ---------- */
   document.getElementById("authForm").addEventListener("submit", (e) => {
     e.preventDefault();
     errorBox.textContent = "";
+
     const email = document.getElementById("emailInput").value.trim();
     const password = document.getElementById("passwordInput").value;
 
@@ -207,7 +217,8 @@
       auth.createUserWithEmailAndPassword(email, password)
         .then(cred => {
           const uid = cred.user.uid;
-          // Default safe permissions: viewer only
+          
+          // Default safe permissions: viewer-only
           const defaultPerms = {
             email,
             canManageEvents: false,
@@ -218,6 +229,7 @@
             canViewDashboard: true,
             canManageUsers: false
           };
+
           return db.collection("users").doc(uid).set(defaultPerms, { merge: true });
         })
         .then(() => {
@@ -229,7 +241,7 @@
     }
   });
 
-  // If already signed in, go straight to admin
+  /* ---------- Auto-redirect if already logged in ---------- */
   auth.onAuthStateChanged(user => {
     if (user) {
       window.location.href = "admin-control.html";
