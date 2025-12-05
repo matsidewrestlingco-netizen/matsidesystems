@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Matside — Control Panel v4.1</title>
 
-<!-- Firebase (match feed) -->
+<!-- Firebase for match feed -->
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
-
 
 <style>
   :root {
@@ -19,71 +18,90 @@
     --accent: #1e88e5;
     --accent-soft: rgba(30,136,229,0.22);
     --red: #d32f2f;
-    --green: #388e3c;
-    --gold: #fbc02d;
-    --border: #252836;
-    --radius: 14px;
-    --gap: 14px;
+    --green: #43a047;
+    --danger: #f44336;
+    --good: #4caf50;
+    --outline: rgba(255,255,255,0.04);
+    --outline-strong: rgba(255,255,255,0.12);
+    --shadow-soft: 0 18px 45px rgba(0,0,0,0.65);
   }
 
   * {
     box-sizing: border-box;
   }
 
-  html, body {
+  body {
     margin: 0;
-    padding: 0;
-    background: radial-gradient(circle at top, #151821 0, #05060a 55%);
-    color: #fff;
-    font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+    padding: 16px 16px 28px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    background: radial-gradient(circle at top, #151829 0, #05060a 42%, #020308 100%);
+    color: #e9eaee;
   }
 
-  /* HEADER */
-  .header-bar {
-    background: #05060a;
-    border-bottom: 1px solid #12141c;
-    box-shadow: 0 14px 40px rgba(0, 0, 0, .9);
-  }
-  .header-inner {
-    max-width: 1100px;
+  .wrap {
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 6px 16px;
+  }
+
+  /* HEADER BAR */
+
+  .header-bar {
+    max-width: 1120px;
+    margin: 0 auto 14px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background:
+      linear-gradient(135deg, rgba(25,118,210,0.18), rgba(2,3,8,0.96));
+    border: 1px solid rgba(120,172,255,0.35);
+    box-shadow: 0 18px 45px rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-inner {
     display: flex;
     align-items: center;
     gap: 10px;
   }
+
   .brand-logo {
-    height: 40px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #02030a;
+    object-fit: contain;
+    padding: 4px;
+    border: 1px solid rgba(255,255,255,0.08);
   }
+
   .brand-title {
     font-size: 18px;
-    font-weight: 700;
-    letter-spacing: .04em;
+    font-weight: 650;
+    letter-spacing: 0.03em;
   }
+
   .header-accent {
-    height: 2px;
-    background: linear-gradient(90deg,
-      rgba(30,136,229,0.0),
-      rgba(30,136,229,0.65),
-      rgba(251,192,45,0.7),
-      rgba(30,136,229,0.0)
-    );
+    font-size: 12px;
+    color: rgba(255,255,255,0.72);
   }
 
-  .wrap {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 14px 16px 60px;
+  .header-accent span {
+    opacity: 0.7;
   }
 
-  /* TOP BAR / SUMMARY */
+  .header-accent strong {
+    font-weight: 600;
+  }
+
+  /* TOP ROW */
+
   .top-row {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 14px;
-    margin-bottom: 10px;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
   }
 
   .brand-mini {
@@ -91,110 +109,508 @@
     align-items: center;
     gap: 8px;
   }
+
   .brand-mini img {
-    height: 22px;
-    border-radius: 6px;
-  }
-  .brand-mini-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #02030a;
+    object-fit: contain;
+    padding: 3px;
   }
 
-  .status {
+  .brand-mini-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .brand-mini-text span:first-child {
     font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
     color: var(--muted);
   }
 
-  select {
-    padding: 8px 10px;
-    border-radius: 10px;
-    border: 1px solid #242733;
-    background: #080a10;
-    color: #fff;
-    font-size: 14px;
+  .brand-mini-text span:last-child {
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
   }
+
+  .top-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .conn-pill {
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: radial-gradient(circle at top left,#30344b,#141624);
+  }
+
+  .conn-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #f44336;
+  }
+
+  .conn-pill.connected .conn-dot {
+    background: #4caf50;
+  }
+
+  .conn-label {
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .conn-state {
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .mat-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: #0b0d15;
+  }
+
+  .mat-select-wrap label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+
+  .mat-select-wrap select {
+    background: #151829;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #fff;
+    font-size: 12px;
+    padding: 3px 9px;
+  }
+
+  /* SUMMARY BAR */
 
   .summary-card {
-    margin-top: 6px;
-    padding: 8px 12px;
+    margin: 0 0 10px;
+    padding: 9px 12px;
     border-radius: 14px;
     background: radial-gradient(circle at top left,
-      rgba(30,136,229,0.18),
+      rgba(30,136,229,0.16),
       rgba(10,12,20,0.95));
-    border: 1px solid rgba(255,255,255,0.05);
-    box-shadow: 0 16px 40px rgba(0,0,0,.9);
+    border: 1px solid rgba(255,255,255,0.04);
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+    gap: 16px;
+    align-items: center;
     justify-content: space-between;
-  }
-  .summary-item {
     font-size: 13px;
   }
+
+  .summary-item {
+    display: flex;
+    gap: 4px;
+    align-items: baseline;
+  }
+
+  .summary-item span {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
   .summary-item strong {
-    font-weight: 800;
-  }
-  .redText { color: var(--red); }
-  .greenText { color: var(--green); }
-
-  /* TIMER PULSE */
-  @keyframes timerPulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.55; }
-    100% { opacity: 1; }
-  }
-  .timer-running {
-    animation: timerPulse 1.1s infinite ease-in-out;
+    font-weight: 600;
   }
 
-  /* GRID LAYOUT */
+  .redText {
+    color: var(--red);
+  }
+
+  .greenText {
+    color: var(--green);
+  }
+
+  /* Upcoming match card */
+  .upcoming-card {
+    margin: 10px auto 18px;
+    max-width: 1100px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: radial-gradient(circle at top left,
+      rgba(30,136,229,0.12),
+      rgba(5,6,10,0.96));
+    border: 1px solid rgba(255,255,255,0.06);
+    display: grid;
+    grid-template-columns: repeat(4,minmax(0,1fr));
+    gap: 8px 16px;
+    align-items: center;
+    font-size: 13px;
+  }
+
+  .upcoming-title {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .up-line {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+  }
+
+  .up-label {
+    color: var(--muted);
+    font-size: 12px;
+    min-width: 70px;
+  }
+
+  .up-value {
+    font-weight: 600;
+    color: #fff;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .up-queue .up-value {
+    opacity: 0.85;
+  }
+
+  @media (max-width: 900px) {
+    .upcoming-card {
+      grid-template-columns: repeat(2,minmax(0,1fr));
+    }
+  }
+
+  @media (max-width: 600px) {
+    .upcoming-card {
+      grid-template-columns: minmax(0,1fr);
+    }
+  }
+
+  /* GRID */
+
   .grid {
     display: grid;
-    grid-template-columns: 2fr 3fr;
-    gap: var(--gap);
-    margin-top: 14px;
+    grid-template-columns: minmax(0,1.3fr) minmax(0,1.1fr);
+    gap: 14px;
   }
-  @media (max-width: 900px) {
+
+  @media (max-width: 880px) {
     .grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0,1fr);
     }
   }
 
   .card {
-    background: radial-gradient(circle at top, #191d2a 0, #10131e 40%, #070813 100%);
-    border-radius: var(--radius);
-    padding: 12px;
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 18px 50px rgba(0,0,0,.95);
-  }
-  .card h3 {
-    margin: 0 0 6px 0;
-    font-size: 15px;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-    color: #e3e7f1;
-  }
-  .card-sub {
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 6px;
+    background: #10121d;
+    border-radius: 18px;
+    padding: 14px 14px 16px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--outline);
   }
 
-  .row {
+  .card h3 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .card-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  /* TIMER LAYOUT */
+
+  .timer-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 720px) {
+    .timer-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .timer-row-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .timer-button-group {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    align-items: center;
   }
 
-  button {
-    border: 0;
+  .scoreline {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scoreline label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+
+  .scoreline span {
+    font-size: 20px;
+    font-weight: 650;
+  }
+
+  .scoreline .sep {
+    width: 1px;
+    height: 18px;
+    background: rgba(255,255,255,0.16);
+  }
+
+  .timer-controls {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .timer-controls button {
+    flex: 1 0 80px;
+  }
+
+  .segment-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .seg-pill {
+    padding: 4px 9px;
     border-radius: 999px;
-    padding: 9px 14px;
-    font-weight: 700;
+    border: 1px solid rgba(255,255,255,0.14);
+    font-size: 11px;
+    background: #080a10;
+    color: #e9eaee;
     cursor: pointer;
-    font-size: 14px;
+  }
+
+  .seg-pill.active {
+    background: var(--accent-soft);
+    border-color: rgba(94,166,255,0.85);
+  }
+
+  .seg-pill span {
+    opacity: 0.86;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+
+  .toggle-row input[type="checkbox"] {
+    accent-color: var(--accent);
+  }
+
+  /* SCORE PANEL */
+
+  .score-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .score-box {
+    border-radius: 16px;
+    padding: 12px 12px 10px;
+    border: 1px solid var(--outline);
+    background: radial-gradient(circle at top, rgba(211,47,47,0.18), #11131b);
+  }
+
+  .score-box.green-side {
+    background: radial-gradient(circle at top, rgba(67,160,71,0.18), #11131b);
+  }
+
+  .score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .score-header span {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .score-header strong {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .big-score {
+    font-size: 30px;
+    font-weight: 700;
+  }
+
+  .score-buttons {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .score-buttons button {
+    flex: 1 0 60px;
+  }
+
+  .name-input-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .name-input-row input {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: #050711;
+    color: #fff;
+    font-size: 12px;
+  }
+
+  .name-input-row input::placeholder {
+    color: rgba(255,255,255,0.35);
+  }
+
+  /* TIMELINE */
+
+  .timeline-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .timeline-stream {
+    margin-top: 4px;
+    border-radius: 12px;
+    padding: 8px 10px;
+    min-height: 150px;
+    max-height: 270px;
+    background: #050711;
+    border: 1px solid var(--outline);
+    overflow-y: auto;
+    font-size: 12px;
+  }
+
+  .tl-item {
+    margin-bottom: 4px;
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+  }
+
+  .tl-time {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    min-width: 60px;
+  }
+
+  .tl-text {
+    font-size: 12px;
+  }
+
+  .tl-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    font-size: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.8);
+  }
+
+  /* FOOTER BOTTOM ROW */
+
+  .bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .bottom-row span strong {
+    color: rgba(255,255,255,0.86);
+  }
+
+  #version-tag {
+    position: fixed;
+    bottom: 8px;
+    right: 12px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+  }
+
+  /* BUTTONS */
+
+  .btn {
+    border: none;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #181a26;
+    color: #f5f5f5;
+    border: 1px solid rgba(255,255,255,0.08);
   }
 
   .btn-wide {
@@ -211,410 +627,132 @@
     color: #fff;
   }
   .gray {
-    background: #2a2f3b;
-    color: #fff;
+    background: linear-gradient(135deg,#424242,#212121);
+    color: #e0e0e0;
   }
   .red {
-    background: #d32f2f;
+    background: linear-gradient(135deg,#ef5350,#c62828);
     color: #fff;
   }
-  .green {
-    background: #388e3c;
-    color: #fff;
-  }
-  .gold {
-    background: #fbc02d;
-    color: #000;
-  }
-
-  .btn-ghost {
+  .outline {
     background: transparent;
-    border: 1px solid #303341;
-    color: var(--muted);
   }
 
-  /* TIMER CARD LAYOUT */
-  .timer-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  .btn:disabled {
+    opacity: 0.35;
+    cursor: default;
   }
-  .timer-row-main {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .timer-button-group {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .timer-preset-row {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .pill-btn {
-    padding: 6px 10px;
+
+  /* TOGGLE CHIP */
+
+  .chip {
     border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(12,15,25,0.9);
-    color: #e0e3f0;
+    padding: 4px 8px;
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: .09em;
-    cursor: pointer;
-  }
-  .pill-btn.active {
-    border-color: var(--accent);
-    background: rgba(30,136,229,0.16);
-    color: #eaf3ff;
-  }
-
-  .hint {
-    font-size: 11px;
+    letter-spacing: 0.14em;
+    border: 1px solid rgba(255,255,255,0.1);
     color: var(--muted);
-    margin-top: 4px;
-  }
-
-  .field-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .field-row label {
-    font-size: 11px;
-    color: var(--muted);
-  }
-  input[type="text"] {
-    padding: 6px 8px;
-    border-radius: 8px;
-    border: 1px solid #262a36;
-    background: #060812;
-    color: #fff;
-    font-size: 13px;
-  }
-
-  /* SCORING */
-  .score-columns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  @media (max-width: 600px) {
-    .score-columns {
-      grid-template-columns: 1fr;
-    }
-  }
-  .scoring-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0,1fr));
-    gap: 6px;
-  }
-  @media (max-width: 450px) {
-    .scoring-grid {
-      grid-template-columns: repeat(2, minmax(0,1fr));
-    }
-  }
-
-  /* LAST MATCH */
-  .last-match-main {
-    font-weight: 600;
-    font-size: 13px;
-    margin-bottom: 4px;
-  }
-  .last-match-meta {
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  /* TIMELINE — NEW GLASS STYLE, FULL-WIDTH AT BOTTOM */
-  .timeline-bar{
-    margin-top:16px;
-    background:linear-gradient(135deg, rgba(15,17,25,0.98), rgba(10,12,20,0.96));
-    border-radius:18px;
-    padding:12px 14px 14px;
-    border:1px solid rgba(255,255,255,0.08);
-    box-shadow:0 14px 36px rgba(0,0,0,.85);
-  }
-  .timeline-header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-bottom:8px;
-  }
-  .timeline-title{
-    font-size:14px;
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.12em;
-    color:var(--muted);
-  }
-  .timeline-hint{
-    font-size:11px;
-    color:var(--muted);
-    opacity:0.9;
-  }
-  #timelineStream{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    max-height:260px;
-    overflow-y:auto;
-    padding:6px 2px 2px 2px;
-  }
-  .timeline-card{
-    position:relative;
-    flex:0 0 auto;
-    min-width:190px;
-    max-width:260px;
-    background:rgba(8,10,18,0.9);
-    border-radius:14px;
-    padding:8px 10px;
-    border:1px solid rgba(255,255,255,0.10);
-    box-shadow:0 10px 26px rgba(0,0,0,.9);
-    font-size:12px;
-    backdrop-filter:blur(12px);
-  }
-  .timeline-card::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    border-radius:inherit;
-    pointer-events:none;
-    border:1px solid rgba(255,255,255,0.06);
-    opacity:0.7;
-  }
-  .timeline-card.tl-score-red{
-    border-color:rgba(211,47,47,0.7);
-    box-shadow:0 0 18px rgba(211,47,47,0.6);
-  }
-  .timeline-card.tl-score-green{
-    border-color:rgba(56,142,60,0.7);
-    box-shadow:0 0 18px rgba(56,142,60,0.6);
-  }
-  .timeline-card.tl-period{
-    border-color:rgba(251,192,45,0.7);
-    box-shadow:0 0 16px rgba(251,192,45,0.6);
-  }
-  .timeline-card.tl-match{
-    border-color:rgba(30,136,229,0.75);
-    box-shadow:0 0 20px rgba(30,136,229,0.7);
-  }
-  .timeline-card.tl-reset{
-    border-color:rgba(144,164,174,0.8);
-    box-shadow:0 0 16px rgba(144,164,174,0.6);
-  }
-  .tl-type{
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:.10em;
-    color:var(--muted);
-    margin-bottom:2px;
-  }
-  .tl-body{
-    font-size:13px;
-    font-weight:500;
-    margin-bottom:3px;
-  }
-  .tl-time{
-    font-size:11px;
-    color:var(--muted);
-  }
-  .timeline-empty{
-    font-size:12px;
-    color:var(--muted);
-    opacity:0.85;
-    padding:4px 2px;
-  }
-
-  /* TOAST */
-  #toast{
-    position:fixed;
-    left:50%;
-    bottom:10px;
-    transform:translateX(-50%);
-    padding:8px 14px;
-    border-radius:999px;
-    background:rgba(8,10,18,0.95);
-    border:1px solid rgba(255,255,255,0.12);
-    box-shadow:0 18px 40px rgba(0,0,0,.95);
-    font-size:12px;
-    display:none;
-    align-items:center;
-    gap:6px;
-    z-index:9999;
-  }
-  #toastIcon{
-    font-size:14px;
   }
 
   /* MATCH MODAL */
-  #matchModalBackdrop{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.7);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:9998;
-  }
-  .modal{
-    background:#10121a;
-    border-radius:16px;
-    padding:14px 16px;
-    max-width:420px;
-    width:100%;
-    border:1px solid rgba(255,255,255,0.16);
-    box-shadow:0 22px 60px rgba(0,0,0,.98);
-  }
-  .modal h3{
-    margin:0 0 8px 0;
-    font-size:16px;
-  }
-  .modal-section{
-    margin-top:8px;
-    padding-top:6px;
-    border-top:1px solid #24293a;
-  }
-  .suggest-line{
-    font-size:12px;
-    color:var(--muted);
-    margin-bottom:6px;
-  }
-  .pill-row{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-  }
-  .pill-btn-fat{
-    border-radius:999px;
-    border:1px solid #303548;
-    padding:6px 10px;
-    background:#0c101c;
-    font-size:12px;
-    cursor:pointer;
-  }
-  .pill-btn-fat.active{
-    border-color:var(--accent);
-    background:rgba(30,136,229,0.3);
-  }
-  .modal-footer{
-    display:flex;
-    justify-content:space-between;
-    gap:8px;
-    margin-top:10px;
+
+  #matchModalBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,20,0.75);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 40;
   }
 
-  /* VERSION TAG */
-  #version-tag{
-    position:fixed;
-    bottom:6px;
-    right:10px;
-    font-size:11px;
-    color:#666;
-    opacity:0.75;
-    pointer-events:none;
-    user-select:none;
-    font-weight:600;
-    z-index:99999;
+  #matchModalBackdrop.show {
+    display: flex;
   }
 
-/* ============================================================
-   END MATCH MODAL — RESTORE BUTTON COLORS
-   ============================================================ */
-
-.modal-container button {
-  font-weight: 600;
-  border-radius: 14px;
-  padding: 8px 18px;
-  border: none;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-/* Winner buttons */
-#winnerRedBtn {
-  background: #c62828 !important;
-  color: white !important;
-}
-#winnerGreenBtn {
-  background: #2e7d32 !important;
-  color: white !important;
-}
-
-/* Winner active state (when selected in JS) */
-.pill-btn-fat.active,
-.pill-btn-fat.selected {
-  outline: 2px solid #4c89ff;
-}
-
-/* Method buttons (default) */
-.pill-btn-fat {
-  background: #2f3640 !important;
-  color: #eee !important;
-}
-
-/* Method selected */
-.pill-btn-fat[data-method].active,
-.pill-btn-fat[data-method].selected {
-  background: #4c89ff !important;
-  color: white !important;
-}
-
-/* Submit button */
-button.gold {
-  background: #f4c542 !important;
-  color: black !important;
-}
-button.gold:hover {
-  opacity: 0.9;
-}
-
-/* Cancel button */
-button.gray {
-  background: #555 !important;
-  color: white !important;
-}
-button.gray:hover {
-  opacity: 0.8;
-}
-  
-
-  /* Upcoming matches card */
-  .upcoming-card {
-    margin-top: 12px;
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: var(--panel-soft);
-    border: 1px solid rgba(255,255,255,0.07);
+  .modal {
+    width: 360px;
+    max-width: 90vw;
+    background: #10121d;
+    border-radius: 18px;
+    padding: 16px 16px 14px;
+    box-shadow: 0 22px 55px rgba(0,0,0,0.8);
+    border: 1px solid rgba(255,255,255,0.12);
   }
-  .upcoming-title {
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: var(--muted);
-    margin-bottom: 6px;
+
+  .modal h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
   }
-  .up-line {
-    font-size: 13px;
+
+  .modal-section {
+    margin-bottom: 10px;
+  }
+
+  .pill-row {
     display: flex;
     gap: 6px;
-    margin-bottom: 2px;
+    margin-top: 6px;
   }
-  .up-label {
-    width: 80px;
-    opacity: 0.75;
-  }
-  .up-value {
+
+  .pill-btn-fat {
     flex: 1;
-    font-weight: 500;
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-size: 12px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: #181a26;
+    color: #fff;
+    cursor: pointer;
   }
+
+  .pill-btn-fat.active {
+    background: var(--accent-soft);
+    border-color: rgba(94,166,255,0.9);
+  }
+
+  .method-grid {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  /* TOAST */
+
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: rgba(22,24,34,0.92);
+    color: #fff;
+    font-size: 12px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.16s ease-out, transform 0.14s ease-out;
+    border: 1px solid rgba(255,255,255,0.12);
+    z-index: 50;
+  }
+
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-2px);
+  }
+
+  #toastIcon {
+    font-size: 13px;
+  }
+
 </style>
 </head>
+
 <body>
 
 <div class="header-bar">
@@ -622,7 +760,10 @@ button.gray:hover {
     <img src="https://www.matside.org/assets/images/image01.png" class="brand-logo" alt="Matside logo"/>
     <div class="brand-title">Matside Control Hub</div>
   </div>
-  <div class="header-accent"></div>
+  <div class="header-accent">
+    <span>Operator View</span> &nbsp;•&nbsp;
+    <strong>Real-time Mat Control</strong>
+  </div>
 </div>
 
 <div class="wrap">
@@ -631,12 +772,20 @@ button.gray:hover {
   <div class="top-row">
     <div class="brand-mini">
       <img src="https://www.matside.org/assets/images/image01.png" alt="Matside mini"/>
-      <div class="brand-mini-title">Control Panel</div>
+      <div class="brand-mini-text">
+        <span>Matside Systems</span>
+        <span>Control, timing, and scoreboard sync in one place.</span>
+      </div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div>
-        <label style="font-size:12px;">Select</label><br/>
+    <div class="top-right">
+      <div class="conn-pill" id="connPill">
+        <div class="conn-dot"></div>
+        <div class="conn-label">server</div>
+        <div class="conn-state" id="conn">connecting…</div>
+      </div>
+      <div class="mat-select-wrap">
+        <label for="matSelect">Mat</label>
         <select id="matSelect">
           <option value="1">Mat 1</option>
           <option value="2">Mat 2</option>
@@ -644,13 +793,9 @@ button.gray:hover {
           <option value="4">Mat 4</option>
         </select>
       </div>
-      <div class="status">
-        Status: <span id="conn">connecting…</span>
-      </div>
     </div>
   </div>
 
-  <!-- SUMMARY -->
   <div class="summary-card">
     <div class="summary-item">Mat: <strong id="sumMat">1</strong></div>
     <div class="summary-item">Period: <strong id="sumSeg">1</strong></div>
@@ -659,16 +804,15 @@ button.gray:hover {
     <div class="summary-item">Green: <strong id="sumGreen" class="greenText">0</strong></div>
   </div>
 
-  
   <div class="upcoming-card">
     <div class="upcoming-title">Upcoming on this Mat</div>
-    <div class="up-line"><div class="up-label">Now:</div><div class="up-value" id="upNow">No event selected</div></div>
-    <div class="up-line"><div class="up-label">On Deck:</div><div class="up-value" id="upDeck">—</div></div>
-    <div class="up-line"><div class="up-label">In The Hole:</div><div class="up-value" id="upHole">—</div></div>
-    <div class="up-line"><div class="up-label">Queue:</div><div class="up-value" id="upQueue">—</div></div>
+    <div class="up-line"><span class="up-label">Now:</span><span id="upNow" class="up-value">—</span></div>
+    <div class="up-line"><span class="up-label">On Deck:</span><span id="upDeck" class="up-value">—</span></div>
+    <div class="up-line"><span class="up-label">In The Hole:</span><span id="upHole" class="up-value">—</span></div>
+    <div class="up-line up-queue"><span class="up-label">Queue:</span><span id="upQueue" class="up-value">—</span></div>
   </div>
 
-<!-- MAIN GRID -->
+  <!-- MAIN GRID -->
   <div class="grid">
 
     <!-- LEFT COLUMN -->
@@ -687,150 +831,124 @@ button.gray:hover {
           <div class="timer-row-main">
             <div class="timer-button-group">
               <button id="startBtn" class="blue btn-wide">Start</button>
-              <button id="stopBtn" class="gray btn-wide">Stop</button>
-              <button id="endMatchBtn" class="gold btn-wide">End Match</button>
+              <button id="stopBtn"  class="gray btn-wide">Stop</button>
+              <button id="resetTimerBtn" class="outline btn-wide small">Reset Clock</button>
+              <button id="endMatchBtn" class="red btn-wide small">End Match</button>
+            </div>
+
+            <div class="scoreline">
+              <label>Clock</label>
+              <span id="clockDisplay">01:00</span>
+              <div class="sep"></div>
+              <label>Segment</label>
+              <span id="segDisplay">REG1</span>
+            </div>
+
+            <div class="segment-row">
+              <span class="chip">Segments</span>
+              <button class="seg-pill" data-seg="REG1"><span>Reg 1 (1:00)</span></button>
+              <button class="seg-pill" data-seg="REG2"><span>Reg 2 (1:30)</span></button>
+              <button class="seg-pill" data-seg="REG3"><span>Reg 3 (2:00)</span></button>
+              <button class="seg-pill" data-seg="OT"><span>OT (1:00)</span></button>
+              <button class="seg-pill" data-seg="TB1"><span>TB1 (0:30)</span></button>
+              <button class="seg-pill" data-seg="TB2"><span>TB2 (0:30)</span></button>
+              <button class="seg-pill" data-seg="UT"><span>UT (0:30)</span></button>
+            </div>
+
+            <div class="toggle-row">
+              <input type="checkbox" id="runningToggle"/>
+              <label for="runningToggle">Running (toggle instead of Start/Stop)</label>
             </div>
           </div>
 
-          <!-- Reset timer + segment presets -->
-          <div class="timer-preset-row">
-            <button id="resetTimerBtn" class="btn-ghost small">Reset Timer</button>
-            <div class="field-row">
-              <label>Reg:</label>
-              <button class="pill-btn" data-seg="REG1">1:00</button>
-              <button class="pill-btn" data-seg="REG2">1:30</button>
-              <button class="pill-btn" data-seg="REG3">2:00</button>
+          <!-- Extra Controls -->
+          <div>
+            <div class="section-label">Fine Controls</div>
+            <div class="timer-controls">
+              <button class="btn small outline" data-jog="-5">-5 sec</button>
+              <button class="btn small outline" data-jog="-1">-1 sec</button>
+              <button class="btn small outline" data-jog="1">+1 sec</button>
+              <button class="btn small outline" data-jog="5">+5 sec</button>
             </div>
           </div>
 
-          <!-- Overtime row -->
-          <div class="timer-preset-row">
-            <div class="field-row">
-              <label>OT Series:</label>
-              <button class="pill-btn" data-seg="OT">OT 1:00</button>
-              <button class="pill-btn" data-seg="TB1">TB1 0:30</button>
-              <button class="pill-btn" data-seg="TB2">TB2 0:30</button>
-              <button class="pill-btn" data-seg="UT">UT 0:30</button>
-            </div>
-          </div>
-
-          <!-- Custom time -->
-          <div class="timer-preset-row">
-            <div class="field-row" style="flex:1;">
-              <label>Custom (MM:SS or seconds):</label>
-              <input id="customTimeInput" type="text" placeholder="1:15 or 75"/>
-              <button id="applyCustomTimeBtn" class="pill-btn small">Apply</button>
-            </div>
-          </div>
-
-          <div class="hint">
-            Timer displays live in the top summary and on scoreboards. Active segment is highlighted.
-          </div>
         </div>
       </div>
 
-      <!-- RESET CARD -->
-      <div class="card" style="margin-top:var(--gap);">
-        <h3>Reset Mat</h3>
-        <button id="resetMatBtn" class="red btn-wide">Reset Entire Mat</button>
-        <div class="hint">
-          Resets period to P1, time to 1:00, scores to 0, clears names, and wipes the timeline.
+      <!-- SCORE CARD -->
+      <div class="card">
+        <h3>Scoring</h3>
+        <div class="card-sub">
+          Apply points for takedowns, escapes, nearfalls, and more.
+        </div>
+
+        <div class="score-row">
+          <!-- RED SIDE -->
+          <div class="score-box">
+            <div class="score-header">
+              <span>Red wrestler</span>
+              <strong id="redNameLabel">Red</strong>
+            </div>
+            <div class="big-score" id="redScoreDisplay">0</div>
+            <div class="score-buttons">
+              <button class="btn small" data-score="red" data-pts="1">+1</button>
+              <button class="btn small" data-score="red" data-pts="2">+2</button>
+              <button class="btn small" data-score="red" data-pts="3">+3</button>
+              <button class="btn small" data-score="red" data-pts="-1">-1</button>
+            </div>
+          </div>
+
+          <!-- GREEN SIDE -->
+          <div class="score-box green-side">
+            <div class="score-header">
+              <span>Green wrestler</span>
+              <strong id="greenNameLabel">Green</strong>
+            </div>
+            <div class="big-score" id="greenScoreDisplay">0</div>
+            <div class="score-buttons">
+              <button class="btn small" data-score="green" data-pts="1">+1</button>
+              <button class="btn small" data-score="green" data-pts="2">+2</button>
+              <button class="btn small" data-score="green" data-pts="3">+3</button>
+              <button class="btn small" data-score="green" data-pts="-1">-1</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="name-input-row">
+          <input id="redNameInput"   placeholder="Red wrestler name"/>
+          <input id="greenNameInput" placeholder="Green wrestler name"/>
         </div>
       </div>
     </div>
 
     <!-- RIGHT COLUMN -->
     <div>
-
-      <!-- SCORING CARD -->
-      <div class="card">
-        <h3>Scoring</h3>
-        <div class="card-sub">Tap buttons for common wrestling scores.</div>
-
-        <div class="score-columns">
-
-          <!-- RED SCORING -->
-          <div>
-            <div class="status" style="margin-bottom:4px;">Red Wrestler</div>
-            <div class="scoring-grid">
-              <button class="red small" data-color="red" data-pts="1">E1 (+1)</button>
-              <button class="red small" data-color="red" data-pts="2">R2 (+2)</button>
-              <button class="red small" data-color="red" data-pts="3">T3 (+3)</button>
-              <button class="red small" data-color="red" data-pts="2">N2 (+2)</button>
-              <button class="red small" data-color="red" data-pts="3">N3 (+3)</button>
-              <button class="red small" data-color="red" data-pts="4">N4 (+4)</button>
-            </div>
-          </div>
-
-          <!-- GREEN SCORING -->
-          <div>
-            <div class="status" style="margin-bottom:4px;">Green Wrestler</div>
-            <div class="scoring-grid">
-              <button class="green small" data-color="green" data-pts="1">E1 (+1)</button>
-              <button class="green small" data-color="green" data-pts="2">R2 (+2)</button>
-              <button class="green small" data-color="green" data-pts="3">T3 (+3)</button>
-              <button class="green small" data-color="green" data-pts="2">N2 (+2)</button>
-              <button class="green small" data-color="green" data-pts="3">N3 (+3)</button>
-              <button class="green small" data-color="green" data-pts="4">N4 (+4)</button>
-            </div>
-          </div>
+      <!-- TIMELINE CARD -->
+      <div class="card timeline-card">
+        <h3>Timeline</h3>
+        <div class="card-sub">
+          Every score change, clock adjustment, and match result is tracked here.
         </div>
-
-        <div class="row" style="margin-top:10px;justify-content:space-between;">
-          <button id="subRed" class="small gray">-1 Red</button>
-          <button id="resetScores" class="small gold">Reset Scores</button>
-          <button id="subGreen" class="small gray">-1 Green</button>
-        </div>
-      </div>
-
-      <!-- NAMES CARD -->
-      <div class="card" style="margin-top:var(--gap);">
-        <h3>Wrestler Names</h3>
-        <div class="card-sub">Names are local-only for now; scoreboards can be wired later.</div>
-
-        <div class="row" style="margin-bottom:8px;">
-          <div style="flex:1;">
-            <label style="font-size:12px;">Red Wrestler</label><br/>
-            <input id="redNameInput" type="text" placeholder="Red wrestler name"/>
-          </div>
-          <div style="flex:1;">
-            <label style="font-size:12px;">Green Wrestler</label><br/>
-            <input id="greenNameInput" type="text" placeholder="Green wrestler name"/>
-          </div>
-        </div>
+        <div id="timelineStream" class="timeline-stream"></div>
       </div>
 
       <!-- LAST MATCH CARD -->
-      <div class="card" style="margin-top:var(--gap);">
-        <h3>Last Match Result</h3>
-        <div id="lastMatchMain" class="last-match-main">
-          No match submitted yet.
+      <div class="card" style="margin-top:10px;">
+        <h3>Last Match</h3>
+        <div class="card-sub">
+          Snapshot of the previous result on this mat.
         </div>
-        <div id="lastMatchMeta" class="last-match-meta">
-          —
-        </div>
+        <div class="section-label">Result</div>
+        <div id="lastMatchMain" style="font-size:13px;font-weight:600;margin-bottom:4px;">—</div>
+        <div id="lastMatchMeta" style="font-size:11px;color:var(--muted);">—</div>
       </div>
-
     </div>
+
   </div>
 
-  <!-- FULL-WIDTH HORIZONTAL TIMELINE (BOTTOM) -->
-  <div class="timeline-bar">
-    <div class="timeline-header">
-  <div class="timeline-title">Timeline</div>
-      <button id="undoBtn" class="gray small">Undo</button>
-
-  <div style="display:flex;align-items:center;gap:10px;">
-    <button id="resetTimelineBtn" class="btn-ghost small" style="
-      padding:4px 10px;
-      border-radius:8px;
-      font-size:11px;
-    ">Reset Timeline</button>
-
-    <div class="timeline-hint">Live event stream for this mat.</div>
-  </div>
-</div>
-    <div id="timelineStream"></div>
+  <div class="bottom-row">
+    <span>Keyboard hotkeys: <strong>1–5</strong> red score, <strong>7–0</strong> green score, <strong>Space</strong> start/stop, <strong>R</strong> reset clock, <strong>E</strong> end match.</span>
+    <span>Server: <strong id="conn">connecting…</strong></span>
   </div>
 
 </div>
@@ -855,17 +973,17 @@ button.gray:hover {
 
     <div class="modal-section">
       <h4 style="margin:0 0 4px 0;font-size:13px;">Method</h4>
-      <div class="pill-row">
+      <div class="method-grid">
         <button class="pill-btn-fat" data-method="decision">Decision</button>
+        <button class="pill-btn-fat" data-method="major_decision">Major Dec</button>
         <button class="pill-btn-fat" data-method="tech_fall">Tech Fall</button>
-        <button class="pill-btn-fat" data-method="pin">Pin</button>
-        <button class="pill-btn-fat" data-method="forfeit">Forfeit</button>
+        <button class="pill-btn-fat" data-method="fall">Fall</button>
       </div>
     </div>
 
-    <div class="modal-footer">
-      <button id="cancelMatchBtn" class="gray small" style="flex:1;">Cancel</button>
-      <button id="confirmMatchBtn" class="gold small" style="flex:1;">Submit</button>
+    <div class="pill-row" style="margin-top:12px;">
+      <button id="cancelMatchBtn" class="pill-btn-fat">Cancel</button>
+      <button id="confirmMatchBtn" class="pill-btn-fat" style="background:#1e88e5;border-color:#64b5f6;">Submit</button>
     </div>
   </div>
 </div>
@@ -876,7 +994,7 @@ button.gray:hover {
   <span id="toastText">Saved</span>
 </div>
 
-<div id="version-tag">v4.1</div>
+<div id="version-tag">v4.2 (Firebase Upcoming)</div>
 
 <!-- Socket.IO -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -890,6 +1008,7 @@ button.gray:hover {
 
   const matSelect   = document.getElementById("matSelect");
   const connEl      = document.getElementById("conn");
+  const connPill    = document.getElementById("connPill");
   const sumMatEl    = document.getElementById("sumMat");
   const sumSegEl    = document.getElementById("sumSeg");
   const sumTimeEl   = document.getElementById("sumTime");
@@ -902,20 +1021,20 @@ button.gray:hover {
 
   const redNameInput     = document.getElementById("redNameInput");
   const greenNameInput   = document.getElementById("greenNameInput");
+  const redNameLabel     = document.getElementById("redNameLabel");
+  const greenNameLabel   = document.getElementById("greenNameLabel");
+
+  const redScoreDisplay   = document.getElementById("redScoreDisplay");
+  const greenScoreDisplay = document.getElementById("greenScoreDisplay");
+
+  const clockDisplay   = document.getElementById("clockDisplay");
+  const segDisplay     = document.getElementById("segDisplay");
+  const runningToggle  = document.getElementById("runningToggle");
+
   const lastMatchMainEl  = document.getElementById("lastMatchMain");
   const lastMatchMetaEl  = document.getElementById("lastMatchMeta");
 
-  
-  // Firebase (match feed) init
-  const firebaseConfig = {
-    apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
-    authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
-    projectId: "matsidewrestlingco-fb85f",
-    storageBucket: "matsidewrestlingco-fb85f.firebasestorage.app",
-    messagingSenderId: "898197416726",
-    appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
-  };
-
+  // Firebase + upcoming match feed
   let db = null;
   let currentEventId = null;
   let unsubscribeMatches = null;
@@ -925,103 +1044,177 @@ button.gray:hover {
   const upHoleEl  = document.getElementById("upHole");
   const upQueueEl = document.getElementById("upQueue");
 
-  function formatMatchLine(m) {
-    if (!m) return "—";
-    const bout = m.bout ? `Bout ${m.bout}` : "";
-    const wt   = m.weight ? ` • ${m.weight}` : "";
-    const red  = (m.red && m.red.name) ? m.red.name : "Red";
-    const green= (m.green && m.green.name) ? m.green.name : "Green";
-    const left = bout || wt ? `${bout}${wt}`.trim() + " — " : "";
-    return left + `${red} vs ${green}`;
+  const firebaseConfig = {
+    apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
+    authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
+    projectId: "matsidewrestlingco-fb85f",
+    storageBucket: "matsidewrestlingco-fb85f.firebasestorage.app",
+    messagingSenderId: "898197416726",
+    appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
+  };
+
+  function initFirebaseIfNeeded() {
+    if (!window.firebase) return;
+    if (!firebase.apps || !firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    db = firebase.firestore();
   }
 
-  function renderUpcoming(list) {
-    if (!upNowEl) return;
-    const now  = list[0];
-    const deck = list[1];
-    const hole = list[2];
-    const queue = list.slice(3);
+  function getQueryParams() {
+    const params = new URLSearchParams(window.location.search || "");
+    return {
+      event: params.get("event"),
+      mat: params.get("mat")
+    };
+  }
 
-    upNowEl.textContent  = formatMatchLine(now);
-    upDeckEl.textContent = formatMatchLine(deck);
-    upHoleEl.textContent = formatMatchLine(hole);
+  function setMatFromParamsIfPresent() {
+    const { mat } = getQueryParams();
+    if (mat) {
+      const matNum = parseInt(mat, 10);
+      if (!Number.isNaN(matNum) && matNum >= 1 && matNum <= 12) {
+        currentMat = matNum;
+        if (matSelect) {
+          matSelect.value = String(matNum);
+        }
+        if (sumMatEl) sumMatEl.textContent = matNum;
+      }
+    }
+  }
+
+  function formatMatchLine(m) {
+    if (!m) return "—";
+    const bout = m.bout != null ? `Bout ${m.bout}` : "";
+    const wt   = m.weight ? ` ${m.weight}` : "";
+    const red  = m.red && m.red.name ? m.red.name : "Red";
+    const green= m.green && m.green.name ? m.green.name : "Green";
+    const round= m.round ? ` • ${m.round}` : "";
+    return `${bout}${wt} — ${red} vs ${green}${round}`;
+  }
+
+  function renderUpcomingFromList(list) {
+    if (!Array.isArray(list)) list = [];
+    const now  = list[0] || null;
+    const deck = list[1] || null;
+    const hole = list[2] || null;
+    const tail = list.slice(3);
+
+    if (upNowEl)  upNowEl.textContent  = formatMatchLine(now);
+    if (upDeckEl) upDeckEl.textContent = formatMatchLine(deck);
+    if (upHoleEl) upHoleEl.textContent = formatMatchLine(hole);
+
     if (upQueueEl) {
-      upQueueEl.textContent = queue.length ? `${queue.length} more` : "No additional matches";
+      if (!tail.length) {
+        upQueueEl.textContent = "—";
+      } else {
+        const labels = tail
+          .map(m => (m.bout != null ? `#${m.bout}` : ""))
+          .filter(Boolean);
+        upQueueEl.textContent = labels.length
+          ? labels.join(", ")
+          : `${tail.length} more`;
+      }
     }
 
-    // Store current match doc so we can mark completed on submit
+    // for match completion
     window._currentMatchDocForMat = now || null;
   }
 
-  function subscribeToMatches() {
-    if (!db || !currentEventId) return;
+  function subscribeToMatchesForMat(eventId, matNumber) {
+    if (!db || !eventId || !matNumber) return;
     if (unsubscribeMatches) {
       unsubscribeMatches();
       unsubscribeMatches = null;
     }
-    if (!currentMat) currentMat = 1;
 
-    unsubscribeMatches = db
+    const matchesRef = db
       .collection("events")
-      .doc(currentEventId)
-      .collection("matches")
-      .where("assignedMat", "==", currentMat)
-      .where("completed", "==", false)
-      .orderBy("queueIndex", "asc")
-      .onSnapshot((snap) => {
-        const matches = [];
-        snap.forEach(doc => {
-          matches.push({ id: doc.id, ...doc.data() });
-        });
-        renderUpcoming(matches);
-      }, (err) => {
-        console.error("Error listening for matches", err);
-        if (upNowEl) upNowEl.textContent = "Error loading matches";
+      .doc(eventId)
+      .collection("matches");
+
+    unsubscribeMatches = matchesRef
+      .where("assignedMat","==", matNumber)
+      .where("completed","==", false)
+      .orderBy("queueIndex","asc")
+      .orderBy("bout","asc")
+      .onSnapshot(snapshot => {
+        const upcoming = [];
+        snapshot.forEach(doc => upcoming.push({ id: doc.id, ...doc.data() }));
+        renderUpcomingFromList(upcoming);
+      }, err => {
+        console.error("Error subscribing to matches", err);
       });
   }
 
-  // Resolve event from URL and init Firestore
-  (function initMatchFeed(){
-    try {
-      if (typeof firebase === "undefined") return;
-      const params = new URLSearchParams(window.location.search);
-      const ev = params.get("event");
-      if (!ev) {
-        // no event param; leave upcoming card as informational only
-        return;
-      }
-      currentEventId = ev;
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-      db = firebase.firestore();
-
-      db.collection("events").doc(ev).get().then(doc => {
-        if (!doc.exists) return;
-        const data = doc.data() || {};
-        const matsCount = Number(data.mats) || 4;
-
-        if (matSelect) {
-          matSelect.innerHTML = "";
-          for (let i = 1; i <= matsCount; i++) {
-            const opt = document.createElement("option");
-            opt.value = String(i);
-            opt.textContent = `Mat ${i}`;
-            matSelect.appendChild(opt);
-          }
-        }
-        currentMat = parseInt(matSelect.value || "1",10) || 1;
-        sumMatEl.textContent = currentMat;
-        subscribeToMatches();
-      }).catch(err => {
-        console.error("Error loading event for control", err);
-      });
-    } catch (e) {
-      console.error("initMatchFeed error", e);
+  function applyMatCountFromEventDoc(ev) {
+    if (!ev || !matSelect) return;
+    const matsCount = ev.mats || ev.matCount || 4;
+    const prev = matSelect.value || "1";
+    matSelect.innerHTML = "";
+    for (let m = 1; m <= matsCount; m++) {
+      const opt = document.createElement("option");
+      opt.value = String(m);
+      opt.textContent = `Mat ${m}`;
+      matSelect.appendChild(opt);
     }
-  })();
+    const prevNum = parseInt(prev, 10);
+    if (!Number.isNaN(prevNum) && prevNum >= 1 && prevNum <= matsCount) {
+      matSelect.value = String(prevNum);
+      currentMat = prevNum;
+    } else {
+      currentMat = 1;
+      matSelect.value = "1";
+    }
+    if (sumMatEl) sumMatEl.textContent = currentMat;
+  }
 
-const SEGMENTS = {
+  function resolveEventAndSubscribe() {
+    if (!window.firebase) {
+      console.warn("Firebase SDK not loaded; upcoming card inactive.");
+      return;
+    }
+    initFirebaseIfNeeded();
+
+    const { event } = getQueryParams();
+    if (event) {
+      currentEventId = event;
+      db.collection("events").doc(event).get()
+        .then(doc => {
+          if (doc.exists) {
+            applyMatCountFromEventDoc(doc.data());
+          }
+          subscribeToMatchesForMat(currentEventId, currentMat);
+        })
+        .catch(err => {
+          console.error("Error loading event doc", err);
+          subscribeToMatchesForMat(currentEventId, currentMat);
+        });
+      return;
+    }
+
+    // Fallback: use active event
+    db.collection("events")
+      .where("isActive","==", true)
+      .limit(1)
+      .get()
+      .then(snap => {
+        if (snap.empty) {
+          console.warn("No active event found; upcoming card will show placeholders.");
+          renderUpcomingFromList([]);
+          return;
+        }
+        const doc = snap.docs[0];
+        currentEventId = doc.id;
+        applyMatCountFromEventDoc(doc.data());
+        subscribeToMatchesForMat(currentEventId, currentMat);
+      })
+      .catch(err => {
+        console.error("Error resolving active event", err);
+      });
+  }
+
+  const SEGMENTS = {
     REG1:{ id:"REG1", period:1, time:60 },
     REG2:{ id:"REG2", period:2, time:90 },
     REG3:{ id:"REG3", period:3, time:120 },
@@ -1048,23 +1241,57 @@ const SEGMENTS = {
   }
 
   function getMatState() {
-    return mats[currentMat] || null;
+    return mats[String(currentMat)] || {
+      running:false,
+      timeRemaining:60,
+      period:1,
+      red:0,
+      green:0,
+      segmentId:"REG1",
+      timeline:[]
+    };
   }
 
   function renderSummary() {
-    const m = getMatState();
-    if (!m) return;
-    sumMatEl.textContent   = String(currentMat);
-    sumSegEl.textContent   = prettySegment(m.segmentId || ("REG" + (m.period || 1)));
-    sumTimeEl.textContent  = formatTime(m.time ?? 0);
-    sumRedEl.textContent   = String(m.red ?? 0);
-    sumGreenEl.textContent = String(m.green ?? 0);
+    const s = getMatState();
+    sumMatEl.textContent = currentMat;
+    sumSegEl.textContent = s.period || 1;
+    sumTimeEl.textContent = formatTime(s.timeRemaining ?? 60);
+    sumRedEl.textContent = s.red ?? 0;
+    sumGreenEl.textContent = s.green ?? 0;
 
-    if (m.running) {
-      sumTimeEl.classList.add("timer-running");
-    } else {
-      sumTimeEl.classList.remove("timer-running");
-    }
+    clockDisplay.textContent = formatTime(s.timeRemaining ?? 60);
+    segDisplay.textContent   = s.segmentId || "REG1";
+
+    redScoreDisplay.textContent   = s.red ?? 0;
+    greenScoreDisplay.textContent = s.green ?? 0;
+  }
+
+  function renderTimeline(){
+    if(!timelineStream) return;
+    const m = getMatState();
+    const list = (m && Array.isArray(m.timeline)) ? m.timeline.slice() : [];
+    list.sort((a,b)=>(a.ts||0)-(b.ts||0));
+
+    timelineStream.innerHTML = "";
+    list.forEach(item=>{
+      const row = document.createElement("div");
+      row.className = "tl-item";
+
+      const time = document.createElement("div");
+      time.className = "tl-time";
+      const t = new Date(item.ts || Date.now());
+      time.textContent = t.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+
+      const text = document.createElement("div");
+      text.className = "tl-text";
+      text.textContent = item.text || "";
+
+      row.appendChild(time);
+      row.appendChild(text);
+      timelineStream.appendChild(row);
+    });
+    timelineStream.scrollTop = timelineStream.scrollHeight;
   }
 
   function appendTimelineEntry(entry){
@@ -1084,91 +1311,24 @@ const SEGMENTS = {
     });
   }
 
-  function renderTimeline(){
-    if(!timelineStream) return;
-    const m = getMatState();
-    const list = (m && Array.isArray(m.timeline)) ? m.timeline : [];
-    if(!list.length){
-      timelineStream.innerHTML = `<div class="timeline-empty"><em>No events yet.</em></div>`;
-      return;
-    }
-
-    timelineStream.innerHTML = list.map(item=>{
-      let text = "";
-      let ts   = Date.now();
-      let kind = item && item.kind ? item.kind : null;
-      let color = item && item.color ? item.color : null;
-
-      if(typeof item === "string"){
-        text = item;
-      }else if(item && item.text){
-        text = item.text;
-        ts   = item.ts || ts;
-      }else{
-        text = String(item);
-      }
-
-      let type = "Event";
-      const lower = text.toLowerCase();
-      if(kind === "match" || lower.includes("match ended")) {
-        type = "Match End";
-      } else if(kind === "reset" || lower.includes("reset")) {
-        type = "Reset";
-      } else if(kind === "period" || lower.includes("period")) {
-        type = "Period";
-      } else if(kind === "score") {
-        type = "Score";
-      }
-
-      let extraClass = "";
-      if(kind === "score" && color === "red") {
-        extraClass = " tl-score-red";
-      } else if(kind === "score" && color === "green") {
-        extraClass = " tl-score-green";
-      } else if(kind === "period") {
-        extraClass = " tl-period";
-      } else if(kind === "match") {
-        extraClass = " tl-match";
-      } else if(kind === "reset") {
-        extraClass = " tl-reset";
-      } else if(lower.includes("red")) {
-        extraClass = " tl-score-red";
-      } else if(lower.includes("green")) {
-        extraClass = " tl-score-green";
-      }
-
-      const t = new Date(ts).toLocaleTimeString([], {
-        hour:"2-digit",
-        minute:"2-digit",
-        second:"2-digit"
-      });
-
-      return `
-        <div class="timeline-card${extraClass}">
-          <div class="tl-type">${type}</div>
-          <div class="tl-body">${text}</div>
-          <div class="tl-time">${t}</div>
-        </div>
-      `;
-    }).join("");
-
-    // auto-scroll to bottom as new events come in
-    timelineStream.scrollTop = timelineStream.scrollHeight;
+  function showToast(msg){
+    if(!toastEl) return;
+    toastTextEl.textContent = msg || "Saved";
+    toastEl.classList.add("show");
+    setTimeout(()=>toastEl.classList.remove("show"), 1600);
   }
 
-  function showToast(message){
-    toastTextEl.textContent = message;
-    toastEl.style.display = "flex";
-    setTimeout(()=>{ toastEl.style.display = "none"; }, 2500);
-  }
+  // SOCKET HANDLERS
 
   socket.on("connect",()=>{
     connEl.textContent = "connected";
+    connPill.classList.add("connected");
     socket.emit("registerDevice",{ type:"control", mat:currentMat });
   });
 
   socket.on("disconnect",()=>{
     connEl.textContent = "disconnected";
+    connPill.classList.remove("connected");
   });
 
   socket.on("stateUpdate",(payload)=>{
@@ -1184,8 +1344,8 @@ const SEGMENTS = {
     currentMat = parseInt(matSelect.value || "1",10) || 1;
     renderSummary();
     renderTimeline();
-    if (typeof subscribeToMatches === "function") {
-      subscribeToMatches();
+    if (db && currentEventId) {
+      subscribeToMatchesForMat(currentEventId, currentMat);
     }
   });
 
@@ -1197,266 +1357,124 @@ const SEGMENTS = {
     socket.emit("updateState",{ mat:currentMat, updates:{ running:false }});
   });
   document.getElementById("resetTimerBtn").addEventListener("click",()=>{
-    const m = getMatState() || {};
-    const t = (typeof m.segmentDefaultTime === "number") ? m.segmentDefaultTime : 60;
-    socket.emit("updateState",{ mat:currentMat, updates:{ time:t, running:false }});
-    showToast("Timer reset");
-  });
-
-  // ======================================================
-// TIMELINE UNDO SYSTEM
-// ======================================================
-let timelineHistory = []; // store entries for undo
-
-function addTimelineEntry(obj) {
-  timelineHistory.push(obj);
-  renderTimeline();
-}
-
-function undoTimelineEntry() {
-  if (timelineHistory.length === 0) return;
-
-  const last = timelineHistory.pop();
-
-  // Reverse actions based on type
-  switch (last.type) {
-    case "score":
-      socket.emit("subPoint", {
-        mat: currentMat(),
-        color: last.color
-      });
-      break;
-
-    case "names":
-      updateState(currentMat(), {
-        redName: last.prevRed,
-        greenName: last.prevGreen
-      });
-      break;
-
-    case "period":
-      updateState(currentMat(), {
-        period: last.prevPeriod
-      });
-      break;
-
-    case "time":
-      updateState(currentMat(), {
-        time: last.prevTime
-      });
-      break;
-  }
-
-  renderTimeline();
-}
-
-// Hook undo button
-document.getElementById("undoBtn").addEventListener("click", undoTimelineEntry);
-
-  // SCORING
-  document.querySelectorAll("[data-color][data-pts]").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      const color = btn.getAttribute("data-color");
-      const pts   = parseInt(btn.getAttribute("data-pts")||"0",10);
-      if(!color || !pts) return;
-
-      socket.emit("addPoints",{ mat:currentMat, color, pts });
-
-      const who  = color === "red" ? "Red" : "Green";
-      const label = (btn.textContent || "").trim() || `+${pts}`;
-      appendTimelineEntry({
-        kind:"score",
-        color,
-        text:`${who} +${pts} (${label})`
-      });
-    });
-  });
-
-  document.getElementById("subRed").addEventListener("click",()=>{
-    socket.emit("subPoint",{ mat:currentMat, color:"red" });
-    appendTimelineEntry({
-      kind:"score",
-      color:"red",
-      text:"Red score corrected (-1)"
-    });
-  });
-  document.getElementById("subGreen").addEventListener("click",()=>{
-    socket.emit("subPoint",{ mat:currentMat, color:"green" });
-    appendTimelineEntry({
-      kind:"score",
-      color:"green",
-      text:"Green score corrected (-1)"
-    });
-  });
-
-  document.getElementById("resetScores").addEventListener("click",()=>{
-    socket.emit("updateState",{ mat:currentMat, updates:{ red:0, green:0 }});
-    appendTimelineEntry({
-      kind:"reset",
-      text:"Scores reset to 0–0"
-    });
-  });
-
-  // PERIOD PRESETS
-  document.querySelectorAll(".pill-btn[data-seg]").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      const key = btn.getAttribute("data-seg");
-      const seg = SEGMENTS[key];
-      if(!seg) return;
-      const updates = {
-        segmentId:seg.id,
-        period:seg.period,
-        time:seg.time,
-        segmentDefaultTime:seg.time,
-        running:false
-      };
-      socket.emit("updateState",{ mat:currentMat, updates });
-      const nice = prettySegment(seg.id);
-      showToast(`Set segment: ${key}`);
-      appendTimelineEntry({
-        kind:"period",
-        text:`Segment changed to ${nice}`
-      });
-    });
-  });
-
-  // CUSTOM TIME
-  document.getElementById("applyCustomTimeBtn").addEventListener("click",()=>{
-    const val = document.getElementById("customTimeInput").value.trim();
-    if(!val) return;
-    let seconds = 0;
-
-    if(val.includes(":")){
-      const parts = val.split(":");
-      if(parts.length !== 2){
-        showToast("Invalid format");
-        return;
-      }
-      const mm = parseInt(parts[0],10);
-      const ss = parseInt(parts[1],10);
-      if(isNaN(mm)||isNaN(ss)||mm<0||ss<0||ss>=60){
-        showToast("Invalid MM:SS");
-        return;
-      }
-      seconds = mm*60 + ss;
-    }else{
-      const s = parseInt(val,10);
-      if(isNaN(s)||s<0){
-        showToast("Invalid seconds");
-        return;
-      }
-      seconds = s;
-    }
-
+    const s = getMatState();
+    const seg = SEGMENTS[s.segmentId || "REG1"] || SEGMENTS.REG1;
     socket.emit("updateState",{
       mat:currentMat,
-      updates:{
-        time:seconds,
-        segmentDefaultTime:seconds,
-        running:false
-      }
-    });
-    const fmt = formatTime(seconds);
-    showToast(`Custom time set: ${fmt}`);
-    appendTimelineEntry({
-      kind:"period",
-      text:`Custom time set to ${fmt}`
+      updates:{ timeRemaining:seg.time, running:false }
     });
   });
 
-  // RESET MAT
-  document.getElementById("resetMatBtn").addEventListener("click",()=>{
-    const updates = {
-      period:1,
-      segmentId:"REG1",
-      time:60,
-      segmentDefaultTime:60,
-      running:false,
-      red:0,
-      green:0,
-      timeline:[]
-    };
-    socket.emit("updateState",{ mat:currentMat, updates });
-    redNameInput.value   = "";
-    greenNameInput.value = "";
-    showToast("Mat reset");
-    appendTimelineEntry({
-      kind:"reset",
-      text:"Mat manually reset"
+  runningToggle.addEventListener("change",()=>{
+    socket.emit("updateState",{
+      mat:currentMat,
+      updates:{ running:runningToggle.checked }
     });
   });
 
-  // RESET TIMELINE ONLY
-  document.getElementById("resetTimelineBtn").addEventListener("click", () => {
-    const m = getMatState();
-    const now = Date.now();
+  // SEGMENTS
+  document.querySelectorAll(".seg-pill").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const segId = btn.dataset.seg || "REG1";
+      const seg = SEGMENTS[segId] || SEGMENTS.REG1;
 
-  socket.emit("updateState", {
-    mat: currentMat,
-    updates: {
-      timeline: [
-        { text: "Timeline manually cleared.", ts: now, kind: "reset" }
-      ]
-    }
+      document.querySelectorAll(".seg-pill").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+
+      socket.emit("updateState",{
+        mat:currentMat,
+        updates:{
+          segmentId:segId,
+          period:seg.period,
+          timeRemaining:seg.time
+        }
+      });
+    });
   });
 
-  showToast("Timeline cleared");
-});
-  
-  // NAMES
-  redNameInput.addEventListener("change",()=>{
-    showToast("Red name updated (local only)");
-  });
-  greenNameInput.addEventListener("change",()=>{
-    showToast("Green name updated (local only)");
+  // JOG BUTTONS
+  document.querySelectorAll("[data-jog]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const delta = parseInt(btn.dataset.jog || "0",10);
+      const s = getMatState();
+      const cur = s.timeRemaining ?? 60;
+      const next = Math.max(0, cur + delta);
+      socket.emit("updateState",{ mat:currentMat, updates:{ timeRemaining:next }});
+    });
   });
 
-  // MATCH END MODAL
+  // SCORE BUTTONS
+  document.querySelectorAll("[data-score]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const who = btn.dataset.score;
+      const pts = parseInt(btn.dataset.pts || "0",10);
+      if(!who || !pts) return;
+      const s = getMatState();
+      const cur = (s[who] || 0) + pts;
+      const clamped = Math.max(0, cur);
+      socket.emit("updateState",{
+        mat:currentMat,
+        updates:{ [who]:clamped }
+      });
+
+      const label = who === "red" ? "Red" : "Green";
+      const desc = pts > 0 ? `+${pts}` : `${pts}`;
+      appendTimelineEntry(`${label} score change ${desc}`);
+    });
+  });
+
+  // NAME INPUTS
+  redNameInput.addEventListener("input",()=>{
+    redNameLabel.textContent = redNameInput.value.trim() || "Red";
+  });
+  greenNameInput.addEventListener("input",()=>{
+    greenNameLabel.textContent = greenNameInput.value.trim() || "Green";
+  });
+
+  // MATCH MODAL LOGIC
   const matchModalBackdrop = document.getElementById("matchModalBackdrop");
-  const endMatchBtn        = document.getElementById("endMatchBtn");
-  const cancelMatchBtn     = document.getElementById("cancelMatchBtn");
-  const confirmMatchBtn    = document.getElementById("confirmMatchBtn");
-  const winnerRedBtn       = document.getElementById("winnerRedBtn");
-  const winnerGreenBtn     = document.getElementById("winnerGreenBtn");
-  const methodButtons      = Array.from(document.querySelectorAll(".pill-btn-fat[data-method]"));
-  const suggestLineEl      = document.getElementById("suggestLine");
+  const winnerRedBtn   = document.getElementById("winnerRedBtn");
+  const winnerGreenBtn = document.getElementById("winnerGreenBtn");
+  const methodButtons  = document.querySelectorAll(".method-grid .pill-btn-fat");
+  const cancelMatchBtn = document.getElementById("cancelMatchBtn");
+  const confirmMatchBtn= document.getElementById("confirmMatchBtn");
+  const suggestLineEl  = document.getElementById("suggestLine");
 
   let selectedWinner = null;
   let selectedMethod = "decision";
 
   function openMatchModal(){
+    selectedWinner = null;
+    selectedMethod = "decision";
+    winnerRedBtn.classList.remove("active");
+    winnerGreenBtn.classList.remove("active");
+    methodButtons.forEach(b=>b.classList.remove("active"));
+    methodButtons[0].classList.add("active");
+
     const m = getMatState() || {};
     const red   = m.red || 0;
     const green = m.green || 0;
-    const diff  = Math.abs(red - green);
-    const segment = m.segmentId || ("REG" + (m.period || 1));
+    let suggestion = "Pick winner & method.";
+    if(red>green) suggestion = `Suggest: RED wins (${red}–${green})`;
+    else if(green>red) suggestion = `Suggest: GREEN wins (${green}–${red})`;
+    suggestLineEl.textContent = suggestion;
 
-    let suggestion = `Current score: Red ${red} – Green ${green} (Segment ${prettySegment(segment)})`;
-
-    if(red > green){
-      suggestion += " • Red is currently leading.";
-    }else if(green > red){
-      suggestion += " • Green is currently leading.";
-    }else{
-      suggestion += " • Match is currently tied.";
-    }
-
-    if(suggestLineEl) suggestLineEl.textContent = suggestion;
-    matchModalBackdrop.style.display = "flex";
+    matchModalBackdrop.classList.add("show");
   }
 
   function closeMatchModal(){
-    matchModalBackdrop.style.display = "none";
+    matchModalBackdrop.classList.remove("show");
   }
 
-  endMatchBtn.addEventListener("click", openMatchModal);
-  cancelMatchBtn.addEventListener("click", closeMatchModal);
+  document.getElementById("endMatchBtn").addEventListener("click",openMatchModal);
+  cancelMatchBtn.addEventListener("click",closeMatchModal);
 
   winnerRedBtn.addEventListener("click",()=>{
     selectedWinner = "red";
     winnerRedBtn.classList.add("active");
     winnerGreenBtn.classList.remove("active");
   });
+
   winnerGreenBtn.addEventListener("click",()=>{
     selectedWinner = "green";
     winnerGreenBtn.classList.add("active");
@@ -1513,16 +1531,16 @@ document.getElementById("undoBtn").addEventListener("click", undoTimelineEntry);
       `${winnerName} wins by ${selectedMethod.replace("_"," ")} (${red}–${green})`;
 
     lastMatchMetaEl.textContent =
-      `Mat ${currentMat}, Segment ${prettySegment(segment)} — ${new Date(payload.ts).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})}`;
+      `Mat ${currentMat}, Segment ${prettySegment(segment)} — ${
+        new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})
+      }`;
 
     const now = Date.now();
     const current = getMatState() || {};
     const existing = Array.isArray(current.timeline) ? current.timeline.slice() : [];
     const resetUpdates = {
       period:1,
-      segmentId:"REG1",
-      time:60,
-      segmentDefaultTime:60,
+      timeRemaining:60,
       running:false,
       red:0,
       green:0,
@@ -1533,8 +1551,6 @@ document.getElementById("undoBtn").addEventListener("click", undoTimelineEntry);
     };
     socket.emit("updateState",{ mat:currentMat, updates:resetUpdates });
 
-
-    // Mark current match as completed in Firestore (if match feed is active)
     try {
       if (db && currentEventId && window._currentMatchDocForMat && window._currentMatchDocForMat.id) {
         const matchId = window._currentMatchDocForMat.id;
@@ -1564,56 +1580,57 @@ document.getElementById("undoBtn").addEventListener("click", undoTimelineEntry);
 
 // ======================================================
 // KEYBOARD SHORTCUT ENGINE
-// ======================================================
 
-document.addEventListener("keydown", (ev) => {
-  if (ev.target.tagName === "INPUT") return; // avoid typing conflicts
+  // Initialize mat from URL and match feed
+  setMatFromParamsIfPresent();
+  resolveEventAndSubscribe();
 
-  const key = ev.key.toLowerCase();
-  const mat = currentMat();
+  // KEYBOARD SHORTCUT ENGINE
+// ================================
 
-  // --- TIMER ---
-  if (key === " ") {
-    ev.preventDefault();
-    if (state.running) {
-      updateState(mat, { running: false });
-    } else {
-      updateState(mat, { running: true });
+  document.addEventListener("keydown",(ev)=>{
+    const key = ev.key;
+    const tag = (ev.target && ev.target.tagName) || "";
+    if(tag === "INPUT" || tag === "TEXTAREA") return;
+
+    const mat = currentMat;
+
+    // --- TIMER ---
+    if (key === " ") {
+      ev.preventDefault();
+      const state = getMatState() || {};
+      if (state.running) {
+        socket.emit("updateState",{ mat, updates:{ running:false }});
+      } else {
+        socket.emit("updateState",{ mat, updates:{ running:true }});
+      }
+      return;
     }
-    return;
-  }
 
-  if (key === "r") {
-    resetTimerBtn.click();
-    return;
-  }
+    if (key === "r" || key === "R") {
+      document.getElementById("resetTimerBtn").click();
+      return;
+    }
 
-  // --- END MATCH ---
-  if (key === "e") {
-    openEndMatchModal();
-    return;
-  }
+    if (key === "e" || key === "E") {
+      openMatchModal();
+      return;
+    }
 
-  // --- UNDO ---
-  if (key === "u") {
-    undoTimelineEntry();
-    return;
-  }
+    // --- RED SCORING ---
+    if (key === "1") socket.emit("addPoints", { mat, color: "red", pts: 1 });
+    if (key === "2") socket.emit("addPoints", { mat, color: "red", pts: 2 });
+    if (key === "3") socket.emit("addPoints", { mat, color: "red", pts: 3 });
+    if (key === "4") socket.emit("addPoints", { mat, color: "red", pts: 2 }); // NF2
+    if (key === "5") socket.emit("addPoints", { mat, color: "red", pts: 3 }); // NF3
 
-  // --- RED SCORING ---
-  if (key === "1") socket.emit("addPoints", { mat, color: "red", pts: 1 });
-  if (key === "2") socket.emit("addPoints", { mat, color: "red", pts: 2 });
-  if (key === "3") socket.emit("addPoints", { mat, color: "red", pts: 3 });
-  if (key === "4") socket.emit("addPoints", { mat, color: "red", pts: 2 }); // NF2
-  if (key === "5") socket.emit("addPoints", { mat, color: "red", pts: 3 }); // NF3
-
-  // --- GREEN SCORING ---
-  if (key === "7") socket.emit("addPoints", { mat, color: "green", pts: 1 });
-  if (key === "8") socket.emit("addPoints", { mat, color: "green", pts: 2 });
-  if (key === "9") socket.emit("addPoints", { mat, color: "green", pts: 3 });
-  if (key === "0") socket.emit("addPoints", { mat, color: "green", pts: 2 }); // NF2
-  if (key === "-") socket.emit("addPoints", { mat, color: "green", pts: 3 }); // NF3
-});
+    // --- GREEN SCORING ---
+    if (key === "7") socket.emit("addPoints", { mat, color: "green", pts: 1 });
+    if (key === "8") socket.emit("addPoints", { mat, color: "green", pts: 2 });
+    if (key === "9") socket.emit("addPoints", { mat, color: "green", pts: 3 });
+    if (key === "0") socket.emit("addPoints", { mat, color: "green", pts: 2 }); // NF2
+    if (key === "-") socket.emit("addPoints", { mat, color: "green", pts: 3 }); // NF3
+  });
   
 </script>
 
