@@ -1,811 +1,542 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Matside — Admin Events v3.0</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matside — Admin Control Panel (v7 Tabs)</title>
+
+<!-- PapaParse -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+
+<!-- SortableJS -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <style>
-  :root {
-    --bg: #070809;
-    --panel: rgba(22, 24, 28, 0.9);
-    --border: rgba(255,255,255,0.08);
-    --muted: #9aa0a6;
-    --accent: #1e88e5;
-    --accent-soft: rgba(30,136,229,0.12);
-    --danger: #ff5252;
-    --gold: #fbc02d;
-    --radius: 20px;
-  }
+/* ----------------------------------------- */
+/* GLOBAL DARK THEME                         */
+/* ----------------------------------------- */
 
-  * { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 20px;
+  background: #181818;
+  color: #e6e6e6;
+  font-family: "Inter", sans-serif;
+}
 
-  body {
-    margin: 0;
-    background: var(--bg);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-    color: #fff;
-    padding: 18px;
-  }
+h1 {
+  margin: 0 0 6px;
+  font-weight: 700;
+}
 
-  /* HEADER */
-  .header {
-    max-width: 1200px;
-    margin: 0 auto 16px auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-  }
+.version-tag {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 18px;
+}
 
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+/* ----------------------------------------- */
+/* TABS SYSTEM                               */
+/* ----------------------------------------- */
 
-  .brand img {
-    height: 40px;
-    border-radius: 10px;
-  }
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
 
-  .brand-title {
-    font-size: 22px;
-    font-weight: 800;
-  }
+.tab {
+  padding: 12px 20px;
+  background: #2d2d2d;
+  color: #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  user-select: none;
+  border: 1px solid #444;
+  transition: 0.2s;
+}
 
-  .subtitle {
-    font-size: 13px;
-    color: var(--muted);
-  }
+.tab.active {
+  background: #3a77ff;
+  border-color: #5a8cff;
+  color: #fff;
+}
 
-  .header-right {
-    text-align: right;
-    font-size: 12px;
-    color: var(--muted);
-  }
+.tab:hover:not(.active) {
+  background: #333;
+}
 
-  /* FILTER BAR */
-  .filter-bar {
-    max-width: 1200px;
-    margin: 0 auto 16px auto;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-  }
+.tab-content {
+  display: none;
+}
 
-  .filter-bar input[type="text"] {
-    background: #0d0f12;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    padding: 8px 12px;
-    color: #fff;
-    font-size: 14px;
-    min-width: 220px;
-  }
+.tab-content.active {
+  display: block;
+}
 
-  .filter-bar select {
-    background: #0d0f12;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    padding: 8px 12px;
-    color: #fff;
-    font-size: 14px;
-  }
+.section {
+  background: #222;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
 
-  .chip {
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    font-size: 12px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-  }
+/* ----------------------------------------- */
+/* BUTTONS                                   */
+/* ----------------------------------------- */
 
-  .chip input {
-    margin: 0;
-  }
+.pill-btn-fat {
+  padding: 10px 20px;
+  border-radius: 24px;
+  border: none;
+  background: #3a77ff;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.2s;
+}
 
-  .primary-btn {
-    border: 0;
-    border-radius: 999px;
-    padding: 9px 14px;
-    font-size: 14px;
-    font-weight: 800;
-    background: var(--accent);
-    color: #fff;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 0 18px rgba(30,136,229,0.6);
-  }
+.pill-btn-fat:hover {
+  background: #5a8cff;
+  box-shadow: 0 0 10px rgba(90,140,255,0.6);
+}
 
-  .primary-btn span {
-    font-size: 16px;
-  }
+/* ----------------------------------------- */
+/* CSV PREVIEW TABLE                         */
+/* ----------------------------------------- */
 
-  /* GRID OF EVENTS */
-  .grid {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 18px;
-  }
+.csv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 12px;
+}
 
-  .event-card {
-    background: var(--panel);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    box-shadow: 0 10px 28px rgba(0,0,0,0.5);
-    backdrop-filter: blur(12px);
-    padding: 14px 14px 16px;
-    position: relative;
-    overflow: hidden;
-  }
+.csv-table th {
+  background: #333;
+  padding: 10px;
+  border-bottom: 2px solid #444;
+}
 
-  .event-name {
-    font-size: 17px;
-    font-weight: 800;
-    margin-bottom: 4px;
-  }
+.csv-table td {
+  padding: 8px;
+  border-bottom: 1px solid #333;
+}
 
-  .event-meta {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
+/* ----------------------------------------- */
+/* TOAST SYSTEM                              */
+/* ----------------------------------------- */
 
-  .event-pill {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    background: var(--accent-soft);
-    border: 1px solid rgba(30,136,229,0.4);
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
+#toastContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 999999 !important;
+  pointer-events: none;
+}
 
-  .archived-pill {
-    background: rgba(191, 54, 12, 0.15);
-    border-color: rgba(255, 87, 34, 0.6);
-    color: #ffab91;
-  }
+.toast {
+  pointer-events: auto;
+  z-index: 999999 !important;
+  background: rgba(40,40,40,0.95);
+  padding: 14px 20px;
+  margin-top: 10px;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  border-left: 4px solid #3cff9d;
+  opacity: 0;
+  transform: translateY(-12px);
+  animation: toastIn 0.35s forwards, toastOut 0.4s 2.8s forwards;
+}
 
-  .card-buttons {
-    margin-top: 12px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
+.toast.error { border-left-color: #ff4b4b; }
 
-  .btn {
-    border: 0;
-    border-radius: 999px;
-    padding: 7px 11px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
+@keyframes toastIn {
+  0% { opacity: 0; transform: translateY(-12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 
-  .btn-blue {
-    background: var(--accent);
-    color: #fff;
-  }
+@keyframes toastOut {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-12px); }
+}
 
-  .btn-gray {
-    background: #15171b;
-    color: #fff;
-    border: 1px solid var(--border);
-  }
+/* ----------------------------------------- */
+/* LOADING BAR                               */
+/* ----------------------------------------- */
 
-  .btn-gold {
-    background: var(--gold);
-    color: #000;
-  }
+.loading-bar {
+  width: 100%;
+  height: 4px;
+  background: #333;
+  border-radius: 3px;
+  margin-top: 12px;
+  display: none;
+}
 
-  .btn-red {
-    background: #3b0000;
-    color: #ff7676;
-    border: 1px solid rgba(255,118,118,0.6);
-  }
+.loading-bar-inner {
+  height: 100%;
+  background: #3a77ff;
+  animation: loadLoop 1.2s infinite;
+}
 
-  .empty {
-    max-width: 1200px;
-    margin: 30px auto;
-    text-align: center;
-    color: var(--muted);
-    font-size: 14px;
-  }
+@keyframes loadLoop {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 0%; }
+}
 
-  /* DRAWER */
-  .drawer-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.55);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .2s;
-    z-index: 998;
-  }
-  .drawer-backdrop.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
+/* ----------------------------------------- */
+/* DRAG & DROP                               */
+/* ----------------------------------------- */
 
-  .drawer {
-    position: fixed;
-    top: 0;
-    right: 0;
-    height: 100%;
-    width: 360px;
-    max-width: 100vw;
-    background: #101116;
-    box-shadow: -8px 0 24px rgba(0,0,0,0.7);
-    border-left: 1px solid var(--border);
-    transform: translateX(100%);
-    transition: transform .25s ease-out;
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-  }
+.drag-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+}
 
-  .drawer.open {
-    transform: translateX(0);
-  }
+.list-column {
+  background: #242424;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  height: 560px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: visible;
+}
 
-  .drawer-header {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+.list-column h3 {
+  background: #2b2b2b;
+  margin: 0;
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #333;
+}
 
-  .drawer-title {
-    font-size: 15px;
-    font-weight: 700;
-  }
+.match-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
-  .drawer-close-btn {
-    background: transparent;
-    border: 0;
-    color: #fff;
-    font-size: 18px;
-    cursor: pointer;
-  }
+.match-card {
+  background: #2e2e2e;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  cursor: grab;
+  transition: 0.15s;
+  touch-action: none;
+}
 
-  .drawer-body {
-    padding: 12px 14px 16px;
-    overflow-y: auto;
-    font-size: 13px;
-  }
+.match-card:hover {
+  background: #353535;
+}
 
-  .field {
-    margin-bottom: 12px;
-  }
+.match-card.dragging {
+  opacity: 0.5;
+}
 
-  .field label {
-    display: block;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-
-  .field input,
-  .field select {
-    width: 100%;
-    background: #0d0f12;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    padding: 8px 10px;
-    color: #fff;
-    font-size: 14px;
-  }
-
-  .field small {
-    display: block;
-    margin-top: 3px;
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  .field-row {
-    display: flex;
-    gap: 8px;
-  }
-  .field-row .field {
-    flex: 1;
-  }
-
-  .checkbox-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin: 10px 0;
-    font-size: 12px;
-  }
-
-  .drawer-footer {
-    padding: 10px 14px 14px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-  }
-
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #111316;
-    border-radius: 999px;
-    padding: 8px 14px;
-    border: 1px solid var(--border);
-    font-size: 13px;
-    display: none;
-    align-items: center;
-    gap: 8px;
-    z-index: 1000;
-  }
-  .toast.show {
-    display: inline-flex;
-  }
-  .toast-ok {
-    color: #a5d6a7;
-  }
-  .toast-err {
-    color: #ef9a9a;
-  }
-
-  /* FOOTER TAG */
-  .footer-tag {
-    max-width: 1200px;
-    margin: 18px auto 0 auto;
-    font-size: 11px;
-    color: var(--muted);
-    text-align: right;
-    opacity: 0.7;
-  }
 </style>
 </head>
+
 <body>
 
 <!-- HEADER -->
-<div class="header">
-  <div class="brand">
-    <img src="https://www.matside.org/assets/images/image01.png" alt="Matside">
-    <div>
-      <div class="brand-title">Matside — Admin Events</div>
-      <div class="subtitle">Manage competition presets, mats, and timing</div>
-    </div>
-  </div>
-  <div class="header-right">
-    <div>Backend: events.json · match-results.json</div>
-    <div>Admin Events UI v3.0</div>
+<div style="max-width:1100px;margin:0 auto;">
+  <h1>Matside Admin Control</h1>
+  <div class="version-tag">admin-control v7 — Tabbed Edition</div>
+
+  <!-- TAB BUTTONS -->
+  <div class="tabs">
+    <div class="tab active" data-tab="data">Data Mgmt</div>
+    <div class="tab" data-tab="assign">Mat Assign</div>
   </div>
 </div>
 
-<!-- FILTER BAR -->
-<div class="filter-bar">
-  <input id="searchInput" type="text" placeholder="Search events by name…">
-  <select id="sortSelect">
-    <option value="name">Sort: Name (A–Z)</option>
-    <option value="mats">Sort: Mats (low → high)</option>
-  </select>
-  <label class="chip">
-    <input id="showArchivedCheckbox" type="checkbox">
-    <span>Show archived</span>
-  </label>
-  <button id="newEventBtn" class="primary-btn">
-    <span>＋</span> New Event
-  </button>
-</div>
+<div id="toastContainer"></div>
 
-<!-- EVENTS GRID -->
-<div id="eventsGrid" class="grid"></div>
-<div id="emptyState" class="empty" style="display:none;">
-  No events found. Create your first event using the “New Event” button.
-</div>
+<!-- TAB CONTENT: DATA MGMT -->
+<div id="tab-data" class="tab-content active">
+  <div class="section">
+    <h2>Upload Matches (CSV)</h2>
 
-<div class="footer-tag">
-  Matside Admin · Events Manager v3.0
-</div>
+    <input type="file" id="matchCsvInput" accept=".csv" />
+    <br><br>
 
-<!-- DRAWER -->
-<div id="drawerBackdrop" class="drawer-backdrop"></div>
-<div id="drawer" class="drawer">
-  <div class="drawer-header">
-    <div class="drawer-title" id="drawerTitle">New Event</div>
-    <button id="drawerCloseBtn" class="drawer-close-btn">✕</button>
-  </div>
-  <div class="drawer-body">
-    <div class="field">
-      <label for="eventNameInput">Event Name</label>
-      <input id="eventNameInput" type="text" placeholder="Ex: Holiday Duals, Winter Classic">
-      <small>This name appears in the selection dropdown on the landing page.</small>
-    </div>
-
-    <div class="field-row">
-      <div class="field">
-        <label for="matCountInput">Number of Mats</label>
-        <select id="matCountInput">
-          <option value="1">1 mat</option>
-          <option value="2">2 mats</option>
-          <option value="3">3 mats</option>
-          <option value="4">4 mats</option>
-          <option value="5">5 mats</option>
-          <option value="6">6 mats</option>
-          <option value="7">7 mats</option>
-          <option value="8">8 mats</option>
-        </select>
-        <small>How many mats this event will run.</small>
-      </div>
-      <div class="field">
-        <label for="periodPresetSelect">Regulation Period</label>
-        <select id="periodPresetSelect">
-          <option value="60">1:00</option>
-          <option value="90">1:30</option>
-          <option value="120">2:00</option>
-          <option value="custom">Custom…</option>
-        </select>
-        <small>Default period length used by the control panel.</small>
-      </div>
-    </div>
-
-    <div class="field" id="customPeriodField" style="display:none;">
-      <label for="customPeriodInput">Custom Period (seconds)</label>
-      <input id="customPeriodInput" type="number" min="10" step="5" placeholder="Ex: 75">
-      <small>Enter total seconds (e.g. 75 = 1:15). Used when “Custom” is selected.</small>
-    </div>
-
-    <div class="field">
-      <label for="notesInput">Notes (optional)</label>
-      <input id="notesInput" type="text" placeholder="Ex: Middle School, Collegiate rules, etc.">
-      <small>Internal notes to remind you of configuration details.</small>
-    </div>
-
-    <div class="checkbox-row">
-      <input id="archivedInput" type="checkbox">
-      <label for="archivedInput">Archive this event (hide from normal selection)</label>
-    </div>
-  </div>
-  <div class="drawer-footer">
-    <button id="cancelBtn" class="btn btn-gray">Cancel</button>
-    <button id="saveEventBtn" class="btn btn-blue">Save Event</button>
+    <button id="parseCsvBtn" class="pill-btn-fat" disabled>Parse CSV</button>
+    <div id="csvPreview"></div>
   </div>
 </div>
 
-<!-- TOAST -->
-<div id="toast" class="toast">
-  <span id="toastIcon">✔</span>
-  <span id="toastText">Saved</span>
+<!-- TAB CONTENT: MAT ASSIGN -->
+<div id="tab-assign" class="tab-content">
+  <div class="section">
+    <h2>Assign Matches to Mats</h2>
+
+    <button id="loadMatchesBtn" class="pill-btn-fat">Load Matches</button>
+
+    <div id="loadingBar" class="loading-bar">
+      <div class="loading-bar-inner"></div>
+    </div>
+
+    <div id="assignmentBoard"></div>
+  </div>
 </div>
 
 <script>
-const API_BASE = "https://scoreboard-server-er33.onrender.com";
+/* --------------------------------------------- */
+/* TAB SWITCHING                                 */
+/* --------------------------------------------- */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
 
-let events = [];
-let filteredEvents = [];
-let editingIndex = null;
-
-const eventsGrid = document.getElementById("eventsGrid");
-const emptyState = document.getElementById("emptyState");
-
-const searchInput = document.getElementById("searchInput");
-const sortSelect = document.getElementById("sortSelect");
-const showArchivedCheckbox = document.getElementById("showArchivedCheckbox");
-const newEventBtn = document.getElementById("newEventBtn");
-
-// Drawer elements
-const drawer = document.getElementById("drawer");
-const drawerBackdrop = document.getElementById("drawerBackdrop");
-const drawerCloseBtn = document.getElementById("drawerCloseBtn");
-const drawerTitle = document.getElementById("drawerTitle");
-const eventNameInput = document.getElementById("eventNameInput");
-const matCountInput = document.getElementById("matCountInput");
-const periodPresetSelect = document.getElementById("periodPresetSelect");
-const customPeriodField = document.getElementById("customPeriodField");
-const customPeriodInput = document.getElementById("customPeriodInput");
-const notesInput = document.getElementById("notesInput");
-const archivedInput = document.getElementById("archivedInput");
-const cancelBtn = document.getElementById("cancelBtn");
-const saveEventBtn = document.getElementById("saveEventBtn");
-
-// Toast
-const toastEl = document.getElementById("toast");
-const toastIcon = document.getElementById("toastIcon");
-const toastText = document.getElementById("toastText");
-
-/* ---------------- Toast helper ---------------- */
-function showToast(message, isError = false) {
-  toastText.textContent = message;
-  toastIcon.textContent = isError ? "⚠" : "✔";
-  toastEl.classList.toggle("toast-err", isError);
-  toastEl.classList.toggle("toast-ok", !isError);
-  toastEl.classList.add("show");
-  setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 2800);
-}
-
-/* ---------------- Drawer helpers ---------------- */
-function openDrawer(isEdit, index) {
-  editingIndex = isEdit ? index : null;
-  if (isEdit && events[index]) {
-    const ev = events[index];
-    drawerTitle.textContent = "Edit Event";
-    eventNameInput.value = ev.name || "";
-    matCountInput.value = (ev.mats || 1).toString();
-    const periodSeconds = ev.periodSeconds || 60;
-
-    if (periodSeconds === 60 || periodSeconds === 90 || periodSeconds === 120) {
-      periodPresetSelect.value = periodSeconds.toString();
-      customPeriodField.style.display = "none";
-      customPeriodInput.value = "";
-    } else {
-      periodPresetSelect.value = "custom";
-      customPeriodField.style.display = "block";
-      customPeriodInput.value = periodSeconds.toString();
-    }
-
-    notesInput.value = ev.notes || "";
-    archivedInput.checked = !!ev.archived;
-  } else {
-    drawerTitle.textContent = "New Event";
-    eventNameInput.value = "";
-    matCountInput.value = "4";
-    periodPresetSelect.value = "60";
-    customPeriodField.style.display = "none";
-    customPeriodInput.value = "";
-    notesInput.value = "";
-    archivedInput.checked = false;
-  }
-
-  drawer.classList.add("open");
-  drawerBackdrop.classList.add("open");
-}
-
-function closeDrawer() {
-  drawer.classList.remove("open");
-  drawerBackdrop.classList.remove("open");
-}
-
-/* ---------------- Fetch events from server ---------------- */
-async function loadEvents() {
-  try {
-    const res = await fetch(API_BASE + "/events.json");
-    if (!res.ok) throw new Error("Server returned " + res.status);
-    const data = await res.json();
-    events = Array.isArray(data) ? data : [];
-    applyFilters();
-  } catch (err) {
-    console.error("Error loading events:", err);
-    showToast("Error loading events from server", true);
-    events = [];
-    applyFilters();
-  }
-}
-
-/* ---------------- Save events to server ---------------- */
-async function saveEventsToServer() {
-  try {
-    const res = await fetch(API_BASE + "/save-events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ events })
-    });
-
-    const data = await res.json();
-    if (!res.ok || !data.success) {
-      throw new Error(data.error || "Unknown error");
-    }
-
-    showToast("Events saved to server");
-    await loadEvents();
-  } catch (err) {
-    console.error("Save events error:", err);
-    showToast("Error saving events to server", true);
-  }
-}
-
-/* ---------------- Filtering & Sorting ---------------- */
-function applyFilters() {
-  const search = (searchInput.value || "").toLowerCase();
-  const showArchived = showArchivedCheckbox.checked;
-  const sortBy = sortSelect.value;
-
-  filteredEvents = events.filter(ev => {
-    const name = (ev.name || "").toLowerCase();
-    const matchesSearch = !search || name.includes(search);
-    const isArchived = !!ev.archived;
-    if (!showArchived && isArchived) return false;
-    return matchesSearch;
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
   });
-
-  if (sortBy === "name") {
-    filteredEvents.sort((a, b) =>
-      (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" })
-    );
-  } else if (sortBy === "mats") {
-    filteredEvents.sort((a, b) => (a.mats || 0) - (b.mats || 0));
-  }
-
-  renderEvents();
-}
-
-/* ---------------- Render ---------------- */
-function renderEvents() {
-  eventsGrid.innerHTML = "";
-  if (filteredEvents.length === 0) {
-    emptyState.style.display = "block";
-    return;
-  }
-  emptyState.style.display = "none";
-
-  filteredEvents.forEach(ev => {
-    const idx = events.indexOf(ev);
-    const card = document.createElement("div");
-    card.className = "event-card";
-
-    const matsLabel = ev.mats != null ? `${ev.mats} mat${ev.mats === 1 ? "" : "s"}` : "—";
-    const periodSec = ev.periodSeconds || 60;
-    const mins = Math.floor(periodSec / 60);
-    const secs = periodSec % 60;
-    const periodLabel = `${mins}:${secs.toString().padStart(2,"0")}`;
-
-    const isArchived = !!ev.archived;
-
-    card.innerHTML = `
-      <div class="event-name">${ev.name || "Untitled Event"}</div>
-      <div class="event-meta">
-        Mats: <strong>${matsLabel}</strong> · Period: <strong>${periodLabel}</strong>
-      </div>
-      <div class="event-pill ${isArchived ? "archived-pill" : ""}">
-        ${isArchived ? "ARCHIVED" : "ACTIVE EVENT"}
-      </div>
-      <div class="event-meta" style="margin-top:6px;">
-        ${ev.notes ? ev.notes : "&nbsp;"}
-      </div>
-      <div class="card-buttons">
-        <button class="btn btn-blue" data-action="edit">✏️ Edit</button>
-        <button class="btn btn-gold" data-action="duplicate">⧉ Duplicate</button>
-        <button class="btn btn-gray" data-action="archive">${isArchived ? "Unarchive" : "Archive"}</button>
-        <button class="btn btn-red" data-action="delete">🗑 Delete</button>
-      </div>
-    `;
-
-    const buttons = card.querySelectorAll("button");
-    buttons.forEach(btn => {
-      const action = btn.dataset.action;
-      if (action === "edit") {
-        btn.addEventListener("click", () => openDrawer(true, idx));
-      } else if (action === "duplicate") {
-        btn.addEventListener("click", () => duplicateEvent(idx));
-      } else if (action === "archive") {
-        btn.addEventListener("click", () => toggleArchiveEvent(idx));
-      } else if (action === "delete") {
-        btn.addEventListener("click", () => deleteEvent(idx));
-      }
-    });
-
-    eventsGrid.appendChild(card);
-  });
-}
-
-/* ---------------- Event operations ---------------- */
-function duplicateEvent(index) {
-  const base = events[index];
-  if (!base) return;
-  const copy = {
-    ...base,
-    id: (Date.now().toString() + "-" + Math.random().toString(16).slice(2)),
-    name: (base.name || "Untitled Event") + " (Copy)",
-    archived: false
-  };
-  events.push(copy);
-  saveEventsToServer();
-}
-
-function toggleArchiveEvent(index) {
-  const ev = events[index];
-  if (!ev) return;
-  ev.archived = !ev.archived;
-  saveEventsToServer();
-}
-
-function deleteEvent(index) {
-  const ev = events[index];
-  if (!ev) return;
-  const name = ev.name || "this event";
-  const ok = confirm(`Delete "${name}"? This cannot be undone.`);
-  if (!ok) return;
-  events.splice(index, 1);
-  saveEventsToServer();
-}
-
-/* ---------------- Drawer Submit ---------------- */
-function onSaveEventClicked() {
-  const name = eventNameInput.value.trim();
-  const matsValue = parseInt(matCountInput.value, 10) || 1;
-  let periodSeconds;
-
-  if (periodPresetSelect.value === "custom") {
-    const custom = parseInt(customPeriodInput.value, 10);
-    if (!custom || custom < 10) {
-      alert("Please enter a valid custom period (at least 10 seconds).");
-      return;
-    }
-    periodSeconds = custom;
-  } else {
-    periodSeconds = parseInt(periodPresetSelect.value, 10);
-  }
-
-  if (!name) {
-    alert("Event name is required.");
-    return;
-  }
-
-  const payload = {
-    name,
-    mats: matsValue,
-    periodSeconds,
-    notes: notesInput.value.trim(),
-    archived: archivedInput.checked
-  };
-
-  // Preserve id if editing
-  if (editingIndex != null && events[editingIndex]) {
-    const existing = events[editingIndex];
-    events[editingIndex] = {
-      ...existing,
-      ...payload
-    };
-  } else {
-    payload.id = Date.now().toString();
-    events.push(payload);
-  }
-
-  closeDrawer();
-  saveEventsToServer();
-}
-
-/* ---------------- Wiring events ---------------- */
-searchInput.addEventListener("input", applyFilters);
-sortSelect.addEventListener("change", applyFilters);
-showArchivedCheckbox.addEventListener("change", applyFilters);
-
-newEventBtn.addEventListener("click", () => openDrawer(false, null));
-drawerCloseBtn.addEventListener("click", closeDrawer);
-drawerBackdrop.addEventListener("click", closeDrawer);
-cancelBtn.addEventListener("click", closeDrawer);
-
-periodPresetSelect.addEventListener("change", () => {
-  if (periodPresetSelect.value === "custom") {
-    customPeriodField.style.display = "block";
-  } else {
-    customPeriodField.style.display = "none";
-  }
 });
 
-saveEventBtn.addEventListener("click", onSaveEventClicked);
+/* --------------------------------------------- */
+/* FIREBASE INIT                                 */
+/* --------------------------------------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
+  authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
+  projectId: "matsidewrestlingco-fb85f",
+  storageBucket: "matsidewrestlingco-fb85f.firebasestorage.app",
+  messagingSenderId: "898197416726",
+  appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-/* ---------------- Init ---------------- */
-loadEvents();
+/* --------------------------------------------- */
+/* TOASTS                                        */
+/* --------------------------------------------- */
+function showToast(msg, type="success") {
+  const el = document.createElement("div");
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById("toastContainer").appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+/* --------------------------------------------- */
+/* CSV PARSER (supports optional fields)         */
+/* --------------------------------------------- */
+
+let parsedMatches = [];
+
+document.getElementById("matchCsvInput").addEventListener("change", e => {
+  document.getElementById("parseCsvBtn").disabled = !e.target.files[0];
+});
+
+document.getElementById("parseCsvBtn").addEventListener("click", () => {
+  const file = document.getElementById("matchCsvInput").files[0];
+  if (!file) return;
+
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: results => {
+
+      const get = (row, ...keys) => {
+        for (let k of keys) {
+          if (row[k] !== undefined && row[k] !== "") return row[k];
+        }
+        return "";
+      };
+
+      parsedMatches = results.data.map(r => ({
+        id: crypto.randomUUID(),
+        bout: get(r, "bout", "Bout", "BOUT"),
+        weight: get(r, "weight", "Weight", "wt"),
+        round: get(r, "round", "Round", "ROUND"),
+
+        red: {
+          name: get(r, "redName", "red", "Red", "RED"),
+          team: get(r, "redTeam", "red_team", "RedTeam")
+        },
+
+        green: {
+          name: get(r, "greenName", "green", "Green", "GREEN"),
+          team: get(r, "greenTeam", "green_team", "GreenTeam")
+        },
+
+        assignedMat: get(r, "assignedMat", "mat", "Mat", "MAT")
+          ? Number(get(r, "assignedMat", "mat", "Mat", "MAT"))
+          : null,
+
+        queueIndex: null
+      }));
+
+      renderCsvPreview();
+    }
+  });
+});
+
+function renderCsvPreview() {
+  let html = `
+    <table class="csv-table">
+      <tr>
+        <th>Bout</th><th>Weight</th><th>Round</th>
+        <th>Red</th><th>Green</th><th>Mat</th>
+      </tr>
+  `;
+
+  parsedMatches.forEach(m => {
+    html += `
+      <tr>
+        <td>${m.bout}</td>
+        <td>${m.weight}</td>
+        <td>${m.round}</td>
+        <td>${m.red.name}</td>
+        <td>${m.green.name}</td>
+        <td>${m.assignedMat ?? ""}</td>
+      </tr>
+    `;
+  });
+
+  html += `</table><br>
+    <button id="saveToCloudBtn" class="pill-btn-fat">Save to Cloud</button>
+  `;
+
+  document.getElementById("csvPreview").innerHTML = html;
+
+  document.getElementById("saveToCloudBtn").onclick = saveMatchesToCloud;
+}
+
+function saveMatchesToCloud() {
+  const batch = db.batch();
+  parsedMatches.forEach(m => {
+    batch.set(db.collection("matchLibrary").doc(m.id), m);
+  });
+  batch.commit()
+    .then(() => showToast("Matches saved!", "success"))
+    .catch(() => showToast("Error saving matches", "error"));
+}
+
+/* --------------------------------------------- */
+/* LOAD MATCHES (strict bout-order)              */
+/* --------------------------------------------- */
+
+document.getElementById("loadMatchesBtn").addEventListener("click", loadMatches);
+
+function loadMatches() {
+  document.getElementById("loadingBar").style.display = "block";
+
+  db.collection("matchLibrary")
+    .get()
+    .then(snapshot => {
+      const matches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // ALWAYS sort by bout number
+      matches.sort((a, b) => Number(a.bout) - Number(b.bout));
+
+      renderAssignmentBoard(matches);
+      document.getElementById("loadingBar").style.display = "none";
+    });
+}
+
+/* --------------------------------------------- */
+/* RENDER BOARD                                  */
+/* --------------------------------------------- */
+
+function renderAssignmentBoard(matches) {
+
+  document.getElementById("assignmentBoard").innerHTML = `
+    <div class="drag-container">
+      ${[0,1,2,3,4].map(m => `
+        <div class="list-column">
+          <h3>${m === 0 ? "Unassigned" : "Mat " + m}</h3>
+          <div id="mat-${m}" class="match-list"></div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  const mats = { 0:[],1:[],2:[],3:[],4:[] };
+
+  matches.forEach(m => {
+    const mat = Number(m.assignedMat) || 0;
+    mats[mat].push(m);
+  });
+
+  // Strict ordering inside each mat
+  Object.values(mats).forEach(list => {
+    list.sort((a, b) => Number(a.bout) - Number(b.bout));
+  });
+
+  Object.keys(mats).forEach(mat => {
+    const container = document.getElementById(`mat-${mat}`);
+    mats[mat].forEach(m => container.appendChild(makeCard(m)));
+  });
+
+  // Enable drag/drop
+  [0,1,2,3,4].forEach(mat => {
+    Sortable.create(document.getElementById(`mat-${mat}`), {
+      group: { name: "mats", pull: true, put: true },
+      animation: 150,
+      draggable: ".match-card",
+      ghostClass: "dragging",
+      onEnd: saveAssignmentOrder
+    });
+  });
+}
+
+function makeCard(m) {
+  const el = document.createElement("div");
+  el.className = "match-card";
+  el.dataset.id = m.id;
+
+  el.innerHTML = `
+    <div>Bout ${m.bout} — ${m.weight || ""}</div>
+    <div>${m.red.name} vs ${m.green.name}</div>
+    <div style="opacity:0.7;font-size:12px;">Mat: ${m.assignedMat ?? "Unassigned"}</div>
+  `;
+
+  return el;
+}
+
+/* --------------------------------------------- */
+/* SAVE MAT ASSIGNMENTS                          */
+/* --------------------------------------------- */
+
+function saveAssignmentOrder() {
+  const batch = db.batch();
+
+  [0,1,2,3,4].forEach(mat => {
+    const parent = document.getElementById(`mat-${mat}`);
+
+    [...parent.children].forEach((card, index) => {
+      const ref = db.collection("matchLibrary").doc(card.dataset.id);
+
+      batch.update(ref, {
+        assignedMat: mat === 0 ? null : mat,
+      });
+    });
+  });
+
+  batch.commit()
+    .then(() => showToast("Assignments updated!", "success"))
+    .catch(() => showToast("Error saving", "error"));
+}
+
 </script>
 
 </body>
