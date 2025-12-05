@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel v4.3</title>
+<title>Matside — Control Panel v4.4</title>
 
 <!-- Firebase for match feed -->
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
@@ -446,16 +446,6 @@
     background: rgba(255,255,255,0.16);
   }
 
-  .timer-controls {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  .timer-controls button {
-    flex: 1 0 80px;
-  }
-
   .segment-row {
     display: flex;
     gap: 8px;
@@ -493,6 +483,61 @@
 
   .toggle-row input[type="checkbox"] {
     accent-color: var(--accent);
+  }
+
+  /* TIMER COLORS + SET CLOCK */
+
+  .timer-start {
+    background: linear-gradient(135deg,#43a047,#2e7d32);
+    color: #fff;
+  }
+
+  .timer-stop {
+    background: linear-gradient(135deg,#e53935,#b71c1c);
+    color: #fff;
+  }
+
+  .timer-reset {
+    background: linear-gradient(135deg,#fbc02d,#f57f17);
+    color: #111;
+  }
+
+  .timer-end {
+    background: linear-gradient(135deg,#c62828,#8e0000);
+    color: #fff;
+  }
+
+  .timer-set-card {
+    border-radius: 14px;
+    padding: 10px 10px 12px;
+    background: #080a12;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .set-clock-row {
+    display:flex;
+    gap:8px;
+    margin-top:4px;
+  }
+
+  .set-clock-input {
+    flex:1;
+    padding:6px 8px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:#050711;
+    color:#fff;
+    font-size:12px;
+  }
+
+  .set-clock-input::placeholder {
+    color: rgba(255,255,255,0.35);
+  }
+
+  .set-clock-help {
+    margin-top:6px;
+    font-size:11px;
+    color:var(--muted);
   }
 
   /* TIMELINE */
@@ -534,7 +579,7 @@
     font-size: 12px;
   }
 
-  /* LAST MATCH */
+  /* LAST MATCH + FOOTER */
 
   .bottom-row {
     max-width: 1100px;
@@ -825,30 +870,30 @@
       <div class="card">
         <h3>Timer</h3>
         <div class="card-sub">
-          Control the clock and choose regulation or overtime segments.
+          Control the clock and choose regulation or overtime periods.
         </div>
 
         <div class="timer-layout">
 
-          <!-- Start / Stop / End Match -->
+          <!-- Start / Stop / End Match + Periods -->
           <div class="timer-row-main">
             <div class="timer-button-group">
-              <button id="startBtn" class="blue btn-wide">Start</button>
-              <button id="stopBtn"  class="gray btn-wide">Stop</button>
-              <button id="resetTimerBtn" class="outline btn-wide small">Reset Clock</button>
-              <button id="endMatchBtn" class="red btn-wide small">End Match</button>
+              <button id="startBtn" class="btn btn-wide timer-start">Start</button>
+              <button id="stopBtn"  class="btn btn-wide timer-stop">Stop</button>
+              <button id="resetTimerBtn" class="btn btn-wide small timer-reset">Reset Clock</button>
+              <button id="endMatchBtn" class="btn btn-wide small timer-end">End Match</button>
             </div>
 
             <div class="scoreline">
               <label>Clock</label>
               <span id="clockDisplay">01:00</span>
               <div class="sep"></div>
-              <label>Segment</label>
+              <label>Period</label>
               <span id="segDisplay">REG1</span>
             </div>
 
             <div class="segment-row">
-              <span class="chip">Segments</span>
+              <span class="chip">Periods</span>
               <button class="seg-pill" data-seg="REG1"><span>Reg 1 (1:00)</span></button>
               <button class="seg-pill" data-seg="REG2"><span>Reg 2 (1:30)</span></button>
               <button class="seg-pill" data-seg="REG3"><span>Reg 3 (2:00)</span></button>
@@ -864,14 +909,15 @@
             </div>
           </div>
 
-          <!-- Extra Controls -->
-          <div>
-            <div class="section-label">Fine Controls</div>
-            <div class="timer-controls">
-              <button class="btn small outline" data-jog="-5">-5 sec</button>
-              <button class="btn small outline" data-jog="-1">-1 sec</button>
-              <button class="btn small outline" data-jog="1">+1 sec</button>
-              <button class="btn small outline" data-jog="5">+5 sec</button>
+          <!-- Set Clock Column -->
+          <div class="timer-set-card">
+            <div class="section-label">Set Clock (seconds)</div>
+            <div class="set-clock-row">
+              <input id="setClockInput" type="number" min="0" step="1" placeholder="e.g. 60" class="set-clock-input"/>
+              <button id="setClockBtn" class="btn small timer-apply">Apply</button>
+            </div>
+            <div class="set-clock-help">
+              Example: 60 = 1:00, 90 = 1:30, 120 = 2:00. Applying a new time will stop the clock.
             </div>
           </div>
 
@@ -951,7 +997,7 @@
   <span id="toastText">Saved</span>
 </div>
 
-<div id="version-tag">v4.3 (Full-width scoring, classic buttons)</div>
+<div id="version-tag">v4.4 (Timer card overhaul)</div>
 
 <!-- Socket.IO -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -985,6 +1031,9 @@
 
   const lastMatchMainEl  = document.getElementById("lastMatchMain");
   const lastMatchMetaEl  = document.getElementById("lastMatchMeta");
+
+  const setClockInput = document.getElementById("setClockInput");
+  const setClockBtn   = document.getElementById("setClockBtn");
 
   // Firebase + upcoming match feed
   let db = null;
@@ -1204,8 +1253,7 @@
 
   function renderSummary() {
     const s = getMatState();
-    // These were used by the old summary card. We guard them now in case
-    // elements don't exist.
+    // these were used by the old summary card; guard in case they don't exist
     const sumMatEl   = document.getElementById("sumMat");
     const sumSegEl   = document.getElementById("sumSeg");
     const sumTimeEl  = document.getElementById("sumTime");
@@ -1307,7 +1355,7 @@
     }
   });
 
-  // TIMER
+  // TIMER BUTTONS
   document.getElementById("startBtn").addEventListener("click",()=>{
     socket.emit("updateState",{ mat:currentMat, updates:{ running:true }});
   });
@@ -1330,7 +1378,7 @@
     });
   });
 
-  // SEGMENTS
+  // PERIODS
   document.querySelectorAll(".seg-pill").forEach(btn=>{
     btn.addEventListener("click",()=>{
       const segId = btn.dataset.seg || "REG1";
@@ -1350,26 +1398,36 @@
     });
   });
 
-  // JOG BUTTONS
-  document.querySelectorAll("[data-jog]").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      const delta = parseInt(btn.dataset.jog || "0",10);
-      const s = getMatState();
-      const cur = s.timeRemaining ?? 60;
-      const next = Math.max(0, cur + delta);
-      socket.emit("updateState",{ mat:currentMat, updates:{ timeRemaining:next }});
+  // SET CLOCK (seconds) — stops clock after applying
+  if (setClockBtn && setClockInput) {
+    setClockBtn.addEventListener("click", () => {
+      const raw = (setClockInput.value || "").trim();
+      const value = Number(raw);
+      if (!raw || Number.isNaN(value) || value < 0) {
+        showToast("Enter valid seconds (0 or more)");
+        return;
+      }
+      const seconds = Math.floor(value);
+      socket.emit("updateState", {
+        mat: currentMat,
+        updates: {
+          timeRemaining: seconds,
+          running: false
+        }
+      });
+      setClockInput.value = "";
+      showToast("Clock updated");
     });
-  });
+  }
 
-  // SCORE BUTTONS (now your wrestling actions)
+  // SCORE BUTTONS (your wrestling actions)
   document.querySelectorAll("[data-score]").forEach(btn=>{
     btn.addEventListener("click",()=>{
       const who = btn.dataset.score;
       const pts = parseInt(btn.dataset.pts || "0",10);
-      if(!who || !pts) {
-        // allow -1 as valid
-        if (!who) return;
-      }
+      if(!who) return;
+      if (Number.isNaN(pts)) return;
+
       const s = getMatState();
       const cur = (s[who] || 0) + pts;
       const clamped = Math.max(0, cur);
@@ -1492,7 +1550,7 @@
       `${winnerName} wins by ${selectedMethod.replace("_"," ")} (${red}–${green})`;
 
     lastMatchMetaEl.textContent =
-      `Mat ${currentMat}, Segment ${prettySegment(segment)} — ${
+      `Mat ${currentMat}, Period ${prettySegment(segment)} — ${
         new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})
       }`;
 
@@ -1538,6 +1596,33 @@
     closeMatchModal();
     showToast("Match submitted & mat reset");
   });
+
+  // LOCAL TIMER LOOP — decreases timeRemaining when running
+  let lastTickTs = Date.now();
+  setInterval(() => {
+    const s = getMatState();
+    if (!s.running) {
+      lastTickTs = Date.now();
+      return;
+    }
+    const now = Date.now();
+    const elapsed = (now - lastTickTs) / 1000;
+    if (elapsed < 0.2) return;
+    lastTickTs = now;
+
+    let remaining = (s.timeRemaining ?? 0) - elapsed;
+    if (remaining <= 0) {
+      remaining = 0;
+    }
+
+    socket.emit("updateState", {
+      mat: currentMat,
+      updates: {
+        timeRemaining: remaining,
+        running: remaining > 0
+      }
+    });
+  }, 200);
 
   // PARAMS / INIT
   setMatFromParamsIfPresent();
