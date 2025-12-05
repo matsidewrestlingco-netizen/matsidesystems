@@ -8,6 +8,10 @@
   <!-- PapaParse CSV Parser -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
+  <!-- Firebase (Browser CDN version) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -15,11 +19,7 @@
       margin: 0;
       padding: 20px;
     }
-
-    h2 {
-      margin-top: 0;
-    }
-
+    h2 { margin-top: 0; }
     .upload-section {
       background: #fff;
       padding: 20px;
@@ -28,10 +28,7 @@
       max-width: 700px;
       margin: auto;
     }
-
-    input[type="file"] {
-      margin: 10px 0;
-    }
+    input[type="file"] { margin: 10px 0; }
 
     .pill-btn-fat {
       padding: 10px 18px;
@@ -66,7 +63,6 @@
       border: 1px solid #ccc;
       padding: 6px 8px;
       font-size: 13px;
-      text-align: left;
     }
 
     .csv-table th {
@@ -74,13 +70,11 @@
       font-weight: bold;
     }
   </style>
-
 </head>
 <body>
 
   <div class="upload-section">
     <h2>Admin Control – Upload Matches</h2>
-
     <p>Select a CSV file containing match data.</p>
 
     <input type="file" id="matchCsvInput" accept=".csv" />
@@ -90,18 +84,33 @@
     <div id="csvPreview" class="csv-preview"></div>
   </div>
 
-
   <script>
+    //////////////////////////////////////////////////////////////////////
+    // 🔥 FIREBASE INITIALIZATION (USING YOUR CONFIG)
+    //////////////////////////////////////////////////////////////////////
+    const firebaseConfig = {
+      apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
+      authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
+      projectId: "matsidewrestlingco-fb85f",
+      storageBucket: "matsidewrestlingco-fb85f.firebasestorage.app",
+      messagingSenderId: "898197416726",
+      appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    //////////////////////////////////////////////////////////////////////
+    // CSV UPLOAD LOGIC
+    //////////////////////////////////////////////////////////////////////
     let uploadedCsvFile = null;
     let parsedMatches = [];
 
-    // Enable Parse button when a file is selected
     document.getElementById("matchCsvInput").addEventListener("change", (e) => {
       uploadedCsvFile = e.target.files[0];
       document.getElementById("parseCsvBtn").disabled = !uploadedCsvFile;
     });
 
-    // Parse CSV when button clicked
     document.getElementById("parseCsvBtn").addEventListener("click", () => {
       if (!uploadedCsvFile) return;
 
@@ -110,7 +119,7 @@
         skipEmptyLines: true,
         complete: function(results) {
 
-          parsedMatches = results.data.map((row, i) => {
+          parsedMatches = results.data.map((row) => {
             return {
               id: crypto.randomUUID(),
               bout: row.bout || row.Bout || "",
@@ -122,6 +131,7 @@
                 name: row.redName || row.RedName || row.Red || "",
                 team: row.redTeam || row.RedTeam || ""
               },
+
               green: {
                 name: row.greenName || row.GreenName || row.Green || "",
                 team: row.greenTeam || row.GreenTeam || ""
@@ -137,8 +147,9 @@
       });
     });
 
-
-    // Preview Table
+    //////////////////////////////////////////////////////////////////////
+    // PREVIEW UI
+    //////////////////////////////////////////////////////////////////////
     function showCsvPreview(matches) {
       const container = document.getElementById("csvPreview");
 
@@ -148,7 +159,7 @@
       }
 
       let html = `
-        <h3>Preview (${matches.length} matches found)</h3>
+        <h3>Preview (${matches.length} matches)</h3>
         <table class="csv-table">
           <tr>
             <th>Bout</th>
@@ -173,15 +184,43 @@
         `;
       });
 
-      html += "</table>";
+      html += "</table><br>";
 
-      // Placeholder for Firebase saving (coming in Step #2)
       html += `
-        <br>
         <button id="saveToCloudBtn" class="pill-btn-fat">Save Matches to Cloud</button>
       `;
 
       container.innerHTML = html;
+
+      document.getElementById("saveToCloudBtn")
+        .addEventListener("click", saveMatchesToCloud);
+    }
+
+    //////////////////////////////////////////////////////////////////////
+    // SAVE MATCHES TO FIRESTORE
+    //////////////////////////////////////////////////////////////////////
+    function saveMatchesToCloud() {
+      if (!parsedMatches.length) {
+        alert("No matches to save.");
+        return;
+      }
+
+      const batch = db.batch();
+      const matchCollection = db.collection("matchLibrary");
+
+      parsedMatches.forEach(match => {
+        const docRef = matchCollection.doc(match.id);
+        batch.set(docRef, match);
+      });
+
+      batch.commit()
+        .then(() => {
+          alert("Matches successfully saved to Firebase!");
+        })
+        .catch(err => {
+          console.error("Error saving:", err);
+          alert("Error saving matches. See console.");
+        });
     }
   </script>
 
