@@ -12,12 +12,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
-<!-- SortableJS -->
+<!-- Sortable -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <style>
 /* ----------------------------------------- */
-/* GLOBAL DARK DASHBOARD THEME               */
+/* GLOBAL DARK DASHBOARD THEME (Option A)    */
 /* ----------------------------------------- */
 
 body {
@@ -152,7 +152,7 @@ h2 {
 }
 
 /* ----------------------------------------- */
-/* DRAG / DROP LAYOUT                        */
+/* DRAG AND DROP ASSIGNMENT UI               */
 /* ----------------------------------------- */
 
 .drag-container {
@@ -187,10 +187,7 @@ h2 {
   padding: 10px;
 }
 
-/* ----------------------------------------- */
-/* MATCH CARDS                               */
-/* ----------------------------------------- */
-
+/* Match Cards */
 .match-card {
   background: #2d2d2d;
   border-radius: 8px;
@@ -200,7 +197,7 @@ h2 {
   font-size: 13px;
   cursor: grab;
   transition: 0.15s;
-  touch-action: none;  /* <-- FIXES DRAG */
+  touch-action: none; /* important for consistent dragging */
 }
 
 .match-card:hover {
@@ -228,18 +225,21 @@ h2 {
   opacity: 0.7;
 }
 
-/* Scrollbar */
+/* Scrollbars */
 .match-list::-webkit-scrollbar { width: 6px; }
 .match-list::-webkit-scrollbar-thumb {
   background: #444;
   border-radius: 6px;
 }
 
+/* ----------------------------------------- */
+
 </style>
 </head>
 
 <body>
 
+<!-- Toasts -->
 <div id="toastContainer"></div>
 
 <!-- ---------------- SECTION: CSV UPLOAD ---------------- -->
@@ -254,7 +254,7 @@ h2 {
   <div id="csvPreview"></div>
 </div>
 
-<!-- ---------------- SECTION: DRAG ASSIGNMENT ---------------- -->
+<!-- ---------------- SECTION: MATCH ASSIGNMENT ---------------- -->
 <div class="section">
   <h2>Assign Matches to Mats</h2>
 
@@ -268,9 +268,9 @@ h2 {
 </div>
 
 <script>
-/* -------------------------------------------- */
-/* FIREBASE SETUP                               */
-/* -------------------------------------------- */
+/* ---------------------------------------------------- */
+/* Firebase Init                                        */
+/* ---------------------------------------------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
   authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
@@ -282,20 +282,20 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* -------------------------------------------- */
-/* TOAST                                         */
-/* -------------------------------------------- */
+/* -------------------------- */
+/* Toast System               */
+/* -------------------------- */
 function showToast(msg, type="success") {
-  const el = document.createElement("div");
-  el.className = `toast ${type}`;
-  el.textContent = msg;
-  document.getElementById("toastContainer").appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  const div = document.createElement("div");
+  div.className = `toast ${type}`;
+  div.textContent = msg;
+  document.getElementById("toastContainer").appendChild(div);
+  setTimeout(() => div.remove(), 3000);
 }
 
-/* -------------------------------------------- */
-/* CSV PARSE                                    */
-/* -------------------------------------------- */
+/* -------------------------- */
+/* CSV UPLOAD & PARSE         */
+/* -------------------------- */
 let parsedMatches = [];
 
 document.getElementById("matchCsvInput").addEventListener("change", e => {
@@ -304,19 +304,21 @@ document.getElementById("matchCsvInput").addEventListener("change", e => {
 
 document.getElementById("parseCsvBtn").addEventListener("click", () => {
   const file = document.getElementById("matchCsvInput").files[0];
+  if (!file) return;
+
   Papa.parse(file, {
     header: true,
     skipEmptyLines: true,
-    complete: res => {
-      parsedMatches = res.data.map(r => ({
+    complete: results => {
+      parsedMatches = results.data.map(r => ({
         id: crypto.randomUUID(),
         bout: r.bout || r.Bout || "",
-        weight: r.weight || "",
-        round: r.round || "",
+        weight: r.weight || r.Weight || "",
+        round: r.round || r.Round || "",
         red: { name: r.redName || "", team: r.redTeam || "" },
         green: { name: r.greenName || "", team: r.greenTeam || "" },
         assignedMat: null,
-        queueIndex: null
+        queueIndex: null,
       }));
       renderCsvPreview();
     }
@@ -324,14 +326,14 @@ document.getElementById("parseCsvBtn").addEventListener("click", () => {
 });
 
 function renderCsvPreview() {
-  let out = `
+  let html = `
     <table class="csv-table">
       <tr>
         <th>Bout</th><th>Weight</th><th>Red</th><th>Green</th><th>Round</th>
       </tr>
   `;
   parsedMatches.forEach(m => {
-    out += `
+    html += `
       <tr>
         <td>${m.bout}</td>
         <td>${m.weight}</td>
@@ -341,45 +343,45 @@ function renderCsvPreview() {
       </tr>
     `;
   });
-
-  out += `</table><br>
+  html += `</table><br>
     <button id="saveToCloudBtn" class="pill-btn-fat">Save to Cloud</button>
   `;
+  document.getElementById("csvPreview").innerHTML = html;
 
-  document.getElementById("csvPreview").innerHTML = out;
-
-  document.getElementById("saveToCloudBtn").onclick = () => {
-    const batch = db.batch();
-    parsedMatches.forEach(m => {
-      batch.set(db.collection("matchLibrary").doc(m.id), m);
-    });
-    batch.commit()
-      .then(() => showToast("Matches saved!", "success"))
-      .catch(() => showToast("Error saving", "error"));
-  };
+  document.getElementById("saveToCloudBtn").onclick = saveMatchesToCloud;
 }
 
-/* -------------------------------------------- */
-/* LOAD MATCHES                                 */
-/* -------------------------------------------- */
+function saveMatchesToCloud() {
+  const batch = db.batch();
+  parsedMatches.forEach(m => {
+    const ref = db.collection("matchLibrary").doc(m.id);
+    batch.set(ref, m);
+  });
+  batch.commit()
+    .then(() => showToast("Saved matches!", "success"))
+    .catch(() => showToast("Error saving", "error"));
+}
+
+/* -------------------------- */
+/* Load Matches & Drag/Drop   */
+/* -------------------------- */
 document.getElementById("loadMatchesBtn").addEventListener("click", loadMatches);
 
 function loadMatches() {
-  document.getElementById("loadingBar").style.display = "block";
+  const bar = document.getElementById("loadingBar");
+  bar.style.display = "block";
 
   db.collection("matchLibrary")
     .get()
-    .then(snapshot => {
-      const matches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      drawAssignmentBoard(matches);
-      document.getElementById("loadingBar").style.display = "none";
+    .then(snap => {
+      const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderAssignmentBoard(matches);
+      bar.style.display = "none";
     });
 }
 
-function drawAssignmentBoard(matches) {
-  const container = document.getElementById("assignmentBoard");
-
-  container.innerHTML = `
+function renderAssignmentBoard(matches) {
+  let html = `
     <div class="drag-container">
       ${[0,1,2,3,4].map(m => `
         <div class="list-column">
@@ -390,21 +392,29 @@ function drawAssignmentBoard(matches) {
     </div>
   `;
 
-  const mats = { 0:[],1:[],2:[],3:[],4:[] };
+  document.getElementById("assignmentBoard").innerHTML = html;
+
+  const groups = { 0: [], 1:[],2:[],3:[],4:[] };
   matches.forEach(m => {
-    const assigned = Number(m.assignedMat) || 0;
-    mats[assigned].push(m);
+    const mat = Number(m.assignedMat) || 0;
+    groups[mat].push(m);
   });
 
-  Object.keys(mats).forEach(k => {
-    mats[k].sort((a,b) => (a.queueIndex ?? 9999) - (b.queueIndex ?? 9999));
-    const el = document.getElementById(`mat-${k}`);
-    mats[k].forEach(m => el.appendChild(makeCard(m)));
+  // sort by queue
+  Object.values(groups).forEach(list =>
+    list.sort((a,b) => (a.queueIndex ?? 9999) - (b.queueIndex ?? 9999))
+  );
+
+  // populate cards
+  Object.keys(groups).forEach(mat => {
+    const div = document.getElementById(`mat-${mat}`);
+    groups[mat].forEach(m => div.appendChild(makeCard(m)));
   });
 
+  // initialize sortable (FIXED: explicit group + draggable)
   [0,1,2,3,4].forEach(m => {
     Sortable.create(document.getElementById(`mat-${m}`), {
-      group: "mats",
+      group: { name: "mats", pull: true, put: true },
       animation: 150,
       draggable: ".match-card",
       ghostClass: "dragging",
@@ -414,38 +424,36 @@ function drawAssignmentBoard(matches) {
 }
 
 function makeCard(m) {
-  const el = document.createElement("div");
-  el.className = "match-card";
-  el.dataset.id = m.id;
+  const div = document.createElement("div");
+  div.className = "match-card";
+  div.dataset.id = m.id;
 
-  el.innerHTML = `
+  div.innerHTML = `
     <div class="match-card-header">Bout ${m.bout} — ${m.weight} lbs</div>
     <div class="match-card-body">${m.red.name} vs ${m.green.name}</div>
     <div class="match-card-meta">Round: ${m.round}</div>
   `;
-
-  return el;
+  return div;
 }
 
-/* -------------------------------------------- */
-/* SAVE ASSIGNMENT ORDER                        */
-/* -------------------------------------------- */
 function saveAssignmentOrder() {
   const batch = db.batch();
+  const mats = [0,1,2,3,4];
 
-  [0,1,2,3,4].forEach(mat => {
+  mats.forEach(mat => {
     const parent = document.getElementById(`mat-${mat}`);
-    [...parent.children].forEach((card, idx) => {
-      batch.update(db.collection("matchLibrary").doc(card.dataset.id), {
+    [...parent.children].forEach((card, i) => {
+      const ref = db.collection("matchLibrary").doc(card.dataset.id);
+      batch.update(ref, {
         assignedMat: mat === 0 ? null : mat,
-        queueIndex: idx
+        queueIndex: i
       });
     });
   });
 
   batch.commit()
     .then(() => showToast("Order updated!", "success"))
-    .catch(() => showToast("Error saving order", "error"));
+    .catch(() => showToast("Error updating order", "error"));
 }
 </script>
 
