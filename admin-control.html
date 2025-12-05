@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Admin Control Panel (v5)</title>
+<title>Matside — Admin Control Panel (v6)</title>
 
 <!-- PapaParse -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -73,11 +73,6 @@ h1 {
   box-shadow: 0 0 10px rgba(90,140,255,0.6);
 }
 
-.pill-btn-fat:disabled {
-  background: #555;
-  cursor: not-allowed;
-}
-
 /* ----------------------------------------- */
 /* CSV PREVIEW TABLE                         */
 /* ----------------------------------------- */
@@ -101,7 +96,7 @@ h1 {
 }
 
 /* ----------------------------------------- */
-/* TOAST NOTIFICATIONS                       */
+/* TOASTS                                     */
 /* ----------------------------------------- */
 
 #toastContainer {
@@ -125,11 +120,8 @@ h1 {
 .toast.success { border-left: 4px solid #3cff9d; }
 .toast.error   { border-left: 4px solid #ff4b4b; }
 
-@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
-
 /* ----------------------------------------- */
-/* PROGRESS BAR                              */
+/* LOADING BAR                               */
 /* ----------------------------------------- */
 
 .loading-bar {
@@ -149,8 +141,8 @@ h1 {
 }
 
 @keyframes loadLoop {
-  0% { width: 0%; }
-  50% { width: 70%; }
+  0%   { width: 0%; }
+  50%  { width: 70%; }
   100% { width: 0%; }
 }
 
@@ -217,6 +209,7 @@ h1 {
 .match-card.dragging {
   opacity: 0.5 !important;
 }
+
 </style>
 </head>
 
@@ -224,7 +217,7 @@ h1 {
 
 <div style="max-width:1100px;margin:0 auto;">
   <h1>Matside Admin Control</h1>
-  <div class="version-tag">admin-control.html — v5 (parser + drag-drop updated)</div>
+  <div class="version-tag">admin-control.html — v6 (Bout-Order Enforced)</div>
 </div>
 
 <div id="toastContainer"></div>
@@ -234,7 +227,6 @@ h1 {
   <h2>Upload Matches (CSV)</h2>
 
   <input type="file" id="matchCsvInput" accept=".csv" />
-
   <br><br>
 
   <button id="parseCsvBtn" class="pill-btn-fat" disabled>Parse CSV</button>
@@ -267,13 +259,12 @@ const firebaseConfig = {
   messagingSenderId: "898197416726",
   appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ---------------------------------------------------- */
-/* Toast Function                                       */
-/* ---------------------------------------------------- */
+/* -------------------------- */
+/* Toast Function             */
+/* -------------------------- */
 function showToast(msg, type="success") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;
@@ -283,7 +274,7 @@ function showToast(msg, type="success") {
 }
 
 /* ---------------------------------------------------- */
-/* NEW FLEXIBLE CSV PARSER (SUPPORTS OPTIONAL FIELDS)   */
+/* FLEXIBLE CSV PARSER (v6)                             */
 /* ---------------------------------------------------- */
 
 let parsedMatches = [];
@@ -313,31 +304,25 @@ document.getElementById("parseCsvBtn").addEventListener("click", () => {
       parsedMatches = results.data.map(r => ({
         id: crypto.randomUUID(),
 
-        // bout required
         bout: get(r, "bout", "Bout", "BOUT"),
 
-        // optional fields
         weight: get(r, "weight", "Weight", "wt", "WT"),
         round: get(r, "round", "Round", "ROUND"),
 
-        // Red wrestler
         red: {
           name: get(r, "redName", "red", "Red", "RED", "red_name"),
           team: get(r, "redTeam", "red_team", "RedTeam", "REDTEAM")
         },
 
-        // Green wrestler
         green: {
           name: get(r, "greenName", "green", "Green", "GREEN", "green_name"),
           team: get(r, "greenTeam", "green_team", "GreenTeam", "GREENTEAM")
         },
 
-        // Optional: mat assignment in CSV
         assignedMat: get(r, "assignedMat", "mat", "Mat", "MAT")
           ? Number(get(r, "assignedMat", "mat", "Mat", "MAT"))
           : null,
 
-        // Will be assigned later
         queueIndex: null
       }));
 
@@ -351,10 +336,10 @@ function renderCsvPreview() {
     <table class="csv-table">
       <tr>
         <th>Bout</th><th>Weight</th><th>Round</th>
-        <th>Red</th><th>Green</th>
-        <th>Mat</th>
+        <th>Red</th><th>Green</th><th>Mat</th>
       </tr>
   `;
+
   parsedMatches.forEach(m => {
     html += `
       <tr>
@@ -367,7 +352,9 @@ function renderCsvPreview() {
       </tr>
     `;
   });
-  html += `</table><br>
+
+  html += `</table>
+    <br>
     <button id="saveToCloudBtn" class="pill-btn-fat">Save to Cloud</button>
   `;
 
@@ -387,7 +374,7 @@ function saveMatchesToCloud() {
 }
 
 /* ---------------------------------------------------- */
-/* LOAD MATCHES INTO DRAG & DROP INTERFACE              */
+/* LOAD MATCHES — OPTION B: STRICT BOUT SORTING         */
 /* ---------------------------------------------------- */
 
 document.getElementById("loadMatchesBtn").addEventListener("click", loadMatches);
@@ -399,12 +386,24 @@ function loadMatches() {
     .get()
     .then(snapshot => {
       const matches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Always enforce bout order — OPTION B
+      matches.sort((a, b) => Number(a.bout) - Number(b.bout));
+
+      // Reset queueIndex so UI reflects bout ordering
+      matches.forEach((m, i) => m.queueIndex = i);
+
       renderAssignmentBoard(matches);
       document.getElementById("loadingBar").style.display = "none";
     });
 }
 
+/* ---------------------------------------------------- */
+/* RENDER ASSIGNMENT BOARD                              */
+/* ---------------------------------------------------- */
+
 function renderAssignmentBoard(matches) {
+
   document.getElementById("assignmentBoard").innerHTML = `
     <div class="drag-container">
       ${[0,1,2,3,4].map(m => `
@@ -419,21 +418,22 @@ function renderAssignmentBoard(matches) {
   const buckets = { 0:[],1:[],2:[],3:[],4:[] };
 
   matches.forEach(m => {
-    const target = Number(m.assignedMat) || 0;
-    buckets[target].push(m);
+    const mat = Number(m.assignedMat) || 0;
+    buckets[mat].push(m);
   });
 
-  Object.values(buckets).forEach(list =>
-    list.sort((a,b) => (a.queueIndex ?? 9999) - (b.queueIndex ?? 9999))
-  );
+  // Sort each mat's list strictly by bout number
+  Object.values(buckets).forEach(list => {
+    list.sort((a, b) => Number(a.bout) - Number(b.bout));
+  });
 
   Object.keys(buckets).forEach(mat => {
     const container = document.getElementById(`mat-${mat}`);
     buckets[mat].forEach(m => container.appendChild(makeCard(m)));
   });
 
-  [0,1,2,3,4].forEach(m => {
-    Sortable.create(document.getElementById(`mat-${m}`), {
+  [0,1,2,3,4].forEach(mat => {
+    Sortable.create(document.getElementById(`mat-${mat}`), {
       group: { name: "mats", pull: true, put: true },
       animation: 150,
       draggable: ".match-card",
@@ -449,13 +449,16 @@ function makeCard(m) {
   el.dataset.id = m.id;
 
   el.innerHTML = `
-    <div class="match-card-header">Bout ${m.bout} — ${m.weight}</div>
+    <div class="match-card-header">Bout ${m.bout} — ${m.weight || ""}</div>
     <div class="match-card-body">${m.red.name} vs ${m.green.name}</div>
     <div class="match-card-meta">Mat: ${m.assignedMat ?? "Unassigned"}</div>
   `;
-
   return el;
 }
+
+/* ---------------------------------------------------- */
+/* SAVE ASSIGNMENTS BACK TO FIRESTORE                   */
+/* ---------------------------------------------------- */
 
 function saveAssignmentOrder() {
   const batch = db.batch();
@@ -463,9 +466,11 @@ function saveAssignmentOrder() {
   [0,1,2,3,4].forEach(mat => {
     const parent = document.getElementById(`mat-${mat}`);
     [...parent.children].forEach((card, index) => {
-      batch.update(db.collection("matchLibrary").doc(card.dataset.id), {
+      const ref = db.collection("matchLibrary").doc(card.dataset.id);
+
+      batch.update(ref, {
         assignedMat: mat === 0 ? null : mat,
-        queueIndex: index
+        queueIndex: index // ALWAYS overwritten by bout number next load
       });
     });
   });
@@ -474,7 +479,7 @@ function saveAssignmentOrder() {
     .then(() => showToast("Order updated!", "success"))
     .catch(() => showToast("Error saving order", "error"));
 }
-</script>
 
+</script>
 </body>
 </html>
