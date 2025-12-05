@@ -2,172 +2,194 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matside — Event Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matside Systems</title>
 
-<link rel="preconnect" href="https://fonts.gstatic.com">
 <style>
-  :root{
-    --bg:#070809; --panel:#111215; --accent:#1e88e5;
-    --muted:#9aa0a6; --radius:12px;
-  }
-  body{
-    margin:0;
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-    background:var(--bg);
-    color:#fff;
-  }
-
-  /* HEADER */
-  .header{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:12px 16px;
-    background:#0d0e10;
-    border-bottom:1px solid #1a1c20;
-  }
-  .header img{
-    height:40px;border-radius:6px;
-  }
-  .header-title{
-    font-size:20px;font-weight:700;
+  :root {
+    --bg: #05060a;
+    --panel: #11131b;
+    --panel-soft: #141824;
+    --outline: rgba(255,255,255,0.08);
+    --outline-strong: rgba(255,255,255,0.16);
+    --muted: #9aa0a6;
+    --accent: #1e88e5;
+    --card-hover: rgba(30,136,229,0.22);
   }
 
-  /* PANEL */
-  .panel{
-    max-width:420px;
-    margin:40px auto;
-    background:var(--panel);
-    padding:22px;
-    border-radius:var(--radius);
-    box-shadow:0 6px 18px rgba(0,0,0,0.55);
+  body {
+    margin: 0;
+    background: radial-gradient(circle at top, #1a1d2e 0%, #05060a 60%, #020308 100%);
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #e9eaee;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
-  h2{
-    margin-top:0;margin-bottom:18px;
-    font-size:19px;
+  .container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
   }
 
-  select, input[type=password]{
-    width:100%;
-    padding:10px 12px;
-    border-radius:8px;
-    border:0;
-    background:#0d0e11;
-    color:#fff;
-    font-size:15px;
-    margin-bottom:14px;
+  .logo {
+    width: 180px;
+    height: auto;
+    margin-bottom: 18px;
+    opacity: 0.95;
   }
 
-  button{
-    width:100%;
-    padding:12px 14px;
-    font-size:16px;
-    border-radius:10px;
-    border:0;
-    cursor:pointer;
-    font-weight:700;
-    background:var(--accent);
-    color:#fff;
-    margin-top:6px;
-  }
-  button.gray{ background:#333; }
-  button:hover{
-    filter:brightness(1.12);
+  h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
   }
 
-  .msg{
-    font-size:14px;color:var(--muted);
-    margin-bottom:10px;
+  .subtitle {
+    margin-top: 6px;
+    margin-bottom: 40px;
+    font-size: 16px;
+    color: var(--muted);
+  }
+
+  /* GRID SECTIONS */
+
+  .section {
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 30px;
+  }
+
+  .section h2 {
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--outline);
+    padding: 18px 16px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+    text-decoration: none;
+    color: #fff;
+  }
+
+  .card:hover {
+    background: var(--card-hover);
+    transform: translateY(-2px);
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: #c7c9cf;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    padding: 20px 0;
+    font-size: 13px;
+    margin-top: auto;
   }
 </style>
 </head>
+
 <body>
 
-<div class="header">
-  <img src="https://www.matside.org/assets/images/image01.png">
-  <div class="header-title">Matside</div>
-</div>
+<div class="container">
 
-<div class="panel">
-  <h2>Select Your Event</h2>
+  <img src="assets/Asset%206MSS.png" class="logo" alt="Matside Systems Logo">
 
-  <div class="msg">
-    Choose the competition assigned to you.  
-    Your control panel will automatically load the correct settings.
+  <h1>Matside Systems</h1>
+  <div class="subtitle">Cloud-Based Wrestling Event Management & Mat Control</div>
+
+  <!-- OPERATOR TOOLS -->
+  <div class="section">
+    <h2>Operator Tools</h2>
+    <div class="grid">
+
+      <a href="control.html" class="card">
+        <div class="card-title">Control Panel</div>
+        <div class="card-desc">Run the mat: scoring, timing, match flow.</div>
+      </a>
+
+      <a href="scoreboard.html" class="card">
+        <div class="card-title">Scoreboard View</div>
+        <div class="card-desc">Display real-time scoreboard to spectators.</div>
+      </a>
+
+      <a href="upcoming-by-mat.html" class="card">
+        <div class="card-title">Upcoming by Mat</div>
+        <div class="card-desc">See Now / On Deck / In The Hole in real-time.</div>
+      </a>
+
+    </div>
   </div>
 
-  <select id="eventSelect">
-    <option>Loading events…</option>
-  </select>
+  <!-- ADMIN TOOLS -->
+  <div class="section">
+    <h2>Admin Tools</h2>
+    <div class="grid">
 
-  <button id="goBtn">Continue</button>
-  <button id="logoutBtn" class="gray">Log Out</button>
+      <a href="admin-control.html" class="card">
+        <div class="card-title">Admin Control</div>
+        <div class="card-desc">Upload matches, assign mats, manage events.</div>
+      </a>
+
+      <a href="hub.html" class="card">
+        <div class="card-title">Event Dashboard</div>
+        <div class="card-desc">Monitor mats, queues, and tournament traffic.</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ACCOUNT ACCESS -->
+  <div class="section">
+    <h2>Account Access</h2>
+    <div class="grid">
+
+      <a href="auth.html" class="card">
+        <div class="card-title">Login</div>
+        <div class="card-desc">Sign in to access privileged tools.</div>
+      </a>
+
+      <a href="auth.html?signup=true" class="card">
+        <div class="card-title">Create Account</div>
+        <div class="card-desc">Register a new Matside Systems user.</div>
+      </a>
+
+    </div>
+  </div>
 
 </div>
 
-<script>
-// =============================================================
-// LOAD EVENTS FROM BACKEND
-// =============================================================
-async function loadEvents() {
-  try {
-    const res = await fetch("https://scoreboard-server-er33.onrender.com/events.json");
-    const data = await res.json();
-
-    const sel = document.getElementById("eventSelect");
-    sel.innerHTML = ""; // clear
-
-    if (!data.events || data.events.length === 0) {
-      const opt = document.createElement("option");
-      opt.textContent = "No events available";
-      sel.appendChild(opt);
-      return;
-    }
-
-    data.events.forEach(ev => {
-      const opt = document.createElement("option");
-      opt.value = ev.name;
-      opt.textContent = ev.name;
-      sel.appendChild(opt);
-    });
-
-  } catch (err) {
-    console.error("Event load error:", err);
-    const sel = document.getElementById("eventSelect");
-    sel.innerHTML = "";
-    const opt = document.createElement("option");
-    opt.textContent = "Error loading events";
-    sel.appendChild(opt);
-  }
-}
-
-loadEvents();
-
-// =============================================================
-// GO BUTTON — SAVE EVENT + REDIRECT
-// =============================================================
-document.getElementById("goBtn").addEventListener("click", () => {
-  const evName = document.getElementById("eventSelect").value;
-  if (!evName || evName === "No events available") return;
-
-  // Save to localStorage so control.html can load it
-  localStorage.setItem("selectedEvent", evName);
-
-  // Send user to the event hub
-  window.location.href = "control-hub.html";
-});
-
-// =============================================================
-// LOG OUT — CLEAR EVENT CHOICE
-// =============================================================
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.removeItem("selectedEvent");
-  alert("You have been logged out.");
-  window.location.reload();
-});
-</script>
+<footer>
+  © Matside Systems — All Rights Reserved
+</footer>
 
 </body>
 </html>
