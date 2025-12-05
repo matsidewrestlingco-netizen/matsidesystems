@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Control – Match Upload v1.1</title>
+  <title>Admin Control – Match Upload & Assignment</title>
 
   <!-- PapaParse CSV Parser -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <!-- Firebase (Browser CDN version) -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
@@ -19,16 +19,19 @@
       margin: 0;
       padding: 20px;
     }
-    h2 { margin-top: 0; }
-    .upload-section {
+
+    h2, h3 {
+      margin-top: 0;
+    }
+
+    .section {
       background: #fff;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      max-width: 700px;
-      margin: auto;
+      max-width: 800px;
+      margin: 30px auto;
     }
-    input[type="file"] { margin: 10px 0; }
 
     .pill-btn-fat {
       padding: 10px 18px;
@@ -48,7 +51,7 @@
 
     .csv-preview {
       margin-top: 20px;
-      max-height: 400px;
+      max-height: 350px;
       overflow-y: auto;
     }
 
@@ -56,13 +59,14 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
+      font-size: 13px;
     }
 
     .csv-table th,
     .csv-table td {
       border: 1px solid #ccc;
       padding: 6px 8px;
-      font-size: 13px;
+      vertical-align: top;
     }
 
     .csv-table th {
@@ -70,24 +74,35 @@
       font-weight: bold;
     }
   </style>
+
 </head>
 <body>
 
-  <div class="upload-section">
-    <h2>Admin Control – Upload Matches</h2>
+  <!-- SECTION 1: CSV UPLOAD -->
+  <div class="section">
+    <h2>Upload Matches (CSV)</h2>
     <p>Select a CSV file containing match data.</p>
 
     <input type="file" id="matchCsvInput" accept=".csv" />
-    <br />
+    <br><br>
     <button id="parseCsvBtn" class="pill-btn-fat" disabled>Parse CSV</button>
 
     <div id="csvPreview" class="csv-preview"></div>
   </div>
 
+  <!-- SECTION 2: MATCH ASSIGNMENT -->
+  <div class="section">
+    <h2>Assign Matches to Mats</h2>
+
+    <button id="loadMatchesBtn" class="pill-btn-fat">Load Matches from Cloud</button>
+
+    <div id="assignmentTable" class="csv-preview"></div>
+  </div>
+
   <script>
-    //////////////////////////////////////////////////////////////////////
-    // 🔥 FIREBASE INITIALIZATION (USING YOUR CONFIG)
-    //////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
+    // 🔥 FIREBASE INITIALIZATION
+    /////////////////////////////////////////////////////////////////////////////
     const firebaseConfig = {
       apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
       authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
@@ -100,9 +115,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    //////////////////////////////////////////////////////////////////////
-    // CSV UPLOAD LOGIC
-    //////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
+    // STEP 1 — CSV UPLOAD + PARSE
+    /////////////////////////////////////////////////////////////////////////////
     let uploadedCsvFile = null;
     let parsedMatches = [];
 
@@ -118,8 +133,7 @@
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-
-          parsedMatches = results.data.map((row) => {
+          parsedMatches = results.data.map(row => {
             return {
               id: crypto.randomUUID(),
               bout: row.bout || row.Bout || "",
@@ -131,7 +145,6 @@
                 name: row.redName || row.RedName || row.Red || "",
                 team: row.redTeam || row.RedTeam || ""
               },
-
               green: {
                 name: row.greenName || row.GreenName || row.Green || "",
                 team: row.greenTeam || row.GreenTeam || ""
@@ -147,13 +160,13 @@
       });
     });
 
-    //////////////////////////////////////////////////////////////////////
-    // PREVIEW UI
-    //////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
+    // CSV PREVIEW TABLE
+    /////////////////////////////////////////////////////////////////////////////
     function showCsvPreview(matches) {
       const container = document.getElementById("csvPreview");
 
-      if (matches.length === 0) {
+      if (!matches.length) {
         container.innerHTML = "<p>No matches parsed.</p>";
         return;
       }
@@ -196,9 +209,9 @@
         .addEventListener("click", saveMatchesToCloud);
     }
 
-    //////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
     // SAVE MATCHES TO FIRESTORE
-    //////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
     function saveMatchesToCloud() {
       if (!parsedMatches.length) {
         alert("No matches to save.");
@@ -214,14 +227,98 @@
       });
 
       batch.commit()
-        .then(() => {
-          alert("Matches successfully saved to Firebase!");
-        })
+        .then(() => alert("Matches successfully saved to Firebase!"))
         .catch(err => {
-          console.error("Error saving:", err);
-          alert("Error saving matches. See console.");
+          console.error(err);
+          alert("Error saving matches.");
         });
     }
+
+    /////////////////////////////////////////////////////////////////////////////
+    // STEP 3 — LOAD MATCHES FOR ASSIGNMENT
+    /////////////////////////////////////////////////////////////////////////////
+    document.getElementById("loadMatchesBtn").addEventListener("click", loadMatchesFromCloud);
+
+    function loadMatchesFromCloud() {
+      db.collection("matchLibrary")
+        .orderBy("bout")
+        .get()
+        .then(snapshot => {
+          const matches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          showAssignmentTable(matches);
+        });
+    }
+
+    /////////////////////////////////////////////////////////////////////////////
+    // MATCH ASSIGNMENT TABLE
+    /////////////////////////////////////////////////////////////////////////////
+    function showAssignmentTable(matches) {
+      const container = document.getElementById("assignmentTable");
+
+      if (!matches.length) {
+        container.innerHTML = "<p>No matches found in cloud.</p>";
+        return;
+      }
+
+      let html = `
+        <h3>Assign Mats</h3>
+        <table class="csv-table">
+          <tr>
+            <th>Bout</th>
+            <th>Wrestlers</th>
+            <th>Weight</th>
+            <th>Assigned Mat</th>
+            <th>Change Mat</th>
+          </tr>
+      `;
+
+      matches.forEach(m => {
+        html += `
+          <tr>
+            <td>${m.bout}</td>
+            <td>
+              ${m.red.name} (${m.red.team})
+              <br>vs<br>
+              ${m.green.name} (${m.green.team})
+            </td>
+            <td>${m.weight}</td>
+            <td>${m.assignedMat ? "Mat " + m.assignedMat : "-"}</td>
+            <td>
+              <select data-id="${m.id}" class="matSelect">
+                <option value="">--</option>
+                <option value="1" ${m.assignedMat == 1 ? "selected" : ""}>Mat 1</option>
+                <option value="2" ${m.assignedMat == 2 ? "selected" : ""}>Mat 2</option>
+                <option value="3" ${m.assignedMat == 3 ? "selected" : ""}>Mat 3</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += "</table>";
+
+      container.innerHTML = html;
+
+      // Attach listeners
+      document.querySelectorAll(".matSelect").forEach(select => {
+        select.addEventListener("change", updateMatchAssignment);
+      });
+    }
+
+    /////////////////////////////////////////////////////////////////////////////
+    // UPDATE FIRESTORE WITH NEW MAT ASSIGNMENT
+    /////////////////////////////////////////////////////////////////////////////
+    function updateMatchAssignment(e) {
+      const matchId = e.target.getAttribute("data-id");
+      const matValue = e.target.value === "" ? null : Number(e.target.value);
+
+      db.collection("matchLibrary")
+        .doc(matchId)
+        .update({ assignedMat: matValue })
+        .then(() => console.log("Updated mat:", matchId, "→", matValue))
+        .catch(err => console.error(err));
+    }
+
   </script>
 
 </body>
