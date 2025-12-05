@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matside — Upcoming Matches By Mat</title>
+
+<!-- THEMES (same as overview.html) -->
+<link rel="stylesheet" href="./css/theme.css" />
+<link rel="stylesheet" href="./css/overview.css" />
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+
+<style>
+  body {
+    background: #f5f5f5;
+    font-family: Arial, sans-serif;
+  }
+
+  #upcoming-root {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  h1 {
+    margin-bottom: 20px;
+  }
+
+  .mat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .mat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    min-height: 300px;
+  }
+
+  .mat-card h2 {
+    font-size: 20px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 8px;
+  }
+
+  .match-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  .match-item:last-child {
+    border-bottom: none;
+  }
+
+  .match-meta {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  .empty-text {
+    color: #888;
+    margin-top: 20px;
+    font-size: 14px;
+  }
+</style>
+
+</head>
+
+<body>
+
+<div id="upcoming-root">
+  <h1>Matside — Upcoming Matches by Mat</h1>
+
+  <div class="mat-grid">
+    <div class="mat-card">
+      <h2>Mat 1</h2>
+      <div id="mat-1-list" class="mat-list"></div>
+    </div>
+
+    <div class="mat-card">
+      <h2>Mat 2</h2>
+      <div id="mat-2-list" class="mat-list"></div>
+    </div>
+
+    <div class="mat-card">
+      <h2>Mat 3</h2>
+      <div id="mat-3-list" class="mat-list"></div>
+    </div>
+
+    <div class="mat-card">
+      <h2>Mat 4</h2>
+      <div id="mat-4-list" class="mat-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+//////////////////////////////////////////////////////////////////////////////
+// FIREBASE INIT (same as admin-control.html)
+//////////////////////////////////////////////////////////////////////////////
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
+  authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
+  projectId: "matsidewrestlingco-fb85f",
+  storageBucket: "matsidewrestlingco-fb85f.firebasestorage.app",
+  messagingSenderId: "898197416726",
+  appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+//////////////////////////////////////////////////////////////////////////////
+// LIVE LISTENER — Update UI when match assignments change
+//////////////////////////////////////////////////////////////////////////////
+
+db.collection("matchLibrary").onSnapshot(snapshot => {
+
+  // Gather matches
+  const matches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+  // Buckets for mats
+  const mats = {
+    1: [],
+    2: [],
+    3: [],
+    4: []
+  };
+
+  // Fill buckets
+  matches.forEach(m => {
+    if (m.assignedMat && mats[m.assignedMat]) {
+      mats[m.assignedMat].push(m);
+    }
+  });
+
+  // Sort within each mat by queueIndex
+  for (let m = 1; m <= 4; m++) {
+    mats[m].sort((a, b) => {
+      const qa = a.queueIndex ?? 9999;
+      const qb = b.queueIndex ?? 9999;
+      return qa - qb;
+    });
+  }
+
+  // Render UI
+  renderMatList(1, mats[1]);
+  renderMatList(2, mats[2]);
+  renderMatList(3, mats[3]);
+  renderMatList(4, mats[4]);
+});
+
+//////////////////////////////////////////////////////////////////////////////
+// RENDER FUNCTION
+//////////////////////////////////////////////////////////////////////////////
+
+function renderMatList(matNum, list) {
+  const root = document.getElementById(`mat-${matNum}-list`);
+  root.innerHTML = "";
+
+  if (!list.length) {
+    root.innerHTML = `<div class="empty-text">No upcoming matches</div>`;
+    return;
+  }
+
+  list.forEach(match => {
+    const div = document.createElement("div");
+    div.className = "match-item";
+
+    div.innerHTML = `
+      <div><strong>Bout ${match.bout}</strong> — ${match.weight} lbs</div>
+      <div>${match.red.name} (${match.red.team}) vs ${match.green.name} (${match.green.team})</div>
+      <div class="match-meta">Round: ${match.round}</div>
+    `;
+
+    root.appendChild(div);
+  });
+}
+
+</script>
+
+</body>
+</html>
