@@ -313,7 +313,7 @@ document.getElementById("parseCsvBtn").addEventListener("click", () => {
         round: r.round || r.Round || "",
         red: { name: r.redName || "", team: r.redTeam || "" },
         green: { name: r.greenName || "", team: r.greenTeam || "" },
-        assignedMat: null,
+        assignedMat: r.assignedMat ? Number(r.assignedMat) : null,
         queueIndex: null,
       }));
       renderCsvPreview();
