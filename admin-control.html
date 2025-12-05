@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Control – Match Upload</title>
+
+  <!-- PapaParse CSV Parser -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .upload-section {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 700px;
+      margin: auto;
+    }
+
+    input[type="file"] {
+      margin: 10px 0;
+    }
+
+    .pill-btn-fat {
+      padding: 10px 18px;
+      font-size: 14px;
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+      background: #0077ff;
+      color: white;
+      transition: 0.2s;
+    }
+
+    .pill-btn-fat:disabled {
+      background: #9bbcf0;
+      cursor: not-allowed;
+    }
+
+    .csv-preview {
+      margin-top: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .csv-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .csv-table th,
+    .csv-table td {
+      border: 1px solid #ccc;
+      padding: 6px 8px;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .csv-table th {
+      background: #e7e7e7;
+      font-weight: bold;
+    }
+  </style>
+
+</head>
+<body>
+
+  <div class="upload-section">
+    <h2>Admin Control – Upload Matches</h2>
+
+    <p>Select a CSV file containing match data.</p>
+
+    <input type="file" id="matchCsvInput" accept=".csv" />
+    <br />
+    <button id="parseCsvBtn" class="pill-btn-fat" disabled>Parse CSV</button>
+
+    <div id="csvPreview" class="csv-preview"></div>
+  </div>
+
+
+  <script>
+    let uploadedCsvFile = null;
+    let parsedMatches = [];
+
+    // Enable Parse button when a file is selected
+    document.getElementById("matchCsvInput").addEventListener("change", (e) => {
+      uploadedCsvFile = e.target.files[0];
+      document.getElementById("parseCsvBtn").disabled = !uploadedCsvFile;
+    });
+
+    // Parse CSV when button clicked
+    document.getElementById("parseCsvBtn").addEventListener("click", () => {
+      if (!uploadedCsvFile) return;
+
+      Papa.parse(uploadedCsvFile, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+
+          parsedMatches = results.data.map((row, i) => {
+            return {
+              id: crypto.randomUUID(),
+              bout: row.bout || row.Bout || "",
+              weight: row.weight || row.Weight || "",
+              round: row.round || row.Round || "",
+              preferredMat: Number(row.mat || row.Mat || 0),
+
+              red: {
+                name: row.redName || row.RedName || row.Red || "",
+                team: row.redTeam || row.RedTeam || ""
+              },
+              green: {
+                name: row.greenName || row.GreenName || row.Green || "",
+                team: row.greenTeam || row.GreenTeam || ""
+              },
+
+              assignedMat: null,
+              status: "upcoming"
+            };
+          });
+
+          showCsvPreview(parsedMatches);
+        }
+      });
+    });
+
+
+    // Preview Table
+    function showCsvPreview(matches) {
+      const container = document.getElementById("csvPreview");
+
+      if (matches.length === 0) {
+        container.innerHTML = "<p>No matches parsed.</p>";
+        return;
+      }
+
+      let html = `
+        <h3>Preview (${matches.length} matches found)</h3>
+        <table class="csv-table">
+          <tr>
+            <th>Bout</th>
+            <th>Weight</th>
+            <th>Red Wrestler</th>
+            <th>Green Wrestler</th>
+            <th>Round</th>
+            <th>Mat Pref</th>
+          </tr>
+      `;
+
+      matches.slice(0, 30).forEach(m => {
+        html += `
+          <tr>
+            <td>${m.bout}</td>
+            <td>${m.weight}</td>
+            <td>${m.red.name} (${m.red.team})</td>
+            <td>${m.green.name} (${m.green.team})</td>
+            <td>${m.round}</td>
+            <td>${m.preferredMat || "-"}</td>
+          </tr>
+        `;
+      });
+
+      html += "</table>";
+
+      // Placeholder for Firebase saving (coming in Step #2)
+      html += `
+        <br>
+        <button id="saveToCloudBtn" class="pill-btn-fat">Save Matches to Cloud</button>
+      `;
+
+      container.innerHTML = html;
+    }
+  </script>
+
+</body>
+</html>
