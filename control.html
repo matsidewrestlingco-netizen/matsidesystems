@@ -774,6 +774,7 @@ button.gray:hover {
   <div class="timeline-bar">
     <div class="timeline-header">
   <div class="timeline-title">Timeline</div>
+      <button id="undoBtn" class="gray small">Undo</button>
 
   <div style="display:flex;align-items:center;gap:10px;">
     <button id="resetTimelineBtn" class="btn-ghost small" style="
@@ -1038,6 +1039,56 @@ button.gray:hover {
     socket.emit("updateState",{ mat:currentMat, updates:{ time:t, running:false }});
     showToast("Timer reset");
   });
+
+  // ======================================================
+// TIMELINE UNDO SYSTEM
+// ======================================================
+let timelineHistory = []; // store entries for undo
+
+function addTimelineEntry(obj) {
+  timelineHistory.push(obj);
+  renderTimeline();
+}
+
+function undoTimelineEntry() {
+  if (timelineHistory.length === 0) return;
+
+  const last = timelineHistory.pop();
+
+  // Reverse actions based on type
+  switch (last.type) {
+    case "score":
+      socket.emit("subPoint", {
+        mat: currentMat(),
+        color: last.color
+      });
+      break;
+
+    case "names":
+      updateState(currentMat(), {
+        redName: last.prevRed,
+        greenName: last.prevGreen
+      });
+      break;
+
+    case "period":
+      updateState(currentMat(), {
+        period: last.prevPeriod
+      });
+      break;
+
+    case "time":
+      updateState(currentMat(), {
+        time: last.prevTime
+      });
+      break;
+  }
+
+  renderTimeline();
+}
+
+// Hook undo button
+document.getElementById("undoBtn").addEventListener("click", undoTimelineEntry);
 
   // SCORING
   document.querySelectorAll("[data-color][data-pts]").forEach(btn=>{
@@ -1322,6 +1373,60 @@ button.gray:hover {
     closeMatchModal();
     showToast("Match submitted & mat reset");
   });
+
+// ======================================================
+// KEYBOARD SHORTCUT ENGINE
+// ======================================================
+
+document.addEventListener("keydown", (ev) => {
+  if (ev.target.tagName === "INPUT") return; // avoid typing conflicts
+
+  const key = ev.key.toLowerCase();
+  const mat = currentMat();
+
+  // --- TIMER ---
+  if (key === " ") {
+    ev.preventDefault();
+    if (state.running) {
+      updateState(mat, { running: false });
+    } else {
+      updateState(mat, { running: true });
+    }
+    return;
+  }
+
+  if (key === "r") {
+    resetTimerBtn.click();
+    return;
+  }
+
+  // --- END MATCH ---
+  if (key === "e") {
+    openEndMatchModal();
+    return;
+  }
+
+  // --- UNDO ---
+  if (key === "u") {
+    undoTimelineEntry();
+    return;
+  }
+
+  // --- RED SCORING ---
+  if (key === "1") socket.emit("addPoints", { mat, color: "red", pts: 1 });
+  if (key === "2") socket.emit("addPoints", { mat, color: "red", pts: 2 });
+  if (key === "3") socket.emit("addPoints", { mat, color: "red", pts: 3 });
+  if (key === "4") socket.emit("addPoints", { mat, color: "red", pts: 2 }); // NF2
+  if (key === "5") socket.emit("addPoints", { mat, color: "red", pts: 3 }); // NF3
+
+  // --- GREEN SCORING ---
+  if (key === "7") socket.emit("addPoints", { mat, color: "green", pts: 1 });
+  if (key === "8") socket.emit("addPoints", { mat, color: "green", pts: 2 });
+  if (key === "9") socket.emit("addPoints", { mat, color: "green", pts: 3 });
+  if (key === "0") socket.emit("addPoints", { mat, color: "green", pts: 2 }); // NF2
+  if (key === "-") socket.emit("addPoints", { mat, color: "green", pts: 3 }); // NF3
+});
+  
 </script>
 
 </body>
