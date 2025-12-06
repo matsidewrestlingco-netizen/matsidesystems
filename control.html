@@ -1134,17 +1134,16 @@
       .collection("matches");
 
     unsubscribeMatches = matchesRef
-      .where("assignedMat","==", matNumber)
-      .where("completed","==", false)
-      .orderBy("queueIndex","asc")
-      .orderBy("bout","asc")
-      .onSnapshot(snapshot => {
-        const upcoming = [];
-        snapshot.forEach(doc => upcoming.push({ id: doc.id, ...doc.data() }));
-        renderUpcomingFromList(upcoming);
-      }, err => {
-        console.error("Error subscribing to matches", err);
-      });
+  .where("assignedMat","==", matNumber)
+  .where("completed","==", false)
+  .orderBy("bout","asc")
+  .onSnapshot(snapshot => {
+    const upcoming = [];
+    snapshot.forEach(doc => upcoming.push({ id: doc.id, ...doc.data() }));
+    renderUpcomingFromList(upcoming);
+  }, err => {
+    console.error("Error subscribing to matches", err);
+  });
   }
 
   function applyMatCountFromEventDoc(ev) {
