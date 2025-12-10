@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Matside Overlay</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <style>
+    :root {
+      --bg-bar: rgba(3,4,10,0.92);
+      --bg-bar-strong: rgba(3,4,10,0.98);
+      --accent: #1e88e5;
+      --accent-soft: rgba(30,136,229,0.4);
+      --red: #f44336;
+      --green: #66bb6a;
+      --muted: #9aa0a6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+      color: #ffffff;
+    }
+
+    .overlay-root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      pointer-events: none; /* overlay is display-only */
+    }
+
+    /* Lower-third bar */
+    .scorebar-wrap {
+      position: absolute;
+      left: 50%;
+      bottom: 3%;
+      transform: translateX(-50%);
+      width: 94%;
+      max-width: 1280px;
+    }
+
+    .scorebar {
+      display: grid;
+      grid-template-columns: minmax(0,1.7fr) minmax(0,1.2fr) minmax(0,1.7fr);
+      align-items: stretch;
+      gap: 2px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(to top, var(--bg-bar-strong), var(--bg-bar));
+      box-shadow: 0 18px 55px rgba(0,0,0,0.85);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .side {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .side.red {
+      background: radial-gradient(circle at left, rgba(244,67,54,0.32), rgba(3,4,10,0.96));
+    }
+
+    .side.green {
+      background: radial-gradient(circle at right, rgba(102,187,106,0.34), rgba(3,4,10,0.96));
+    }
+
+    .team-block {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .team-name {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: rgba(255,255,255,0.68);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .wrestler-name {
+      font-size: 16px;
+      font-weight: 650;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .score-pill {
+      min-width: 46px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.3);
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      margin-left: 10px;
+      background: rgba(0,0,0,0.4);
+    }
+
+    .score-pill.red {
+      border-color: rgba(244,67,54,0.9);
+      box-shadow: 0 0 18px rgba(244,67,54,0.55);
+    }
+
+    .score-pill.green {
+      border-color: rgba(102,187,106,0.9);
+      box-shadow: 0 0 18px rgba(102,187,106,0.55);
+    }
+
+    /* Center clock/period block */
+    .center-block {
+      position: relative;
+      background: radial-gradient(circle at top, rgba(30,136,229,0.26), rgba(3,4,10,0.98));
+      border-inline: 1px solid rgba(255,255,255,0.18);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      gap: 2px;
+    }
+
+    .clock {
+      font-variant-numeric: tabular-nums;
+      font-size: 26px;
+      font-weight: 750;
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 14px rgba(0,0,0,0.9);
+    }
+
+    .period-tag {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: rgba(255,255,255,0.82);
+    }
+
+    .mat-tag {
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: rgba(255,255,255,0.7);
+    }
+
+    /* Matside bug bottom-right */
+    .logo-bug {
+      position: absolute;
+      right: 2%;
+      bottom: 1.5%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 9px 4px 4px;
+      background: radial-gradient(circle at top left, rgba(30,136,229,0.46), rgba(3,4,10,0.98));
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.9);
+    }
+
+    .logo-bug img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #02030a;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 3px;
+      object-fit: contain;
+    }
+
+    .logo-text-main {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.86);
+    }
+
+    .logo-text-sub {
+      font-size: 10px;
+      color: rgba(255,255,255,0.65);
+    }
+
+    @media (max-width: 800px) {
+      .scorebar {
+        grid-template-columns: minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.6fr);
+      }
+      .wrestler-name { font-size: 14px; }
+      .clock { font-size: 22px; }
+    }
+
+    @media (max-width: 600px) {
+      .scorebar-wrap {
+        width: 98%;
+      }
+      .scorebar {
+        grid-template-columns: minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.6fr);
+      }
+      .team-name { font-size: 10px; }
+      .wrestler-name { font-size: 13px; }
+      .score-pill { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+<div class="overlay-root">
+  <div class="scorebar-wrap">
+    <div class="scorebar">
+      <!-- Red side -->
+      <div class="side red">
+        <div class="team-block">
+          <div id="redTeam" class="team-name">Red Team</div>
+          <div id="redName" class="wrestler-name">Red Wrestler</div>
+        </div>
+        <div id="redScore" class="score-pill red">0</div>
+      </div>
+
+      <!-- Center -->
+      <div class="center-block">
+        <div class="mat-tag" id="matTag">MAT 1</div>
+        <div id="clock" class="clock">01:00</div>
+        <div id="periodTag" class="period-tag">PERIOD 1</div>
+      </div>
+
+      <!-- Green side -->
+      <div class="side green">
+        <div class="team-block" style="text-align:right; align-items:flex-end;">
+          <div id="greenTeam" class="team-name">Green Team</div>
+          <div id="greenName" class="wrestler-name">Green Wrestler</div>
+        </div>
+        <div id="greenScore" class="score-pill green">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Matside Systems bug -->
+  <div class="logo-bug">
+    <img src="https://www.matside.org/assets/images/image01.png" alt="Matside Systems logo" />
+    <div>
+      <div class="logo-text-main">MATSIDE</div>
+      <div class="logo-text-sub">Systems</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SERVER_URL = "https://scoreboard-server-er33.onrender.com";
+  const socket = io(SERVER_URL, { transports:["websocket","polling"] });
+
+  const redTeamEl   = document.getElementById("redTeam");
+  const redNameEl   = document.getElementById("redName");
+  const redScoreEl  = document.getElementById("redScore");
+
+  const greenTeamEl  = document.getElementById("greenTeam");
+  const greenNameEl  = document.getElementById("greenName");
+  const greenScoreEl = document.getElementById("greenScore");
+
+  const clockEl     = document.getElementById("clock");
+  const periodTagEl = document.getElementById("periodTag");
+  const matTagEl    = document.getElementById("matTag");
+
+  let mats = {};
+  let currentMat = 1;
+
+  // Read ?mat= from query string
+  (function initMatFromQuery(){
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      const mat = parseInt(params.get("mat") || "1",10);
+      if (!Number.isNaN(mat) && mat >= 1 && mat <= 12) {
+        currentMat = mat;
+      }
+    } catch (e) {
+      currentMat = 1;
+    }
+    matTagEl.textContent = "MAT " + currentMat;
+  })();
+
+  function getMatState(){
+    return mats[String(currentMat)] || {
+      red:0,
+      green:0,
+      timeRemaining:60,
+      segmentId:"REG1",
+      period:1,
+      redName:null,
+      greenName:null,
+      redTeam:null,
+      greenTeam:null
+    };
+  }
+
+  function formatTime(sec){
+    const s = Math.max(0, Math.floor(sec || 0));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return String(m).padStart(2,"0") + ":" + String(r).padStart(2,"0");
+  }
+
+  function prettyPeriod(segId, periodNumber){
+    if (!segId) segId = "REG" + (periodNumber || 1);
+    if (segId.startsWith("REG")) {
+      const n = segId.replace("REG","");
+      return "PERIOD " + (n || "1");
+    }
+    if (segId === "OT") return "OVERTIME";
+    if (segId.startsWith("TB")) return segId.toUpperCase();
+    if (segId === "UT") return "ULTIMATE TIE";
+    return segId.toUpperCase();
+  }
+
+  function render(){
+    const s = getMatState();
+
+    const redTeam  = s.redTeam   || "";
+    const redName  = s.redName   || "Red Wrestler";
+    const greenTeam= s.greenTeam || "";
+    const greenName= s.greenName || "Green Wrestler";
+
+    redTeamEl.textContent   = redTeam  || "Red Team";
+    redNameEl.textContent   = redName;
+    greenTeamEl.textContent = greenTeam || "Green Team";
+    greenNameEl.textContent = greenName;
+
+    redScoreEl.textContent   = (s.red != null ? s.red : 0);
+    greenScoreEl.textContent = (s.green != null ? s.green : 0);
+
+    clockEl.textContent = formatTime(s.timeRemaining ?? 60);
+    periodTagEl.textContent = prettyPeriod(s.segmentId, s.period);
+  }
+
+  socket.on("connect",()=>{
+    socket.emit("registerDevice",{ type:"overlay", mat: currentMat });
+  });
+
+  socket.on("stateUpdate",(payload)=>{
+    if (payload && payload.mats) {
+      mats = payload.mats;
+      render();
+    }
+  });
+
+  // Just in case there are small drifts or late packets, re-render periodically
+  setInterval(render, 500);
+</script>
+</body>
+</html>
