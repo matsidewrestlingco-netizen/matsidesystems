@@ -206,6 +206,10 @@
       text-align: left;
     }
 
+    .score-value.small-score {
+      font-size: 20px;
+    }
+
     .btn-group {
       display: flex;
       flex-wrap: wrap;
@@ -375,7 +379,7 @@
   <!-- Names & Scores -->
   <section class="card">
     <h3>Names & Scoring</h3>
-    <p class="card-sub">Set names and teams, then adjust scores. This feeds the live overlay.</p>
+    <p class="card-sub">Set names, teams, team scores, and match scores. This feeds the live overlay.</p>
 
     <div class="two-col">
       <!-- Red side -->
@@ -384,9 +388,23 @@
         <input id="redNameInput" class="name-input" placeholder="Red wrestler name" />
         <input id="redTeamInput" class="team-input" placeholder="Red team (optional)" />
 
+        <!-- Red team score -->
         <div class="score-row">
           <div>
-            <div class="label-small">Score</div>
+            <div class="label-small">Team score</div>
+            <div id="redTeamScoreDisplay" class="score-value small-score">0</div>
+          </div>
+          <div class="btn-group">
+            <button class="btn" data-team-score="red" data-pts="1">+1</button>
+            <button class="btn" data-team-score="red" data-pts="3">+3</button>
+            <button class="btn" data-team-score="red" data-pts="-1">-1</button>
+          </div>
+        </div>
+
+        <!-- Red individual score -->
+        <div class="score-row">
+          <div>
+            <div class="label-small">Match score</div>
             <div id="redScoreDisplay" class="score-value">0</div>
           </div>
           <div class="btn-group">
@@ -404,9 +422,23 @@
         <input id="greenNameInput" class="name-input" placeholder="Green wrestler name" />
         <input id="greenTeamInput" class="team-input" placeholder="Green team (optional)" />
 
+        <!-- Green team score -->
         <div class="score-row">
           <div>
-            <div class="label-small">Score</div>
+            <div class="label-small">Team score</div>
+            <div id="greenTeamScoreDisplay" class="score-value small-score">0</div>
+          </div>
+          <div class="btn-group">
+            <button class="btn" data-team-score="green" data-pts="1">+1</button>
+            <button class="btn" data-team-score="green" data-pts="3">+3</button>
+            <button class="btn" data-team-score="green" data-pts="-1">-1</button>
+          </div>
+        </div>
+
+        <!-- Green individual score -->
+        <div class="score-row">
+          <div>
+            <div class="label-small">Match score</div>
             <div id="greenScoreDisplay" class="score-value">0</div>
           </div>
           <div class="btn-group">
@@ -465,7 +497,7 @@
     </div>
 
     <div class="footer-hints">
-      Keyboard: Space = start/stop, R = reset, 1/2/3/- for red, 7/8/9/= for green.
+      Keyboard: Space = start/stop, R = reset, 1/2/3 for red, 7/8/9 for green.
     </div>
   </section>
 </div>
@@ -485,8 +517,10 @@
   const greenNameInput = document.getElementById("greenNameInput");
   const greenTeamInput = document.getElementById("greenTeamInput");
 
-  const redScoreDisplay   = document.getElementById("redScoreDisplay");
-  const greenScoreDisplay = document.getElementById("greenScoreDisplay");
+  const redScoreDisplay        = document.getElementById("redScoreDisplay");
+  const greenScoreDisplay      = document.getElementById("greenScoreDisplay");
+  const redTeamScoreDisplay    = document.getElementById("redTeamScoreDisplay");
+  const greenTeamScoreDisplay  = document.getElementById("greenTeamScoreDisplay");
 
   const clockDisplay  = document.getElementById("clockDisplay");
   const periodSelect  = document.getElementById("periodSelect");
@@ -527,7 +561,9 @@
       segmentId:"REG1",
       period:1,
       red:0,
-      green:0
+      green:0,
+      redTeamScore:0,
+      greenTeamScore:0
     };
   }
 
@@ -544,6 +580,8 @@
     periodSelect.value = s.segmentId || "REG1";
     redScoreDisplay.textContent   = s.red ?? 0;
     greenScoreDisplay.textContent = s.green ?? 0;
+    redTeamScoreDisplay.textContent   = s.redTeamScore ?? 0;
+    greenTeamScoreDisplay.textContent = s.greenTeamScore ?? 0;
 
     // Names/teams (if present from another device)
     if (s.redName && !redNameInput.matches(":focus")) {
@@ -605,7 +643,7 @@
   greenNameInput.addEventListener("input", pushNames);
   greenTeamInput.addEventListener("input", pushNames);
 
-  // Score buttons
+  // Match score buttons
   document.querySelectorAll("[data-score]").forEach(btn=>{
     btn.addEventListener("click",()=>{
       const who = btn.dataset.score;
@@ -621,7 +659,24 @@
     });
   });
 
-  // Period select -> segmentId + period + default time for that seg (don’t auto-reset if you don’t want)
+  // Team score buttons
+  document.querySelectorAll("[data-team-score]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const who = btn.dataset.teamScore; // "red" | "green"
+      const pts = parseInt(btn.dataset.pts || "0",10);
+      if (!who || Number.isNaN(pts)) return;
+      const field = who + "TeamScore";
+      const s = getMatState();
+      const cur = (s[field] || 0) + pts;
+      const next = Math.max(0, cur);
+      socket.emit("updateState",{
+        mat: currentMat,
+        updates: { [field]: next }
+      });
+    });
+  });
+
+  // Period select
   periodSelect.addEventListener("change",()=>{
     const segId = periodSelect.value || "REG1";
     const seg = SEGMENTS[segId] || SEGMENTS.REG1;
@@ -671,7 +726,7 @@
     showToast("Clock set");
   });
 
-  // Local timer loop (client-side tick pushing to server)
+  // Local timer loop
   setInterval(()=>{
     const s = getMatState();
     if (!s.running) {
@@ -715,12 +770,12 @@
       return;
     }
 
-    // Red quick scoring
+    // Red quick scoring (match score)
     if (ev.key === "1") socket.emit("updateState",{ mat: currentMat, updates:{ red:(getMatState().red||0)+1 }});
     if (ev.key === "2") socket.emit("updateState",{ mat: currentMat, updates:{ red:(getMatState().red||0)+2 }});
     if (ev.key === "3") socket.emit("updateState",{ mat: currentMat, updates:{ red:(getMatState().red||0)+3 }});
 
-    // Green quick scoring
+    // Green quick scoring (match score)
     if (ev.key === "7") socket.emit("updateState",{ mat: currentMat, updates:{ green:(getMatState().green||0)+1 }});
     if (ev.key === "8") socket.emit("updateState",{ mat: currentMat, updates:{ green:(getMatState().green||0)+2 }});
     if (ev.key === "9") socket.emit("updateState",{ mat: currentMat, updates:{ green:(getMatState().green||0)+3 }});
