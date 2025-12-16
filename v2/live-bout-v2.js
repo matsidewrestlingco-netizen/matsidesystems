@@ -10,7 +10,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const supabase = createClient(
   'https://polfteqwekkhzlhfjhsn.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvbGZ0ZXF3ZWtraHpsaGZqaHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTU2MzAsImV4cCI6MjA4MDY5MTYzMH0.npJCJJKOLTQddFH-xtU_ZtlT9_M8JWWpScDIsZAGY4M'
+  'YOUR_ANON_KEY_HERE'
 );
 
 // ===============================
@@ -82,53 +82,67 @@ function renderActions(bout) {
     return;
   }
 
-// -----------------------------
-// BOUT_IN_PROGRESS
-// -----------------------------
-if (bout.state === 'BOUT_IN_PROGRESS') {
-  const panel = document.getElementById('actionPanel');
-  panel.innerHTML = '';
+  // -----------------------------
+  // BOUT_IN_PROGRESS
+  // -----------------------------
+  if (bout.state === 'BOUT_IN_PROGRESS') {
+    const tdRedBtn = document.createElement('button');
+    tdRedBtn.className = 'secondary';
+    tdRedBtn.textContent = 'TD Red +3';
+    tdRedBtn.onclick = () => score('RED', 3);
 
-  const tdRedBtn = document.createElement('button');
-  tdRedBtn.className = 'secondary';
-  tdRedBtn.textContent = 'TD Red +3';
-  tdRedBtn.onclick = () => score('RED', 3);
+    const tdGreenBtn = document.createElement('button');
+    tdGreenBtn.className = 'secondary';
+    tdGreenBtn.textContent = 'TD Green +3';
+    tdGreenBtn.onclick = () => score('GREEN', 3);
 
-  const tdGreenBtn = document.createElement('button');
-  tdGreenBtn.className = 'secondary';
-  tdGreenBtn.textContent = 'TD Green +3';
-  tdGreenBtn.onclick = () => score('GREEN', 3);
+    const clockBtn = document.createElement('button');
+    clockBtn.className = 'secondary';
+    if (bout.clock_running) {
+      clockBtn.textContent = 'Stop Clock';
+      clockBtn.onclick = clockStop;
+    } else {
+      clockBtn.textContent = 'Start Clock';
+      clockBtn.onclick = clockStart;
+    }
 
-  const clockBtn = document.createElement('button');
-  clockBtn.className = 'secondary';
-  if (bout.clock_running) {
-    clockBtn.textContent = 'Stop Clock';
-    clockBtn.onclick = clockStop;
-  } else {
-    clockBtn.textContent = 'Start Clock';
-    clockBtn.onclick = clockStart;
+    const endPeriodBtn = document.createElement('button');
+    endPeriodBtn.className = 'secondary';
+    endPeriodBtn.textContent = 'End Period';
+    endPeriodBtn.onclick = endPeriod;
+
+    const undoBtn = document.createElement('button');
+    undoBtn.className = 'danger';
+    undoBtn.textContent = 'Undo Last Action';
+    undoBtn.onclick = undoLastAction;
+
+    const endMatchBtn = document.createElement('button');
+    endMatchBtn.className = 'danger';
+    endMatchBtn.textContent = 'End Match';
+    endMatchBtn.onclick = endMatch;
+
+    panel.appendChild(tdRedBtn);
+    panel.appendChild(tdGreenBtn);
+    panel.appendChild(clockBtn);
+    panel.appendChild(endPeriodBtn);
+    panel.appendChild(undoBtn);
+    panel.appendChild(endMatchBtn);
+    return;
   }
 
-  const endPeriodBtn = document.createElement('button');
-  endPeriodBtn.className = 'secondary';
-  endPeriodBtn.textContent = 'End Period';
-  endPeriodBtn.onclick = endPeriod;
-
-  const undoBtn = document.createElement('button');
-  undoBtn.className = 'danger';
-  undoBtn.textContent = 'Undo Last Action';
-  undoBtn.onclick = undoLastAction;
-
-  panel.appendChild(tdRedBtn);
-  panel.appendChild(tdGreenBtn);
-  panel.appendChild(clockBtn);
-  panel.appendChild(endPeriodBtn);
-  panel.appendChild(undoBtn);
-  return;
-}
   // -----------------------------
-  // ALL OTHER STATES
+  // BOUT_COMPLETE
   // -----------------------------
+  if (bout.state === 'BOUT_COMPLETE') {
+    panel.innerHTML = `
+      <div class="locked">
+        Match Complete<br/>
+        Winner: <strong>${bout.winner}</strong>
+      </div>
+    `;
+    return;
+  }
+
   panel.innerHTML = `<div class="muted">No actions available</div>`;
 }
 
@@ -224,6 +238,24 @@ async function endPeriod() {
   if (error) {
     console.error('endPeriod error:', error);
     alert('Failed to end period');
+    return;
+  }
+
+  await refresh();
+}
+
+async function endMatch() {
+  const ok = confirm('End match and finalize result?');
+  if (!ok) return;
+
+  const { error } = await supabase.rpc('rpc_end_match', {
+    p_actor_id: crypto.randomUUID(),
+    p_bout_id: BOUT_ID
+  });
+
+  if (error) {
+    console.error('endMatch error:', error);
+    alert('Failed to end match');
     return;
   }
 
