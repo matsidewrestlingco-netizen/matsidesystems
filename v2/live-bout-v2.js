@@ -83,24 +83,29 @@ function renderActions(bout) {
   }
 
   // -----------------------------
-  // BOUT_IN_PROGRESS
-  // -----------------------------
-  if (bout.state === 'BOUT_IN_PROGRESS') {
-    const tdBtn = document.createElement('button');
-    tdBtn.className = 'secondary';
-    tdBtn.textContent = 'TD Red +3';
-    tdBtn.onclick = () => score('RED', 3);
+// BOUT_IN_PROGRESS
+// -----------------------------
+if (bout.state === 'BOUT_IN_PROGRESS') {
+  const tdRedBtn = document.createElement('button');
+  tdRedBtn.className = 'secondary';
+  tdRedBtn.textContent = 'TD Red +3';
+  tdRedBtn.onclick = () => score('RED', 3);
 
-    const undoBtn = document.createElement('button');
-    undoBtn.className = 'danger';
-    undoBtn.textContent = 'Undo Last Action';
-    undoBtn.onclick = undoLastAction;
+  const tdGreenBtn = document.createElement('button');
+  tdGreenBtn.className = 'secondary';
+  tdGreenBtn.textContent = 'TD Green +3';
+  tdGreenBtn.onclick = () => score('GREEN', 3);
 
-    panel.appendChild(tdBtn);
-    panel.appendChild(undoBtn);
-    return;
-  }
+  const undoBtn = document.createElement('button');
+  undoBtn.className = 'danger';
+  undoBtn.textContent = 'Undo Last Action';
+  undoBtn.onclick = undoLastAction;
 
+  panel.appendChild(tdRedBtn);
+  panel.appendChild(tdGreenBtn);
+  panel.appendChild(undoBtn);
+  return;
+}
   // -----------------------------
   // ALL OTHER STATES
   // -----------------------------
