@@ -1,7 +1,26 @@
-const BOUT_ID = 'hardcoded-for-now';
+const BOUT_ID = 'f2a8f387-8cdd-4aa7-a55a-1cf62f4990f4';
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const supabase = createClient(
+  'https://polfteqwekkhzlhfjhsn.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvbGZ0ZXF3ZWtraHpsaGZqaHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTU2MzAsImV4cCI6MjA4MDY5MTYzMH0.npJCJJKOLTQddFH-xtU_ZtlT9_M8JWWpScDIsZAGY4M'
+);
 
 async function fetchBout() {
-  // SELECT * FROM matside_v2.bouts WHERE id = BOUT_ID
+  const { data, error } = await supabase
+    .from('bouts')
+    .select('*')
+    .eq('id', BOUT_ID)
+    .single();
+
+  if (error) {
+    console.error(error);
+    alert('Failed to fetch bout');
+    return null;
+  }
+
+  return data;  
 }
 
 function render(bout) {
@@ -25,18 +44,28 @@ async function refresh() {
   render(bout);
 }
 
-console.log('live-bout-v2 loaded');
+async function refresh() {
+  const bout = await fetchBout();
+  if (!bout) return;
 
-document.getElementById('boutHeader').innerHTML = `
-  <h2>V2 Live Bout Control</h2>
-  <div class="muted">JS is running</div>
-`;
+  document.getElementById('boutHeader').innerHTML = `
+    <h2>${bout.red_name} vs ${bout.green_name}</h2>
+    <div class="muted">
+      Score: ${bout.red_score} – ${bout.green_score}
+    </div>
+  `;
 
-document.getElementById('stateBanner').innerHTML = `
-  <strong>BOOTSTRAP STATE</strong>
-  <div class="muted">No engine data yet</div>
-`;
+  document.getElementById('stateBanner').innerHTML = `
+    <strong>${bout.state}</strong>
+    <div class="muted">
+      Period ${bout.current_period} • 
+      ${bout.clock_running ? 'Clock Running' : 'Clock Stopped'}
+    </div>
+  `;
 
-document.getElementById('actionPanel').innerHTML = `
-  <button class="secondary">Placeholder Button</button>
-`;
+  document.getElementById('actionPanel').innerHTML = `
+    <div class="muted">Actions coming next</div>
+  `;
+}
+
+refresh();
