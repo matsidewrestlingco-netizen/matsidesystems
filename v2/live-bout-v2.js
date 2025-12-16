@@ -109,6 +109,11 @@ if (bout.state === 'BOUT_IN_PROGRESS') {
     clockBtn.onclick = clockStart;
   }
 
+  const endPeriodBtn = document.createElement('button');
+  endPeriodBtn.className = 'secondary';
+  endPeriodBtn.textContent = 'End Period';
+  endPeriodBtn.onclick = endPeriod;
+
   const undoBtn = document.createElement('button');
   undoBtn.className = 'danger';
   undoBtn.textContent = 'Undo Last Action';
@@ -117,6 +122,7 @@ if (bout.state === 'BOUT_IN_PROGRESS') {
   panel.appendChild(tdRedBtn);
   panel.appendChild(tdGreenBtn);
   panel.appendChild(clockBtn);
+  panel.appendChild(endPeriodBtn);
   panel.appendChild(undoBtn);
   return;
 }
