@@ -1,4 +1,4 @@
-const BOUT_ID = 'f2a8f387-8cdd-4aa7-a55a-1cf62f4990f4';
+const BOUT_ID = '93c1b3b2-e2d0-4b77-9582-c2bed2099d05';
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
