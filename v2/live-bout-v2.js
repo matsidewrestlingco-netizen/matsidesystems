@@ -1,7 +1,7 @@
 // ===============================
 // CONFIG
 // ===============================
-const BOUT_ID = '80457c06-e986-476e-9752-2fc0bf6b9618';
+const BOUT_ID = '6495a2b8-53fd-48db-9da8-f5bd237b3d67';
 
 // ===============================
 // SUPABASE
@@ -41,14 +41,14 @@ function renderHeader(bout) {
         <div class="muted">RED</div>
       </div>
 
-      <div style="text-align:center;">
-        <div style="font-size:28px;">
+      <div class="center">
+        <div class="score">
           ${bout.red_score} – ${bout.green_score}
         </div>
         <div class="muted">Period ${bout.current_period}</div>
       </div>
 
-      <div style="text-align:right;">
+      <div class="right">
         <h2>${bout.green_name}</h2>
         <div class="muted">GREEN</div>
       </div>
@@ -57,12 +57,25 @@ function renderHeader(bout) {
 }
 
 function renderStateBanner(bout) {
-  document.getElementById('stateBanner').innerHTML = `
-    <strong>${bout.state}</strong>
-    <div class="muted">
-      ${bout.clock_running ? 'Clock Running' : 'Clock Stopped'}
-    </div>
-  `;
+  const banner = document.getElementById('stateBanner');
+
+  let stateClass = 'idle';
+  let label = 'Ready';
+
+  if (bout.state === 'BOUT_IN_PROGRESS') {
+    stateClass = bout.clock_running ? 'live' : 'paused';
+    label = bout.clock_running
+      ? 'LIVE • Clock Running'
+      : 'Paused • Clock Stopped';
+  }
+
+  if (bout.state === 'BOUT_COMPLETE') {
+    stateClass = 'complete';
+    label = `FINAL • Winner: ${bout.winner}`;
+  }
+
+  banner.className = `state-banner ${stateClass}`;
+  banner.innerHTML = `<strong>${label}</strong>`;
 }
 
 function renderActions(bout) {
@@ -70,200 +83,150 @@ function renderActions(bout) {
   panel.innerHTML = '';
 
   // -----------------------------
-  // BOUT_READY
+  // READY
   // -----------------------------
   if (bout.state === 'BOUT_READY') {
-    const startBtn = document.createElement('button');
-    startBtn.className = 'primary';
-    startBtn.textContent = 'Start Match';
-    startBtn.onclick = startMatch;
-
-    panel.appendChild(startBtn);
+    panel.appendChild(primaryBtn('Start Match', startMatch));
     return;
   }
 
   // -----------------------------
-  // BOUT_IN_PROGRESS
+  // IN PROGRESS
   // -----------------------------
   if (bout.state === 'BOUT_IN_PROGRESS') {
-    const tdRedBtn = document.createElement('button');
-    tdRedBtn.className = 'secondary';
-    tdRedBtn.textContent = 'TD Red +3';
-    tdRedBtn.onclick = () => score('RED', 3);
+    const redGroup = document.createElement('div');
+    redGroup.className = 'score-group red';
+    redGroup.appendChild(
+      secondaryBtn('+3 TD', () => score('RED', 3))
+    );
 
-    const tdGreenBtn = document.createElement('button');
-    tdGreenBtn.className = 'secondary';
-    tdGreenBtn.textContent = 'TD Green +3';
-    tdGreenBtn.onclick = () => score('GREEN', 3);
+    const greenGroup = document.createElement('div');
+    greenGroup.className = 'score-group green';
+    greenGroup.appendChild(
+      secondaryBtn('+3 TD', () => score('GREEN', 3))
+    );
 
-    const clockBtn = document.createElement('button');
-    clockBtn.className = 'secondary';
-    if (bout.clock_running) {
-      clockBtn.textContent = 'Stop Clock';
-      clockBtn.onclick = clockStop;
-    } else {
-      clockBtn.textContent = 'Start Clock';
-      clockBtn.onclick = clockStart;
-    }
+    const clockBtn = bout.clock_running
+      ? primaryBtn('Stop Clock', clockStop)
+      : primaryBtn('Start Clock', clockStart);
 
-    const endPeriodBtn = document.createElement('button');
-    endPeriodBtn.className = 'secondary';
-    endPeriodBtn.textContent = 'End Period';
-    endPeriodBtn.onclick = endPeriod;
-
-    const undoBtn = document.createElement('button');
-    undoBtn.className = 'danger';
-    undoBtn.textContent = 'Undo Last Action';
-    undoBtn.onclick = undoLastAction;
-
-    const endMatchBtn = document.createElement('button');
-    endMatchBtn.className = 'danger';
-    endMatchBtn.textContent = 'End Match';
-    endMatchBtn.onclick = endMatch;
-
-    panel.appendChild(tdRedBtn);
-    panel.appendChild(tdGreenBtn);
-    panel.appendChild(clockBtn);
-    panel.appendChild(endPeriodBtn);
-    panel.appendChild(undoBtn);
-    panel.appendChild(endMatchBtn);
+    panel.append(
+      redGroup,
+      greenGroup,
+      clockBtn,
+      secondaryBtn('End Period', endPeriod),
+      dangerBtn('Undo Last Action', undoLastAction),
+      dangerBtn('End Match', endMatch)
+    );
     return;
   }
 
   // -----------------------------
-  // BOUT_COMPLETE
+  // COMPLETE
   // -----------------------------
   if (bout.state === 'BOUT_COMPLETE') {
     panel.innerHTML = `
       <div class="locked">
-        Match Complete<br/>
-        Winner: <strong>${bout.winner}</strong>
+        <h2>FINAL</h2>
+        <div class="winner">Winner: ${bout.winner}</div>
       </div>
     `;
-    return;
   }
+}
 
-  panel.innerHTML = `<div class="muted">No actions available</div>`;
+// ===============================
+// BUTTON HELPERS
+// ===============================
+function primaryBtn(label, fn) {
+  const b = document.createElement('button');
+  b.className = 'primary';
+  b.textContent = label;
+  b.onclick = fn;
+  return b;
+}
+
+function secondaryBtn(label, fn) {
+  const b = document.createElement('button');
+  b.className = 'secondary';
+  b.textContent = label;
+  b.onclick = fn;
+  return b;
+}
+
+function dangerBtn(label, fn) {
+  const b = document.createElement('button');
+  b.className = 'danger';
+  b.textContent = label;
+  b.onclick = fn;
+  return b;
 }
 
 // ===============================
 // ACTIONS
 // ===============================
 async function startMatch() {
-  const { error } = await supabase.rpc('rpc_bout_start', {
-    p_actor_id: crypto.randomUUID(),
-    p_bout_id: BOUT_ID
-  });
-
-  if (error) {
-    console.error('startMatch error:', error);
-    alert('Failed to start match');
-    return;
-  }
-
-  await refresh();
+  await rpc('rpc_bout_start');
 }
 
 async function score(color, points) {
-  const { error } = await supabase.rpc('rpc_apply_score_action', {
-    p_actor_id: crypto.randomUUID(),
-    p_bout_id: BOUT_ID,
+  await rpc('rpc_apply_score_action', {
     p_action_type: 'SCORE_TAKEDOWN',
     p_color: color,
     p_points: points
   });
-
-  if (error) {
-    console.error('score error:', error);
-    alert('Failed to apply score');
-    return;
-  }
-
-  await refresh();
 }
 
 async function undoLastAction() {
-  const { error } = await supabase.rpc('rpc_undo_last_action', {
-    p_actor_id: crypto.randomUUID(),
-    p_bout_id: BOUT_ID
-  });
-
-  if (error) {
-    console.error('undo error:', error);
-    alert('Failed to undo last action');
-    return;
-  }
-
-  await refresh();
+  await rpc('rpc_undo_last_action');
 }
 
 async function clockStart() {
-  const { error } = await supabase.rpc('rpc_clock_action', {
-    p_actor_id: crypto.randomUUID(),
-    p_bout_id: BOUT_ID,
-    p_action_type: 'CLOCK_START'
-  });
-
-  if (error) {
-    console.error('clockStart error:', error);
-    alert('Failed to start clock');
-    return;
-  }
-
-  await refresh();
+  await rpc('rpc_clock_action', { p_action_type: 'CLOCK_START' });
 }
 
 async function clockStop() {
-  const { error } = await supabase.rpc('rpc_clock_action', {
-    p_actor_id: crypto.randomUUID(),
-    p_bout_id: BOUT_ID,
-    p_action_type: 'CLOCK_STOP'
-  });
-
-  if (error) {
-    console.error('clockStop error:', error);
-    alert('Failed to stop clock');
-    return;
-  }
-
-  await refresh();
+  await rpc('rpc_clock_action', { p_action_type: 'CLOCK_STOP' });
 }
 
 async function endPeriod() {
-  const { error } = await supabase.rpc('rpc_end_period', {
-    p_actor_id: crypto.randomUUID(),
-    p_bout_id: BOUT_ID
-  });
-
-  if (error) {
-    console.error('endPeriod error:', error);
-    alert('Failed to end period');
-    return;
-  }
-
-  await refresh();
+  await rpc('rpc_end_period');
 }
 
 async function endMatch() {
-  const ok = confirm('End match and finalize result?');
-  if (!ok) return;
+  if (!confirm('End match and finalize result?')) return;
+  await rpc('rpc_end_match');
+}
 
-  const { error } = await supabase.rpc('rpc_end_match', {
+// ===============================
+// RPC HELPER
+// ===============================
+async function rpc(name, extra = {}) {
+  const { error } = await supabase.rpc(name, {
     p_actor_id: crypto.randomUUID(),
-    p_bout_id: BOUT_ID
+    p_bout_id: BOUT_ID,
+    ...extra
   });
 
   if (error) {
-    console.error('endMatch error:', error);
-    alert('Failed to end match');
+    console.error(`${name} error:`, error);
+    alert(`Failed to ${name.replace('rpc_', '').replaceAll('_', ' ')}`);
     return;
   }
 
+  flash();
   await refresh();
 }
 
 // ===============================
-// REFRESH LOOP
+// FEEDBACK
+// ===============================
+function flash() {
+  document.body.classList.add('flash');
+  setTimeout(() => document.body.classList.remove('flash'), 120);
+}
+
+// ===============================
+// REFRESH
 // ===============================
 async function refresh() {
   const bout = await fetchBout();
@@ -274,5 +237,4 @@ async function refresh() {
   renderActions(bout);
 }
 
-// INITIAL LOAD
 refresh();
