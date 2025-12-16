@@ -82,10 +82,13 @@ function renderActions(bout) {
     return;
   }
 
-  // -----------------------------
+// -----------------------------
 // BOUT_IN_PROGRESS
 // -----------------------------
 if (bout.state === 'BOUT_IN_PROGRESS') {
+  const panel = document.getElementById('actionPanel');
+  panel.innerHTML = '';
+
   const tdRedBtn = document.createElement('button');
   tdRedBtn.className = 'secondary';
   tdRedBtn.textContent = 'TD Red +3';
@@ -96,6 +99,16 @@ if (bout.state === 'BOUT_IN_PROGRESS') {
   tdGreenBtn.textContent = 'TD Green +3';
   tdGreenBtn.onclick = () => score('GREEN', 3);
 
+  const clockBtn = document.createElement('button');
+  clockBtn.className = 'secondary';
+  if (bout.clock_running) {
+    clockBtn.textContent = 'Stop Clock';
+    clockBtn.onclick = clockStop;
+  } else {
+    clockBtn.textContent = 'Start Clock';
+    clockBtn.onclick = clockStart;
+  }
+
   const undoBtn = document.createElement('button');
   undoBtn.className = 'danger';
   undoBtn.textContent = 'Undo Last Action';
@@ -103,6 +116,7 @@ if (bout.state === 'BOUT_IN_PROGRESS') {
 
   panel.appendChild(tdRedBtn);
   panel.appendChild(tdGreenBtn);
+  panel.appendChild(clockBtn);
   panel.appendChild(undoBtn);
   return;
 }
@@ -157,6 +171,36 @@ async function undoLastAction() {
   if (error) {
     console.error('undo error:', error);
     alert('Failed to undo last action');
+    return;
+  }
+
+  await refresh();
+}
+
+async function clockStart() {
+  const { error } = await supabase.rpc('rpc_clock_start', {
+    p_actor_id: crypto.randomUUID(),
+    p_bout_id: BOUT_ID
+  });
+
+  if (error) {
+    console.error('clockStart error:', error);
+    alert('Failed to start clock');
+    return;
+  }
+
+  await refresh();
+}
+
+async function clockStop() {
+  const { error } = await supabase.rpc('rpc_clock_stop', {
+    p_actor_id: crypto.randomUUID(),
+    p_bout_id: BOUT_ID
+  });
+
+  if (error) {
+    console.error('clockStop error:', error);
+    alert('Failed to stop clock');
     return;
   }
 
