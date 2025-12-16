@@ -122,53 +122,47 @@ function renderActions(bout) {
 // ===============================
 // ACTIONS
 // ===============================
-  async function startMatch() {
-    const { error } = await supabase.rpc('rpc_bout_start', {
-      p_bout_id: BOUT_ID,
-      p_actor_id: crypto.randomUUID()
-    });
-  
-    if (error) {
-      console.error('startMatch error:', error);
-      alert('Failed to start match');
-      return;
-    }
-  
-    await refresh();
+  function renderActions(bout) {
+  const panel = document.getElementById('actionPanel');
+  panel.innerHTML = '';
+
+  // =========================
+  // BOUT_READY
+  // =========================
+  if (bout.state === 'BOUT_READY') {
+    const startBtn = document.createElement('button');
+    startBtn.className = 'primary';
+    startBtn.textContent = 'Start Match';
+    startBtn.onclick = startMatch;
+
+    panel.appendChild(startBtn);
+    return;
   }
 
-  async function score(color, points) {
-    const { error } = await supabase.rpc('rpc_apply_score_action', {
-      p_actor_id: crypto.randomUUID(),
-      p_bout_id: BOUT_ID,
-      p_action_type: 'SCORE_TAKEDOWN',
-      p_color: color,
-      p_points: points
-    });
-  
-    if (error) {
-      console.error('score error:', error);
-      alert('Failed to apply score');
-      return;
-    }
-  
-    await refresh();
+  // =========================
+  // BOUT_IN_PROGRESS
+  // =========================
+  if (bout.state === 'BOUT_IN_PROGRESS') {
+    const tdBtn = document.createElement('button');
+    tdBtn.className = 'secondary';
+    tdBtn.textContent = 'TD Red +3';
+    tdBtn.onclick = () => score('RED', 3);
+
+    const undoBtn = document.createElement('button');
+    undoBtn.className = 'danger';
+    undoBtn.textContent = 'Undo Last Action';
+    undoBtn.onclick = undoLastAction;
+
+    panel.appendChild(tdBtn);
+    panel.appendChild(undoBtn);
+    return;
   }
 
-  async function undoLastAction() {
-    const { error } = await supabase.rpc('rpc_undo_last_action', {
-      p_actor_id: crypto.randomUUID(),
-      p_bout_id: BOUT_ID
-    });
-  
-    if (error) {
-      console.error('undo error:', error);
-      alert('Failed to undo last action');
-      return;
-    }
-  
-    await refresh();
-  }
+  // =========================
+  // ALL OTHER STATES
+  // =========================
+  panel.innerHTML = `<div class="muted">No actions available</div>`;
+}
 
 // ===============================
 // REFRESH LOOP
