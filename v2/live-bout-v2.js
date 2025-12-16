@@ -9,7 +9,7 @@ const supabase = createClient(
 
 async function fetchBout() {
   const { data, error } = await supabase
-    .from('bouts')
+    .from('matside_v2.bouts')
     .select('*')
     .eq('id', BOUT_ID)
     .single();
