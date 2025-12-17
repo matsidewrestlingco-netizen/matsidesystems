@@ -3,12 +3,19 @@
 // ===============================
 const BOUT_ID = 'f1187435-ae3c-45ff-b9f5-b9884be880e5';
 
+const MAX_REG_PERIODS = 3;
+const MAX_OT_PERIODS  = 4;
+const MAX_PERIOD      = MAX_REG_PERIODS + MAX_OT_PERIODS; // 7 total
+
 // V2 UI fallback (until backend period timing is fully authoritative)
 const PERIOD_LENGTH_MS = {
   1: 120000, // 2:00
   2: 120000,
   3: 120000,
-  // OT: 60000, // later
+  4: 60000,  // OT1 default 1:00
+  5: 60000,  // OT2
+  6: 60000,  // OT3
+  7: 60000,  // OT4 (max)
 };
 
 // ===============================
@@ -179,6 +186,11 @@ function ensureChoiceModal() {
 function openChoiceModal(periodNumber) {
   ensureChoiceModal();
   _moreOpen = false;
+
+  if (Number(periodNumber) > MAX_PERIOD) {
+    alert(`Max periods reached (${MAX_PERIOD}). End match / confirm result.`);
+    return;
+  }
   choiceUI.isOpen = true;
   choiceUI.pendingPeriod = periodNumber;
 
@@ -442,7 +454,7 @@ function renderActions(bout) {
         endPeriod,
         2000
       );
-      endPeriodConfirm.disabled = choicePendingNow;
+      endPeriodConfirm.disabled = choicePendingNow || !['PERIOD_ACTIVE','PERIOD_PAUSED'].includes(bout.period_state);
 
       moreCard.append(endPeriodConfirm);
       panel.append(moreCard);
@@ -536,6 +548,16 @@ async function clockStop() {
 }
 
 async function endPeriod() {
+  // Front-end guard (backend should also enforce)
+  if (_lastBout && !['PERIOD_ACTIVE','PERIOD_PAUSED'].includes(_lastBout.period_state)) {
+    alert('Cannot end period unless it is active/paused.');
+    return;
+  }
+  if (_lastBout && Number(_lastBout.current_period) >= MAX_PERIOD) {
+    alert(`Max periods reached (${MAX_PERIOD}). End match / confirm result.`);
+    return;
+  }
+
   const ok = await rpc('rpc_end_period');
   if (!ok) return;
 
@@ -650,15 +672,18 @@ function maybeAutoEndPeriod() {
 
   const period = _lastBout?.current_period ?? null;
   const boutState = _lastBout?.state ?? null;
+  const periodState = _lastBout?.period_state ?? null;
 
-  // Safety: only during an in-progress bout
+  // Safety: only during an in-progress bout and during an active period
   if (boutState !== 'BOUT_IN_PROGRESS' || period == null) return;
+  if (Number(period) > MAX_PERIOD) return;
+  if (periodState !== 'PERIOD_ACTIVE') return;
 
   const key = `${BOUT_ID}:${period}`;
   if (_autoEndInFlight) return;
   if (_autoEndFiredKey === key) return;
 
-  // Arm + freeze UI at exactly 0
+  // Arm + freeze UI at exactly 0 (no recursion)
   _autoEndInFlight = true;
   _autoEndFiredKey = key;
 
@@ -666,8 +691,11 @@ function maybeAutoEndPeriod() {
   _desiredRunning = false;
   _desiredRunningUntil = Date.now() + 2000;
   _clockBaseMs = 0;
+
   stopClockTicker();
-  updateClockDisplay();
+
+  const el = document.getElementById('clockDisplay');
+  if (el) el.textContent = '00:00.0';
 
   // Fire the real transition (async, guarded)
   endPeriod()
