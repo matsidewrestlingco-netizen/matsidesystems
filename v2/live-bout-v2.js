@@ -544,6 +544,14 @@ async function endPeriod() {
   if (!bout) return;
 
   _lastBout = bout;
+
+
+  // Auto-end reset when period advances
+  const newKey = `${BOUT_ID}:${bout.current_period}`;
+  if (_autoEndFiredKey && _autoEndFiredKey !== newKey) {
+    _autoEndFiredKey = null;
+  }
+
   renderHeader(bout);
   syncClockFromBout(bout);
   renderStateBanner(bout, bout.actions || []);
@@ -602,6 +610,11 @@ let _clockRunning = false;
 let _desiredRunning = null;   // true/false/null
 let _desiredRunningUntil = 0; // epoch ms
 
+
+// Auto-end (UI-driven V2.1): when local clock reaches 0, end period once
+let _autoEndInFlight = false;
+let _autoEndFiredKey = null;
+
 function formatClockMs(ms) {
   const clamped = Math.max(0, Math.floor(ms));
   const totalSeconds = Math.floor(clamped / 1000);
@@ -624,6 +637,44 @@ function updateClockDisplay() {
   const el = document.getElementById('clockDisplay');
   if (!el) return;
   el.textContent = formatClockMs(getDisplayedClockMs());
+  maybeAutoEndPeriod();
+}
+
+
+function maybeAutoEndPeriod() {
+  // Only auto-end while running and only once per period
+  if (!_clockRunning) return;
+
+  const remaining = getDisplayedClockMs();
+  if (remaining > 0) return;
+
+  const period = _lastBout?.current_period ?? null;
+  const boutState = _lastBout?.state ?? null;
+
+  // Safety: only during an in-progress bout
+  if (boutState !== 'BOUT_IN_PROGRESS' || period == null) return;
+
+  const key = `${BOUT_ID}:${period}`;
+  if (_autoEndInFlight) return;
+  if (_autoEndFiredKey === key) return;
+
+  // Arm + freeze UI at exactly 0
+  _autoEndInFlight = true;
+  _autoEndFiredKey = key;
+
+  _clockRunning = false;
+  _desiredRunning = false;
+  _desiredRunningUntil = Date.now() + 2000;
+  _clockBaseMs = 0;
+  stopClockTicker();
+  updateClockDisplay();
+
+  // Fire the real transition (async, guarded)
+  endPeriod()
+    .catch((e) => console.error('auto endPeriod error:', e))
+    .finally(() => {
+      _autoEndInFlight = false;
+    });
 }
 
 function stopClockTicker() {
