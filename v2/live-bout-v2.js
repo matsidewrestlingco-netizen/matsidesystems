@@ -13,6 +13,13 @@ const supabase = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvbGZ0ZXF3ZWtraHpsaGZqaHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTU2MzAsImV4cCI6MjA4MDY5MTYzMH0.npJCJJKOLTQddFH-xtU_ZtlT9_M8JWWpScDIsZAGY4M'
 );
 
+const PERIOD_LENGTH_MS = {
+  1: 120000,
+  2: 120000,
+  3: 120000,
+  OT: 60000
+};
+
 // ===============================
 // UI STATE (FRONT-END ONLY)
 // ===============================
