@@ -33,6 +33,9 @@ const choiceUI = {
   positionOverrideByPeriod: {}, // period -> 'NEUTRAL'|'RED_CONTROL'|'GREEN_CONTROL'
 };
 
+// More-menu UI state
+let _moreOpen = false;
+
 // ===============================
 // FETCH
 // ===============================
@@ -175,6 +178,7 @@ function ensureChoiceModal() {
 
 function openChoiceModal(periodNumber) {
   ensureChoiceModal();
+  _moreOpen = false;
   choiceUI.isOpen = true;
   choiceUI.pendingPeriod = periodNumber;
 
@@ -333,6 +337,44 @@ function renderStateBanner(bout, actions = []) {
   `;
 }
 
+// ===============================
+// CONFIRM BUTTON (DOUBLE TAP)
+// ===============================
+function doubleTapConfirmBtn(label, confirmLabel, fn, windowMs = 2000) {
+  const b = document.createElement('button');
+  b.className = 'secondary';
+  b.textContent = label;
+
+  let armed = false;
+  let t = null;
+
+  const disarm = () => {
+    armed = false;
+    b.classList.remove('armed');
+    b.textContent = label;
+    if (t) clearTimeout(t);
+    t = null;
+  };
+
+  b.onclick = async () => {
+    if (!armed) {
+      armed = true;
+      b.classList.add('armed');
+      b.textContent = confirmLabel;
+      t = setTimeout(disarm, windowMs);
+      return;
+    }
+    disarm();
+    await fn();
+  };
+
+  // If it gets disabled (e.g., modal opens), disarm for safety
+  const obs = new MutationObserver(() => { if (b.disabled) disarm(); });
+  obs.observe(b, { attributes: true, attributeFilter: ['disabled'] });
+
+  return b;
+}
+
 function renderActions(bout) {
   const panel = document.getElementById('actionPanel');
   panel.innerHTML = '';
@@ -376,13 +418,36 @@ function renderActions(bout) {
 
     clockBtn.disabled = choicePendingNow;
 
-    const endPeriodBtn = secondaryBtn('End Period', endPeriod);
-    endPeriodBtn.disabled = choicePendingNow;
-
     const undoBtn = dangerBtn('Undo Last Action', undoLastAction);
     const endMatchBtn = dangerBtn('End Match', endMatch);
 
-    panel.append(scoreCard, clockBtn, endPeriodBtn, undoBtn, endMatchBtn);
+    // Main controls (keep clean)
+    panel.append(scoreCard, clockBtn, undoBtn, endMatchBtn);
+
+    // More menu (rare actions)
+    const moreBtn = secondaryBtn(_moreOpen ? 'Less' : 'More', () => {
+      _moreOpen = !_moreOpen;
+      renderActions(bout);
+    });
+    moreBtn.disabled = choicePendingNow;
+    panel.append(moreBtn);
+
+    if (_moreOpen) {
+      const moreCard = document.createElement('div');
+      moreCard.className = 'card more-panel';
+
+      const endPeriodConfirm = doubleTapConfirmBtn(
+        'End Period',
+        'Tap again to END PERIOD',
+        endPeriod,
+        2000
+      );
+      endPeriodConfirm.disabled = choicePendingNow;
+
+      moreCard.append(endPeriodConfirm);
+      panel.append(moreCard);
+    }
+
     return;
   }
 
