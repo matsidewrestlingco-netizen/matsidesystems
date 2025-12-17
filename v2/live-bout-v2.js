@@ -1,7 +1,7 @@
 // ===============================
 // CONFIG
 // ===============================
-const BOUT_ID = 'd71b1b31-3901-4d2a-af36-61c25109ce4e';
+const BOUT_ID = '403e35a5-032c-4492-85b2-c0d1a64da5e3';
 
 // ===============================
 // SUPABASE
@@ -329,6 +329,9 @@ function renderHeader(bout) {
         <div class="score">
           ${bout.red_score} – ${bout.green_score}
         </div>
+
+        <div id="clockDisplay" class="clock">--:--.-</div>
+
         <div class="muted">Period ${bout.current_period}</div>
       </div>
 
@@ -394,6 +397,65 @@ function renderActions(bout) {
     bout.current_period === choiceUI.pendingPeriod &&
     bout.state === 'BOUT_IN_PROGRESS';
 
+  // -----------------------------
+  // CLOCK HELPERS
+  // -----------------------------
+
+let _clockTimer = null;
+let _clockBaseMs = 0;      // remaining ms at last sync
+let _clockBaseTs = 0;      // performance.now() at last sync
+let _clockRunning = false;
+
+function formatClockMs(ms) {
+  const clamped = Math.max(0, Math.floor(ms));
+  const totalSeconds = Math.floor(clamped / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const tenths = Math.floor((clamped % 1000) / 100); // 0-9
+
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(seconds).padStart(2, '0');
+  return `${mm}:${ss}.${tenths}`;
+}
+
+function getDisplayedClockMs() {
+  if (!_clockRunning) return _clockBaseMs;
+  const elapsed = performance.now() - _clockBaseTs;
+  return _clockBaseMs - elapsed; // countdown
+}
+
+function updateClockDisplay() {
+  const el = document.getElementById('clockDisplay');
+  if (!el) return;
+  el.textContent = formatClockMs(getDisplayedClockMs());
+}
+
+function stopClockTicker() {
+  if (_clockTimer) {
+    clearInterval(_clockTimer);
+    _clockTimer = null;
+  }
+}
+
+function startClockTicker() {
+  stopClockTicker();
+  // 100ms tick for tenths display
+  _clockTimer = setInterval(updateClockDisplay, 100);
+}
+
+function syncClockFromBout(bout) {
+  // Expecting bout.clock_ms = remaining time in ms
+  const ms = Number(bout.clock_ms ?? 0);
+  _clockBaseMs = Number.isFinite(ms) ? ms : 0;
+  _clockRunning = !!bout.clock_running;
+  _clockBaseTs = performance.now();
+
+  updateClockDisplay();
+
+  if (_clockRunning) startClockTicker();
+  else stopClockTicker();
+}
+  
   // -----------------------------
   // READY
   // -----------------------------
@@ -584,6 +646,7 @@ async function refresh() {
   _lastBout = bout;
 
   renderHeader(bout);
+  syncClockFromBout(bout);
   renderStateBanner(bout, bout.actions || []);
   renderActions(bout);
 }
