@@ -188,8 +188,8 @@ function ensureChoiceModal() {
   };
 
   // Chooser toggles
-  document.getElementById('chooserRed').onclick = () => setChooser('RED');
-  document.getElementById('chooserGreen').onclick = () => setChooser('GREEN');
+  document.getElementById('chooserRed').innerHTML = '<span>Red has choice</span>';
+  document.getElementById('chooserGreen').innerHTML = '<span>Green has choice</span>';
 
   // Choices
   document.getElementById('choiceNeutral').onclick = () => applyChoice('NEUTRAL');
@@ -238,6 +238,9 @@ function updateChoiceModal() {
   title.textContent = `Period ${choiceUI.pendingPeriod} — Choice`;
   sub.textContent = `${choiceUI.chooser === 'RED' ? 'Red' : 'Green'} has the choice`;
 
+  chooserRed.classList.add('red');
+  chooserGreen.classList.add('green');
+
   // Highlight active chooser
   chooserRed.classList.toggle('active', choiceUI.chooser === 'RED');
   chooserGreen.classList.toggle('active', choiceUI.chooser === 'GREEN');
@@ -250,6 +253,12 @@ function updateChoiceModal() {
   note.textContent = deferAllowed
     ? 'Select Neutral, Top, Bottom, or Defer.'
     : 'Defer already used — select Neutral, Top, or Bottom.';
+
+  note.className = deferAllowed ? 'ms-modal-note' : 'ms-modal-note warn';
+note.textContent = deferAllowed
+  ? 'Select Neutral, Top, Bottom, or Defer.'
+  : 'Defer already used — select Neutral, Top, or Bottom.';
+  
 }
 
 function applyChoice(choice) {
@@ -269,6 +278,16 @@ function applyChoice(choice) {
     choiceUI.chooser = otherColor(chooser);
     updateChoiceModal();
     return;
+
+    const note = document.getElementById('choiceModalNote');
+    if (note) {
+    let msg = 'Starting position set.';
+    if (context === 'NEUTRAL') msg = 'Starting position set: NEUTRAL.';
+    if (context === 'RED_CONTROL') msg = 'Starting position set: RED IN CONTROL.';
+    if (context === 'GREEN_CONTROL') msg = 'Starting position set: GREEN IN CONTROL.';
+    note.className = 'ms-modal-note good';
+    note.textContent = `✓ ${msg}`;
+}
   }
 
   // Determine the initial position hint for this period
