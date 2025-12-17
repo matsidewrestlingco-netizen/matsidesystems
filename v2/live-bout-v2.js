@@ -644,6 +644,62 @@ function flash() {
 }
 
 // ===============================
+// CLOCK (COUNTDOWN, MM:SS.t)
+// ===============================
+let _clockTimer = null;
+let _clockBaseMs = 0;      // remaining ms at last sync
+let _clockBaseTs = 0;      // performance.now() at last sync
+let _clockRunning = false;
+
+function formatClockMs(ms) {
+  const clamped = Math.max(0, Math.floor(ms));
+  const totalSeconds = Math.floor(clamped / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const tenths = Math.floor((clamped % 1000) / 100); // 0-9
+
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(seconds).padStart(2, '0');
+  return `${mm}:${ss}.${tenths}`;
+}
+
+function getDisplayedClockMs() {
+  if (!_clockRunning) return _clockBaseMs;
+  const elapsed = performance.now() - _clockBaseTs;
+  return _clockBaseMs - elapsed; // countdown
+}
+
+function updateClockDisplay() {
+  const el = document.getElementById('clockDisplay');
+  if (!el) return;
+  el.textContent = formatClockMs(getDisplayedClockMs());
+}
+
+function stopClockTicker() {
+  if (_clockTimer) {
+    clearInterval(_clockTimer);
+    _clockTimer = null;
+  }
+}
+
+function startClockTicker() {
+  stopClockTicker();
+  _clockTimer = setInterval(updateClockDisplay, 100); // tenths
+}
+
+function syncClockFromBout(bout) {
+  const ms = Number(bout.clock_ms ?? 0);
+  _clockBaseMs = Number.isFinite(ms) ? ms : 0;
+  _clockRunning = !!bout.clock_running;
+  _clockBaseTs = performance.now();
+
+  updateClockDisplay();
+
+  if (_clockRunning) startClockTicker();
+  else stopClockTicker();
+}
+
+// ===============================
 // REFRESH
 // ===============================
 async function refresh() {
