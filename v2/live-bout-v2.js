@@ -14,10 +14,10 @@ const supabase = createClient(
 );
 
 const PERIOD_LENGTH_MS = {
-  1: 120000,
+  1: 120000, // 2:00
   2: 120000,
   3: 120000,
-  OT: 60000
+  // optional: add OT later
 };
 
 // ===============================
