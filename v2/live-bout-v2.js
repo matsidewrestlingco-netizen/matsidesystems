@@ -51,6 +51,93 @@ async function fetchBout() {
   return data;
 }
 
+
+async function fetchMatQueue(matId) {
+  if (!matId) return [];
+  const { data, error } = await supabase.rpc('rpc_get_mat_queue', {
+    p_mat_id: matId,
+    p_limit: 25
+  });
+
+  if (error) {
+    console.error('fetchMatQueue error:', error);
+    return [];
+  }
+
+  return Array.isArray(data) ? data : [];
+}
+
+function gotoBout(boutId) {
+  if (!boutId) return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('bout_id', boutId);
+  window.location.href = url.toString(); // simple + reliable
+}
+
+async function renderMatQueue(bout) {
+  const panel = document.getElementById('actionPanel');
+  if (!panel) return;
+
+  // Ensure container exists (always at bottom of panel)
+  let q = document.getElementById('matQueue');
+  if (!q) {
+    q = document.createElement('div');
+    q.id = 'matQueue';
+    q.className = 'mat-queue';
+    panel.appendChild(q);
+  }
+
+  const matId = bout?.mat_id;
+  if (!matId) {
+    q.innerHTML = '';
+    return;
+  }
+
+  const rows = await fetchMatQueue(matId);
+
+  const currentId = bout?.id;
+  const items = rows
+    .filter(r => r && r.id)
+    .slice(0, 25);
+
+  q.innerHTML = `
+    <div class="mat-queue__header">
+      <div class="mat-queue__title">Mat Queue</div>
+      <div class="mat-queue__sub">Tap a bout to load it</div>
+    </div>
+    <div class="mat-queue__list" id="matQueueList"></div>
+  `;
+
+  const list = q.querySelector('#matQueueList');
+  if (!list) return;
+
+  if (items.length === 0) {
+    list.innerHTML = `<div class="muted" style="padding:10px;">No bouts found for this mat.</div>`;
+    return;
+  }
+
+  for (const r of items) {
+    const btn = document.createElement('button');
+    btn.className = 'mat-queue__item' + (r.id === currentId ? ' active' : '');
+    btn.type = 'button';
+    btn.onclick = () => gotoBout(r.id);
+
+    const label = `#${r.bout_order ?? '?'}  ${r.red_name ?? 'Red'} vs ${r.green_name ?? 'Green'}`;
+    const state = (r.state ?? '').toString().replaceAll('_', ' ');
+    btn.innerHTML = `
+      <div class="mq-left">
+        <div class="mq-label">${escapeHtml(label)}</div>
+        <div class="mq-state">${escapeHtml(state)}</div>
+      </div>
+      <div class="mq-right">
+        ${r.id === currentId ? '<span class="mq-pill">CURRENT</span>' : '<span class="mq-pill">LOAD</span>'}
+      </div>
+    `;
+    list.appendChild(btn);
+  }
+}
+
+
 // ===============================
 // POSITION CONTEXT (DERIVED)
 // ===============================
@@ -478,6 +565,7 @@ function renderActions(bout) {
   // READY
   if (bout.state === 'BOUT_READY') {
     panel.appendChild(primaryBtn('Start Match', startMatch));
+    renderMatQueue(bout);
     return;
   }
 
@@ -546,6 +634,7 @@ function renderActions(bout) {
       panel.append(moreCard);
     }
 
+    renderMatQueue(bout);
     return;
   }
 
@@ -557,6 +646,7 @@ function renderActions(bout) {
         <div class="winner">Winner: ${bout.winner}</div>
       </div>
     `;
+    renderMatQueue(bout);
   }
 }
 
