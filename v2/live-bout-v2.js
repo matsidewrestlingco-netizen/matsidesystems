@@ -1,7 +1,19 @@
 // ===============================
 // CONFIG
 // ===============================
-const BOUT_ID = 'd51a057f-923b-45e8-bc77-10036bd21ccc';
+let BOUT_ID = new URLSearchParams(location.search).get('bout_id') || localStorage.getItem('matside_last_bout_id') || '';
+if (!BOUT_ID) {
+  // First run: prompt once
+  const entered = prompt('Enter bout_id (UUID) to load:');
+  if (entered && entered.trim()) {
+    BOUT_ID = entered.trim();
+    const u = new URL(location.href);
+    u.searchParams.set('bout_id', BOUT_ID);
+    history.replaceState(null, '', u.toString());
+    localStorage.setItem('matside_last_bout_id', BOUT_ID);
+  }
+}
+
 
 // V2 UI fallback (until backend period timing is fully authoritative)
 const PERIOD_LENGTH_MS = {
@@ -41,6 +53,12 @@ let _moreOpen = false;
 // FETCH
 // ===============================
 async function fetchBout() {
+  if (!BOUT_ID) {
+    console.error('fetchBout: missing bout_id');
+    alert('Missing bout_id. Add ?bout_id=<uuid> to the URL.');
+    return null;
+  }
+
   const { data, error } = await supabase.rpc('rpc_get_bout', { p_bout_id: BOUT_ID });
 
   if (error) {
@@ -68,7 +86,7 @@ async function fetchBout() {
 
   if (!bout || typeof bout !== 'object') {
     console.error('fetchBout: unexpected payload for bout_id', BOUT_ID, 'raw:', data);
-    alert('No bout data returned (check bout_id)');
+    alert('No bout data returned (check bout_id). See console for payload.');
     return null;
   }
 
@@ -99,6 +117,7 @@ function gotoBout(boutId) {
   if (!boutId) return;
   const url = new URL(window.location.href);
   url.searchParams.set('bout_id', boutId);
+  localStorage.setItem('matside_last_bout_id', boutId);
   window.location.href = url.toString(); // simple + reliable
 }
 
