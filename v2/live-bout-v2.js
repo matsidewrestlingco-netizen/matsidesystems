@@ -189,7 +189,8 @@ function openChoiceModal(periodNumber) {
   choiceUI.isOpen = true;
   choiceUI.pendingPeriod = periodNumber;
   // Lock chooser based on prior choices / defer rules
-  choiceUI.chooser = getAllowedChooserForPeriod(periodNumber);
+  const allowed = getAllowedChooserForPeriod(periodNumber);
+  choiceUI.chooser = (allowed === 'RED' || allowed === 'GREEN') ? allowed : null;
 
   const overlay = document.getElementById('choiceModalOverlay');
   overlay.classList.remove('hidden');
@@ -226,8 +227,8 @@ function getAllowedChooserForPeriod(periodNumber) {
   // Otherwise, the next chooser is the opposite of whoever last made a choice
   if (choiceUI.lastChoiceColor) return otherColor(choiceUI.lastChoiceColor);
 
-  // Default: RED (for period 2 in testing, coin toss not modeled yet)
-  return 'RED';
+  // Default: unknown (coin flip). Let user choose RED or GREEN.
+  return null;
 }
 
 function updateChoiceModal() {
@@ -237,34 +238,77 @@ function updateChoiceModal() {
 
   const chooserRed = document.getElementById('chooserRed');
   const chooserGreen = document.getElementById('chooserGreen');
+
+  const btnNeutral = document.getElementById('choiceNeutral');
+  const btnTop = document.getElementById('choiceTop');
+  const btnBottom = document.getElementById('choiceBottom');
   const deferBtn = document.getElementById('choiceDefer');
 
   const allowedChooser = getAllowedChooserForPeriod(choiceUI.pendingPeriod);
   const chooserLocked = (allowedChooser === 'RED' || allowedChooser === 'GREEN');
 
   title.textContent = `Period ${choiceUI.pendingPeriod} — Choice`;
-  sub.textContent = `${choiceUI.chooser === 'RED' ? 'Red' : 'Green'} has the choice`;
+
+  if (!choiceUI.chooser) {
+    sub.textContent = `Select the coin-flip winner (Red or Green)`;
+  } else {
+    sub.textContent = `${choiceUI.chooser === 'RED' ? 'Red' : 'Green'} has the choice`;
+  }
 
   chooserRed.classList.toggle('active', choiceUI.chooser === 'RED');
   chooserGreen.classList.toggle('active', choiceUI.chooser === 'GREEN');
 
-    // Disable chooser toggles when locked by rules
+  // Lock chooser if rules dictate it (e.g., opposite color next period, or owed choice after defer)
   chooserRed.disabled = chooserLocked && allowedChooser !== 'RED';
   chooserGreen.disabled = chooserLocked && allowedChooser !== 'GREEN';
 
-  const deferUsed = !!choiceUI.deferUsedByColor[choiceUI.chooser];
-  const chooserOwedChoice = (choiceUI.deferredColor === choiceUI.chooser);
-  const deferAllowed = !deferUsed && !chooserOwedChoice;
+  // Can't choose position until a chooser is selected
+  const chooserSelected = (choiceUI.chooser === 'RED' || choiceUI.chooser === 'GREEN');
+  btnNeutral.disabled = !chooserSelected;
+  btnTop.disabled = !chooserSelected;
+  btnBottom.disabled = !chooserSelected;
+
+  // Defer rules:
+  // - Defer can only be used once per wrestler
+  // - If someone deferred earlier, they are owed the next choice and cannot defer then
+  // - At the end of period 2 (choosing for period 3), defer is NOT allowed
+  const periodNumber = Number(choiceUI.pendingPeriod ?? 0);
+  const isChoosingForPeriod3 = (periodNumber === 3);
+
+  const chooserOwedChoice = chooserSelected && (choiceUI.deferredColor === choiceUI.chooser);
+  const deferUsed = chooserSelected && !!choiceUI.deferUsedByColor[choiceUI.chooser];
+
+  const deferAllowed =
+    chooserSelected &&
+    !isChoosingForPeriod3 &&
+    !chooserOwedChoice &&
+    !deferUsed;
 
   deferBtn.disabled = !deferAllowed;
-  deferBtn.title = deferAllowed ? '' : (chooserOwedChoice ? 'Cannot defer after deferring earlier' : 'Defer already used');
+  deferBtn.title = deferAllowed
+    ? ''
+    : (!chooserSelected
+        ? 'Select Red or Green first'
+        : (isChoosingForPeriod3
+            ? 'Defer not allowed after Period 2'
+            : (chooserOwedChoice
+                ? 'Cannot defer after deferring earlier'
+                : 'Defer already used')));
 
-    note.className = deferAllowed ? 'ms-modal-note' : 'ms-modal-note warn';
-  note.textContent = deferAllowed
-    ? 'Select Neutral, Top, Bottom, or Defer.'
-    : (chooserOwedChoice
-        ? 'Defer not available — you already deferred earlier.'
-        : 'Defer already used — select Neutral, Top, or Bottom.');
+  note.className = deferAllowed ? 'ms-modal-note' : 'ms-modal-note warn';
+  if (!chooserSelected) {
+    note.textContent = 'Select Red or Green, then choose Neutral, Top, Bottom (or Defer if allowed).';
+  } else if (deferAllowed) {
+    note.textContent = 'Select Neutral, Top, Bottom, or Defer.';
+  } else {
+    note.textContent = isChoosingForPeriod3
+      ? 'Defer not available — select Neutral, Top, or Bottom.'
+      : (chooserOwedChoice
+          ? 'Defer not available — you already deferred earlier.'
+          : (deferUsed
+              ? 'Defer already used — select Neutral, Top, or Bottom.'
+              : 'Select Neutral, Top, or Bottom.'));
+  }
 }
 
 function applyChoice(choice) {
@@ -573,7 +617,7 @@ async function clockStart() {
   _clockRunning = true;
   _clockBaseTs = performance.now();
   _desiredRunning = true;
-  _desiredRunningUntil = Date.now() + 2000;
+  _desiredRunningUntil = 0;
   startClockTicker();
 }
 
@@ -718,6 +762,69 @@ function updateClockDisplay() {
   const el = document.getElementById('clockDisplay');
   if (!el) return;
   el.textContent = formatClockMs(getDisplayedClockMs());
+  maybeAutoEndPeriod();
+}
+
+function maybeAutoEndPeriod() {
+  // Only auto-end while running and only once per period
+  if (!_clockRunning) return;
+
+  const remaining = getDisplayedClockMs();
+  if (remaining > 0) return;
+
+  const period = _lastBout?.current_period ?? null;
+  const boutState = _lastBout?.state ?? null;
+  const periodState = _lastBout?.period_state ?? null;
+
+  // Only during an in-progress bout and active/paused period
+  if (boutState !== 'BOUT_IN_PROGRESS' || period == null) return;
+  if (!['PERIOD_ACTIVE','PERIOD_PAUSED'].includes(periodState)) return;
+
+  const key = `${BOUT_ID}:${period}`;
+  if (_autoEndInFlight) return;
+  if (_autoEndFiredKey === key) return;
+
+  _autoEndInFlight = true;
+
+  // Freeze UI at 0 immediately
+  _clockRunning = false;
+  _desiredRunning = false;
+  _desiredRunningUntil = 0;
+  _clockBaseMs = 0;
+
+  stopClockTicker();
+  const el = document.getElementById('clockDisplay');
+  if (el) el.textContent = '00:00.0';
+
+  (async () => {
+    try {
+      const ok = await rpc('rpc_end_period');
+      if (!ok) {
+        console.warn('auto-end: rpc_end_period failed; use More → End Period.');
+        return;
+      }
+
+      _autoEndFiredKey = key;
+
+      // Refresh + open choice for the next period
+      const bout = await fetchBout();
+      if (!bout) return;
+
+      _lastBout = bout;
+      renderHeader(bout);
+      syncClockFromBout(bout);
+      renderStateBanner(bout, bout.actions || []);
+      renderActions(bout);
+
+      if (bout.state === 'BOUT_IN_PROGRESS') {
+        openChoiceModal(bout.current_period);
+      }
+    } catch (e) {
+      console.error('auto-endPeriod error:', e);
+    } finally {
+      _autoEndInFlight = false;
+    }
+  })();
 }
 
 function stopClockTicker() {
@@ -744,7 +851,12 @@ function syncClockFromBout(bout) {
 
   const serverRunning = !!bout.clock_running;
   const inGrace = Date.now() < _desiredRunningUntil;
-  const effectiveRunning = serverRunning || (inGrace && _desiredRunning === true);
+  let effectiveRunning = serverRunning || (inGrace && _desiredRunning === true);
+
+  // Never run the clock unless the period is active/paused
+  if (!['PERIOD_ACTIVE','PERIOD_PAUSED'].includes(bout.period_state)) {
+    effectiveRunning = false;
+  }
 
   // If backend isn't authoritative yet, NEVER let refresh reset the clock upward
   // during the SAME period. (This prevents the "stop clock -> resets to 2:00" bug.)
