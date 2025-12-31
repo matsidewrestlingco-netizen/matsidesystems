@@ -775,7 +775,7 @@ async function clockStop() {
   _clockBaseMs = getDisplayedClockMs();
   _clockRunning = false;
   _desiredRunning = false;
-  _desiredRunningUntil = Date.now() + 2000;
+  _desiredRunningUntil = 0;
   stopClockTicker();
   updateClockDisplay();
 }
@@ -945,9 +945,24 @@ function maybeAutoEndPeriod() {
 
   (async () => {
     try {
-      const ok = await rpc('rpc_end_period');
-      if (!ok) {
-        console.warn('auto-end: rpc_end_period failed; use More → End Period.');
+      const actorId = crypto.randomUUID();
+
+      // 1) Stop clock in backend (best-effort). Some backends may already be stopped.
+      await supabase.rpc('rpc_clock_action', {
+        p_actor_id: actorId,
+        p_bout_id: BOUT_ID,
+        p_action_type: 'CLOCK_STOP',
+      });
+
+      // 2) End period
+      const { error: endErr } = await supabase.rpc('rpc_end_period', {
+        p_actor_id: actorId,
+        p_bout_id: BOUT_ID,
+      });
+
+      if (endErr) {
+        console.error('auto-end rpc_end_period error:', endErr);
+        alert('Failed to end period automatically. Use More → End Period.');
         return;
       }
 
@@ -1026,10 +1041,10 @@ function syncClockFromBout(bout) {
   } else {
     // Not running: prefer backend, but fall back to local/default if backend gives 0
     if (serverMs <= 0 && bout.state === 'BOUT_IN_PROGRESS') {
-      serverMs = (localRemaining > 0)
-        ? localRemaining
-        : (PERIOD_LENGTH_MS[bout.current_period] ?? 0);
-    }
+    // If backend isn't persisting ms during running/stopping, trust local remaining.
+    // IMPORTANT: never jump back up to the default period length at/near 0.
+    serverMs = (localRemaining > 0) ? localRemaining : 0;
+  }
   }
 
   _clockBaseMs = Math.max(0, serverMs);
