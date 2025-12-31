@@ -778,15 +778,25 @@ async function clockStart() {
 }
 
 async function clockStop() {
-  const ok = await rpc('rpc_clock_action', { p_action_type: 'CLOCK_STOP' });
-  if (!ok) return;
+  // Stop locally first so UI doesn't "jump back" to a default period time.
+  const msNow = getDisplayedClockMs();
 
-  _clockBaseMs = getDisplayedClockMs();
+  _clockBaseMs = msNow;
   _clockRunning = false;
   _desiredRunning = false;
   _desiredRunningUntil = 0;
   stopClockTicker();
   updateClockDisplay();
+
+  // If the clock hit 0 and the operator hits Stop, treat that as "end period"
+  // so the UI advances to the next period instead of resetting to 2:00.
+  if (msNow <= 0 && _lastBout && _lastBout.state === 'BOUT_IN_PROGRESS') {
+    await endPeriod();
+    return;
+  }
+
+  const ok = await rpc('rpc_clock_action', { p_action_type: 'CLOCK_STOP' });
+  if (!ok) return;
 }
 
 async function endPeriod() {
@@ -886,6 +896,10 @@ function flash() {
 
 // ===============================
 // CLOCK (COUNTDOWN, MM:SS.t) + SERVER-LAG GRACE
+
+// Auto-end period guards
+let _autoEndInFlight = false;
+let _autoEndFiredKey = null;
 // ===============================
 let _clockTimer = null;
 let _clockBaseMs = 0;      // remaining ms at last sync
@@ -1036,8 +1050,11 @@ function syncClockFromBout(bout) {
     (bout.state === 'BOUT_IN_PROGRESS') &&
     (Number(bout.current_period) === Number(_lastBout?.current_period));
 
-  if (samePeriod && localRemaining > 0 && serverMs > localRemaining + 500) {
-    serverMs = localRemaining;
+  const localSafe = Math.max(0, Number.isFinite(localRemaining) ? localRemaining : 0);
+
+  if (samePeriod && serverMs > localSafe + 500) {
+    // Keep the UI's current remaining time; prevents refresh from jumping back to a full period.
+    serverMs = localSafe;
   }
 
   if (effectiveRunning) {
