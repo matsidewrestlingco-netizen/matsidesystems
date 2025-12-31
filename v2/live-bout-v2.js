@@ -48,7 +48,32 @@ async function fetchBout() {
     alert('Failed to fetch bout');
     return null;
   }
-  return data;
+
+  // Shapes we may see:
+  // 1) jsonb return: data can be an object OR [{ rpc_get_bout: {...} }]
+  // 2) legacy composite/string: [{ rpc_get_bout: "(...)" }]
+  let raw = data;
+  if (Array.isArray(raw)) raw = raw[0];
+  if (raw && typeof raw === 'object' && 'rpc_get_bout' in raw) raw = raw.rpc_get_bout;
+
+  // If it came back as a JSON string, parse it
+  if (typeof raw === 'string') {
+    const s = raw.trim();
+    if (s.startsWith('{') || s.startsWith('[')) {
+      try { raw = JSON.parse(s); } catch {}
+    }
+  }
+
+  const bout = raw;
+
+  if (!bout || typeof bout !== 'object') {
+    console.error('fetchBout: unexpected payload for bout_id', BOUT_ID, 'raw:', data);
+    alert('No bout data returned (check bout_id)');
+    return null;
+  }
+
+  console.log('[fetchBout ok]', Object.keys(bout));
+  return bout;
 }
 
 
@@ -1016,3 +1041,4 @@ async function refresh() {
 
 // INITIAL LOAD
 refresh();
+
