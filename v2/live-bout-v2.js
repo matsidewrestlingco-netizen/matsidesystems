@@ -801,27 +801,8 @@ async function clockStop() {
 
 async function endPeriod() {
   // Capture what period we are ending BEFORE we call the server.
+  // (This is more reliable than looking at the post-call bout, which may already be advanced.)
   const endedPeriod = Number(_lastBout?.current_period ?? 0);
-
-  
-  // If this is the end of Period 3 and NOT tied, end the match (do NOT advance to OT/Period 4).
-  // This keeps the UI from jumping into a 4th period when the bout is decided.
-  const _redScoreNow = Number(bout.red_score ?? 0);
-  const _greenScoreNow = Number(bout.green_score ?? 0);
-  if (endedPeriod === 3 && _redScoreNow !== _greenScoreNow && bout.state !== 'BOUT_COMPLETE') {
-    if (_autoMatchEndInFlight) return;
-    _autoMatchEndInFlight = true;
-    try {
-      await rpc('rpc_end_match', { bout_id: boutId });
-      await fetchBout();
-      renderFromQueue();
-    } catch (e) {
-      console.error('[autoEndMatchAfterP3] failed', e);
-    } finally {
-      _autoMatchEndInFlight = false;
-    }
-    return;
-  }
 
   const ok = await rpc('rpc_end_period');
   if (!ok) return;
@@ -835,28 +816,22 @@ async function endPeriod() {
     renderFromQueue();
   }
 
-  // If regulation (Period 3) ends and the score is NOT tied, auto-end the match.
-  // Only go to Period 4 (OT) when tied.
-  if (
-    endedPeriod === 3 &&
-    bout &&
-    bout.state !== 'BOUT_COMPLETE'
-  ) {
+  // End-of-regulation behavior:
+  // After Period 3, if NOT tied, end the match instead of going to Period 4 (choice/OT).
+  if (endedPeriod === 3 && bout && bout.state === 'BOUT_IN_PROGRESS') {
     const red = Number(bout.red_score ?? 0);
     const green = Number(bout.green_score ?? 0);
-
-    if (red !== green && !_autoMatchEndInFlight) {
+    if (red !== green) {
+      if (_autoMatchEndInFlight) return;
       _autoMatchEndInFlight = true;
-      const ok2 = await rpc('rpc_end_match');
+      await rpc('rpc_end_match');
       _autoMatchEndInFlight = false;
-
-      // rpc() already refreshes; just make sure the local ticker stays stopped.
       stopClockTicker();
       return;
     }
   }
 
-  // Keep existing behavior: show the chooser for the next segment when we end a period.
+  // Otherwise (including tied after P3), move forward as normal.
   if (bout && bout.state === 'BOUT_IN_PROGRESS') {
     openChoiceModal(Number(bout.current_period) || endedPeriod + 1);
   }
@@ -1039,6 +1014,40 @@ function maybeAutoEndPeriod() {
       syncClockFromBout(bout);
       renderStateBanner(bout, bout.actions || []);
       renderActions(bout);
+
+      // After Period 3 ends: if NOT tied, end the match instead of advancing to OT choice.
+      if (bout.state === 'BOUT_IN_PROGRESS' && Number(period) === 3) {
+        const redNow = Number(bout.red_score ?? 0);
+        const greenNow = Number(bout.green_score ?? 0);
+        const tied = Number.isFinite(redNow) && Number.isFinite(greenNow) && redNow === greenNow;
+
+        if (!tied) {
+          if (!_autoMatchEndInFlight) {
+            _autoMatchEndInFlight = true;
+            const { error: matchErr } = await supabase.rpc('rpc_end_match', {
+              p_actor_id: actorId,
+              p_bout_id: BOUT_ID,
+            });
+            _autoMatchEndInFlight = false;
+
+            if (matchErr) {
+              console.error('auto-end rpc_end_match error:', matchErr);
+              // Fall through to OT choice rather than hard-fail the UI.
+            } else {
+              // Refresh after ending the match
+              const bout2 = await fetchBout();
+              if (bout2) {
+                _lastBout = bout2;
+                renderHeader(bout2);
+                syncClockFromBout(bout2);
+                renderStateBanner(bout2, bout2.actions || []);
+                renderActions(bout2);
+              }
+              return;
+            }
+          }
+        }
+      }
 
       if (bout.state === 'BOUT_IN_PROGRESS') {
         openChoiceModal(bout.current_period);
