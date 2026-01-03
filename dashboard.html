@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FloArena Dashboard (Web)</title>
+  <style>
+    :root{
+      --grid:#d7d7d7;
+      --text:#111;
+      --muted:#666;
+      --bg:#fafafa;
+      --card:#fff;
+      --input:#ffb74d; /* orange-ish */
+      --inputText:#111;
+    }
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
+    .wrap{max-width:1100px; margin:0 auto; padding:18px;}
+    h1{font-size:20px; margin:0 0 10px;}
+    .sub{color:var(--muted); margin:0 0 18px; font-size:13px;}
+    .grid{display:grid; grid-template-columns: 1.05fr 1.25fr; gap:16px;}
+    .card{background:var(--card); border:1px solid var(--grid); border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); overflow:hidden;}
+    .card h2{margin:0; padding:12px 14px; font-size:14px; background:#f3f3f3; border-bottom:1px solid var(--grid);}
+    table{border-collapse:collapse; width:100%;}
+    th,td{border:1px solid var(--grid); padding:8px 10px; font-size:13px; vertical-align:middle;}
+    th{background:#f8f8f8; text-align:left; font-weight:600;}
+    .right{text-align:right;}
+    input, select{
+      width:100%;
+      box-sizing:border-box;
+      padding:6px 8px;
+      border:1px solid #bdbdbd;
+      border-radius:8px;
+      font-size:13px;
+      background:#fff;
+      color:var(--text);
+      outline:none;
+    }
+    input.user, select.user{
+      background:var(--input);
+      color:var(--inputText);
+      border-color:#d0831f;
+      font-weight:600;
+    }
+    .row{display:flex; gap:10px; padding:12px 14px; align-items:end; flex-wrap:wrap;}
+    .field{min-width:160px; flex:1;}
+    .label{font-size:12px; color:var(--muted); margin:0 0 6px;}
+    .kpi{display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; padding:12px 14px;}
+    .kpi .box{border:1px solid var(--grid); border-radius:12px; padding:10px;}
+    .kpi .box .k{font-size:11px; color:var(--muted);}
+    .kpi .box .v{font-size:18px; font-weight:800; margin-top:4px;}
+    .note{padding:10px 14px; color:var(--muted); font-size:12px; border-top:1px solid var(--grid);}
+    .small{font-size:12px; color:var(--muted);}
+    .sticky-actions{display:flex; gap:10px; padding:12px 14px; border-top:1px solid var(--grid); background:#fff;}
+    button{
+      border:1px solid var(--grid);
+      background:#fff;
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    button:hover{background:#f6f6f6;}
+    @media (max-width: 900px){
+      .grid{grid-template-columns: 1fr;}
+      .kpi{grid-template-columns: 1fr;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>FloArena Dashboard</h1>
+    <p class="sub">Orange fields are user input. Everything else calculates automatically.</p>
+
+    <div class="grid">
+      <!-- LEFT: Matches remaining -->
+      <div class="card">
+        <h2>Matches remaining by location</h2>
+        <div style="padding:12px 14px" class="small">
+          Enter mats and matches remaining per location. “Matches per mat” is calculated.
+        </div>
+        <table id="locTable">
+          <thead>
+            <tr>
+              <th style="width:34%">Location</th>
+              <th style="width:16%" class="right"># Mats</th>
+              <th style="width:22%" class="right">Matches remaining</th>
+              <th style="width:28%" class="right">Matches / mat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- rows injected -->
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>Total</th>
+              <th class="right" id="totalMats">0</th>
+              <th class="right" id="totalMatchesRemaining">0</th>
+              <th class="right" id="overallMatchesPerMat">-</th>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="sticky-actions">
+          <button id="addLoc">+ Add location</button>
+          <button id="resetLoc">Reset locations</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: hourly progress / end time -->
+      <div class="card">
+        <h2>Averages & end time</h2>
+
+        <div class="row">
+          <div class="field">
+            <div class="label">Placing</div>
+            <select id="placing" class="user">
+              <option value="top4">Top 4</option>
+              <option value="top6">Top 6 (1st/3rd/5th)</option>
+              <option value="top8">Top 8</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="label">Level</div>
+            <select id="level" class="user">
+              <option value="hs">HS</option>
+              <option value="jh">JH</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="label">Total estimated bouts</div>
+            <input id="totalBouts" class="user" type="number" min="0" step="1" value="387" />
+          </div>
+          <div class="field">
+            <div class="label">Start time</div>
+            <input id="startTime" class="user" type="time" value="09:00" />
+          </div>
+        </div>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="k">Bouts completed (entered)</div>
+            <div class="v" id="boutsCompleted">0</div>
+          </div>
+          <div class="box">
+            <div class="k">Bouts left</div>
+            <div class="v" id="boutsLeft">0</div>
+          </div>
+          <div class="box">
+            <div class="k">Avg bouts / hr (overall)</div>
+            <div class="v" id="avgPerHour">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Avg bouts / mat / hr</div>
+            <div class="v" id="avgPerMatHour">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Estimated hours remaining</div>
+            <div class="v" id="hrsRemaining">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Estimated end time</div>
+            <div class="v" id="estEndTime">-</div>
+          </div>
+        </div>
+
+        <div style="padding:12px 14px">
+          <table id="hourTable">
+            <thead>
+              <tr>
+                <th style="width:20%">Start</th>
+                <th style="width:20%">End</th>
+                <th style="width:30%" class="right">Completed (this hour)</th>
+                <th style="width:30%" class="right">Per-mat average</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- hours injected -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sticky-actions">
+          <button id="addHour">+ Add hour row</button>
+          <button id="clearHours">Clear hour inputs</button>
+        </div>
+
+        <div class="note">
+          Tip: If you don’t want to track hourly, you can just enter 2–3 hours of “completed” and this will still estimate an end time based on the average.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ---------- helpers ----------
+  const pad2 = n => String(n).padStart(2, "0");
+  function parseTimeToMinutes(hhmm){
+    if(!hhmm) return null;
+    const [h,m] = hhmm.split(":").map(Number);
+    if(Number.isNaN(h) || Number.isNaN(m)) return null;
+    return h*60+m;
+  }
+  function minutesToTime(mins){
+    mins = ((mins % 1440) + 1440) % 1440;
+    const h = Math.floor(mins/60), m = mins%60;
+    return `${pad2(h)}:${pad2(m)}`;
+  }
+  function fmtNumber(n, digits=2){
+    if(n === null || n === undefined || Number.isNaN(n)) return "-";
+    if(!Number.isFinite(n)) return "-";
+    return n.toFixed(digits).replace(/\.00$/,"");
+  }
+
+  // ---------- Locations ----------
+  const defaultLocations = [
+    { name:"Gym 1", mats:3, remaining:35 },
+    { name:"Gym 2", mats:2, remaining:17 },
+    { name:"Aux 1", mats:0, remaining:0 },
+    { name:"Aux 2", mats:0, remaining:0 }
+  ];
+
+  let locations = JSON.parse(localStorage.getItem("flo_loc") || "null") || defaultLocations;
+
+  function renderLocations(){
+    const tbody = document.querySelector("#locTable tbody");
+    tbody.innerHTML = "";
+    locations.forEach((loc, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input class="user" data-field="name" data-idx="${idx}" value="${loc.name}"></td>
+        <td class="right"><input class="user right" type="number" min="0" step="1" data-field="mats" data-idx="${idx}" value="${loc.mats}"></td>
+        <td class="right"><input class="user right" type="number" min="0" step="1" data-field="remaining" data-idx="${idx}" value="${loc.remaining}"></td>
+        <td class="right" id="mpm-${idx}">-</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll("input").forEach(inp => {
+      inp.addEventListener("input", (e) => {
+        const i = Number(e.target.dataset.idx);
+        const field = e.target.dataset.field;
+        let val = e.target.value;
+        if(field === "mats" || field === "remaining") val = Number(val || 0);
+        locations[i][field] = val;
+        persist();
+        recalc();
+      });
+    });
+  }
+
+  function persist(){
+    localStorage.setItem("flo_loc", JSON.stringify(locations));
+    localStorage.setItem("flo_hours", JSON.stringify(hours));
+    localStorage.setItem("flo_meta", JSON.stringify({
+      placing: document.querySelector("#placing").value,
+      level: document.querySelector("#level").value,
+      totalBouts: Number(document.querySelector("#totalBouts").value || 0),
+      startTime: document.querySelector("#startTime").value || "09:00"
+    }));
+  }
+
+  // ---------- Hours ----------
+  let hours = JSON.parse(localStorage.getItem("flo_hours") || "null") || Array.from({length: 14}, () => ({ completed: "" }));
+
+  function renderHours(){
+    const tbody = document.querySelector("#hourTable tbody");
+    tbody.innerHTML = "";
+    const start = parseTimeToMinutes(document.querySelector("#startTime").value);
+    hours.forEach((h, idx) => {
+      const rowStart = (start ?? 0) + idx*60;
+      const rowEnd   = rowStart + 60;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span id="hs-${idx}">${minutesToTime(rowStart)}</span></td>
+        <td><span id="he-${idx}">${minutesToTime(rowEnd)}</span></td>
+        <td class="right">
+          <input class="user right" type="number" min="0" step="1" data-hidx="${idx}" value="${h.completed}">
+        </td>
+        <td class="right" id="hpm-${idx}">-</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll("input[data-hidx]").forEach(inp => {
+      inp.addEventListener("input", (e) => {
+        const i = Number(e.target.dataset.hidx);
+        hours[i].completed = e.target.value;
+        persist();
+        recalc();
+      });
+    });
+  }
+
+  // ---------- Calculations ----------
+  function recalc(){
+    // locations totals
+    const totalMats = locations.reduce((s,l)=>s + (Number(l.mats)||0), 0);
+    const totalRemaining = locations.reduce((s,l)=>s + (Number(l.remaining)||0), 0);
+
+    document.querySelector("#totalMats").textContent = totalMats;
+    document.querySelector("#totalMatchesRemaining").textContent = totalRemaining;
+
+    const overallMPM = totalMats > 0 ? (totalRemaining/totalMats) : null;
+    document.querySelector("#overallMatchesPerMat").textContent = totalMats>0 ? fmtNumber(overallMPM,2) : "-";
+
+    locations.forEach((loc, idx) => {
+      const m = Number(loc.mats)||0;
+      const r = Number(loc.remaining)||0;
+      const mpm = m>0 ? r/m : null;
+      document.querySelector(`#mpm-${idx}`).textContent = m>0 ? fmtNumber(mpm,2) : "-";
+    });
+
+    // hours
+    const totalBouts = Number(document.querySelector("#totalBouts").value || 0);
+    const completedNums = hours
+      .map(h => h.completed === "" ? null : Number(h.completed))
+      .filter(v => v !== null && !Number.isNaN(v));
+
+    const boutsCompleted = completedNums.reduce((s,n)=>s+n,0);
+    const boutsLeft = Math.max(0, totalBouts - boutsCompleted);
+
+    const avgPerHour = completedNums.length ? (boutsCompleted / completedNums.length) : null;
+    const avgPerMatHour = (avgPerHour !== null && totalMats>0) ? (avgPerHour / totalMats) : null;
+
+    const hrsRemaining = (avgPerHour !== null && avgPerHour>0) ? (boutsLeft / avgPerHour) : null;
+
+    document.querySelector("#boutsCompleted").textContent = boutsCompleted;
+    document.querySelector("#boutsLeft").textContent = boutsLeft;
+    document.querySelector("#avgPerHour").textContent = avgPerHour!==null ? fmtNumber(avgPerHour,2) : "-";
+    document.querySelector("#avgPerMatHour").textContent = avgPerMatHour!==null ? fmtNumber(avgPerMatHour,2) : "-";
+    document.querySelector("#hrsRemaining").textContent = hrsRemaining!==null ? `${fmtNumber(hrsRemaining,2)} hrs` : "-";
+
+    // update per-hour per-mat averages + time labels
+    const startMin = parseTimeToMinutes(document.querySelector("#startTime").value) ?? 0;
+    hours.forEach((h, idx) => {
+      const rowStart = startMin + idx*60;
+      const rowEnd = rowStart + 60;
+      document.querySelector(`#hs-${idx}`).textContent = minutesToTime(rowStart);
+      document.querySelector(`#he-${idx}`).textContent = minutesToTime(rowEnd);
+
+      const c = (h.completed === "" ? null : Number(h.completed));
+      const perMat = (c !== null && !Number.isNaN(c) && totalMats>0) ? (c/totalMats) : null;
+      document.querySelector(`#hpm-${idx}`).textContent = perMat!==null ? fmtNumber(perMat,2) : "-";
+    });
+
+    // estimated end time (start time + entered full hours + remaining fractional)
+    if(hrsRemaining !== null){
+      const enteredHours = completedNums.length; // count of filled hour rows, not necessarily contiguous
+      // Better: estimate based on total bouts completed vs avg (so far), so "now" is ambiguous.
+      // We'll estimate tournament end as: start + (totalBouts / avgPerHour) hours.
+      const estTotalHours = (avgPerHour && avgPerHour>0) ? (totalBouts / avgPerHour) : null;
+      if(estTotalHours !== null){
+        const endMins = startMin + Math.round(estTotalHours*60);
+        document.querySelector("#estEndTime").textContent = minutesToTime(endMins);
+      } else {
+        document.querySelector("#estEndTime").textContent = "-";
+      }
+    } else {
+      document.querySelector("#estEndTime").textContent = "-";
+    }
+  }
+
+  // ---------- wire up ----------
+  function loadMeta(){
+    const meta = JSON.parse(localStorage.getItem("flo_meta") || "null");
+    if(meta){
+      document.querySelector("#placing").value = meta.placing || "top4";
+      document.querySelector("#level").value = meta.level || "hs";
+      document.querySelector("#totalBouts").value = meta.totalBouts ?? 387;
+      document.querySelector("#startTime").value = meta.startTime || "09:00";
+    }
+  }
+
+  document.querySelector("#addLoc").addEventListener("click", () => {
+    locations.push({name:`Location ${locations.length+1}`, mats:0, remaining:0});
+    persist();
+    renderLocations();
+    recalc();
+  });
+  document.querySelector("#resetLoc").addEventListener("click", () => {
+    if(!confirm("Reset locations to defaults?")) return;
+    locations = JSON.parse(JSON.stringify(defaultLocations));
+    persist();
+    renderLocations();
+    recalc();
+  });
+
+  document.querySelector("#addHour").addEventListener("click", () => {
+    hours.push({completed:""});
+    persist();
+    renderHours();
+    recalc();
+  });
+  document.querySelector("#clearHours").addEventListener("click", () => {
+    if(!confirm("Clear all hourly completed inputs?")) return;
+    hours = hours.map(()=>({completed:""}));
+    persist();
+    renderHours();
+    recalc();
+  });
+
+  ["placing","level","totalBouts","startTime"].forEach(id => {
+    document.querySelector("#"+id).addEventListener("input", () => {
+      persist();
+      renderHours();
+      recalc();
+    });
+  });
+
+  // init
+  loadMeta();
+  renderLocations();
+  renderHours();
+  recalc();
+</script>
+</body>
+</html>
