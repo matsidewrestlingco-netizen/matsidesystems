@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tournament Planner + Dashboard (FloArena)</title>
+  <title>FloArena Tournament Suite (Planner + Live Dashboard)</title>
   <style>
     :root{
       --grid:#d7d7d7;
@@ -18,15 +18,16 @@
       --bad:#b71c1c;
     }
     body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
-    .wrap{max-width:1200px; margin:0 auto; padding:18px;}
+    .wrap{max-width:1250px; margin:0 auto; padding:18px;}
     h1{font-size:20px; margin:0 0 6px;}
     .sub{color:var(--muted); margin:0 0 16px; font-size:13px;}
-    .grid{display:grid; grid-template-columns: 1.15fr 1fr; gap:16px;}
+    .grid{display:grid; grid-template-columns: 1fr 1fr; gap:16px;}
+    .grid3{display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px;}
     .card{background:var(--card); border:1px solid var(--grid); border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); overflow:hidden;}
     .card h2{margin:0; padding:12px 14px; font-size:14px; background:#f3f3f3; border-bottom:1px solid var(--grid);}
     .row{display:flex; gap:10px; padding:12px 14px; align-items:end; flex-wrap:wrap;}
     .field{min-width:170px; flex:1;}
-    .field.small{min-width:130px; flex:0.7;}
+    .field.small{min-width:130px; flex:0.75;}
     .label{font-size:12px; color:var(--muted); margin:0 0 6px;}
     input, select{
       width:100%;
@@ -50,6 +51,7 @@
     th{background:#f8f8f8; text-align:left; font-weight:650;}
     .right{text-align:right;}
     .kpi{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; padding:12px 14px;}
+    .kpi.k3{grid-template-columns: repeat(3, 1fr);}
     .kpi .box{border:1px solid var(--grid); border-radius:12px; padding:10px;}
     .kpi .box .k{font-size:11px; color:var(--muted);}
     .kpi .box .v{font-size:18px; font-weight:850; margin-top:4px;}
@@ -70,22 +72,25 @@
     button:hover{background:#f6f6f6;}
     .twoCol{display:grid; grid-template-columns: 1fr 1fr; gap:14px; padding:12px 14px;}
     .mini{font-size:12px; color:var(--muted);}
+    .small{font-size:12px; color:var(--muted);}
+    .pill{display:inline-flex; gap:8px; align-items:center;}
+    .pill input{width:auto;}
     @media (max-width: 980px){
-      .grid{grid-template-columns: 1fr;}
+      .grid, .grid3{grid-template-columns: 1fr;}
       .kpi{grid-template-columns: 1fr 1fr;}
+      .kpi.k3{grid-template-columns: 1fr;}
       .twoCol{grid-template-columns: 1fr;}
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Tournament Planner + Live Dashboard (FloArena)</h1>
-    <p class="sub">Orange fields are user input. Everything else calculates automatically. This version adds a “start-of-tournament” planning card + weight-class balancing between gyms/mats.</p>
+    <h1>FloArena Tournament Suite</h1>
+    <p class="sub">All modules in one page. Orange fields are user input. Everything else updates automatically. Saved locally in your browser.</p>
 
     <div class="grid">
-      <!-- Planner -->
       <div class="card">
-        <h2>Start-of-tournament planner</h2>
+        <h2>Module 1 — Start-of-tournament planner</h2>
 
         <div class="row">
           <div class="field">
@@ -120,16 +125,12 @@
             <input id="day1Start" class="user" type="time" value="16:00"/>
           </div>
           <div class="field small">
-            <div class="label">Day 1 end (optional)</div>
+            <div class="label">Day 1 end</div>
             <input id="day1End" class="user" type="time" value="22:00"/>
           </div>
           <div class="field small">
             <div class="label">Day 2 start</div>
             <input id="day2Start" class="user" type="time" value="09:00"/>
-          </div>
-          <div class="field small">
-            <div class="label">Day 2 hard stop (optional)</div>
-            <input id="day2End" class="user" type="time" value="17:00"/>
           </div>
           <div class="field small">
             <div class="label">Assumed pace (bouts / mat / hr)</div>
@@ -154,15 +155,16 @@
                 <tr>
                   <th>Total</th>
                   <th class="right" id="totalWrestlers">0</th>
-                  <th class="right" id="totalBouts">0</th>
+                  <th class="right" id="plannerTotalBouts">0</th>
                 </tr>
               </tfoot>
             </table>
           </div>
 
           <div>
-            <div class="label">Gyms / locations</div>
-            <table id="locTable">
+            <div class="label">Gym / locations (shared across modules)</div>
+            <div class="small" style="padding:0 0 10px 0;">Set mats here once; Live Dashboard + What-if use the same mats automatically.</div>
+            <table id="locTablePlanner">
               <thead>
                 <tr>
                   <th style="width:40%">Location</th>
@@ -174,7 +176,7 @@
               <tfoot>
                 <tr>
                   <th>Total</th>
-                  <th class="right" id="totalMats">0</th>
+                  <th class="right" id="totalMatsPlanner">0</th>
                   <th class="right" id="totalAssignedBouts">0</th>
                 </tr>
               </tfoot>
@@ -187,7 +189,7 @@
             </div>
 
             <div style="padding:0 14px 12px 14px" class="mini">
-              Balancing logic: assigns heavier “bouts” weight classes to gyms so each gym’s <b>bouts per mat</b> load stays as even as possible.
+              Balancing logic: assigns heavier “bouts” weights to gyms to keep <b>bouts per mat</b> as even as possible.
             </div>
 
             <table id="assignmentTable" style="margin:0 14px 14px 14px; width: calc(100% - 28px);">
@@ -214,7 +216,7 @@
             <div class="v" id="kpiHours">-</div>
           </div>
           <div class="box">
-            <div class="k">Day 1 capacity (bouts)</div>
+            <div class="k">Friday capacity (bouts)</div>
             <div class="v" id="kpiDay1Cap">-</div>
           </div>
           <div class="box">
@@ -224,40 +226,130 @@
         </div>
 
         <div style="padding:0 14px 14px 14px">
-          <div class="label">Recommended Day 1 stop point (time-based)</div>
+          <div class="label">Recommended Day 1 stop point</div>
           <div id="stopPointText" style="font-weight:750; font-size:13px;">-</div>
           <div class="mini" id="stopPointMini"></div>
         </div>
 
         <div class="note">
-          This recommendation is intentionally practical (time-based), because Flo brackets vary by byes and small brackets. Once you’re close to the event, refine with “matches remaining by location” + hourly pace tracking.
+          Planner uses your confirmed format: double elim, places 1st–6th with a single 5th-place winner.
         </div>
       </div>
 
-      <!-- Simulator -->
       <div class="card">
-        <h2>What-if simulator (end time)</h2>
+        <h2>Module 2 — Live dashboard (matches remaining + hourly pace)</h2>
+
+        <div style="padding:12px 14px" class="small">
+          Enter <b>matches remaining</b> per location. It calculates “matches per mat” and overall remaining load.
+        </div>
+
+        <table id="locTableLive">
+          <thead>
+            <tr>
+              <th style="width:34%">Location</th>
+              <th style="width:16%" class="right"># Mats</th>
+              <th style="width:22%" class="right">Matches remaining</th>
+              <th style="width:28%" class="right">Matches / mat</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr>
+              <th>Total</th>
+              <th class="right" id="liveTotalMats">0</th>
+              <th class="right" id="liveTotalRemaining">0</th>
+              <th class="right" id="liveOverallMPM">-</th>
+            </tr>
+          </tfoot>
+        </table>
 
         <div class="row">
           <div class="field">
+            <div class="label">Total estimated bouts</div>
+            <div class="pill">
+              <input id="usePlannerTotal" type="checkbox" checked />
+              <span class="mini">Use Planner total</span>
+            </div>
+            <input id="totalBouts" class="user" type="number" min="0" step="1" value="0" />
+          </div>
+          <div class="field small">
+            <div class="label">Start time</div>
+            <input id="startTime" class="user" type="time" value="09:00" />
+          </div>
+          <div class="field small">
+            <div class="label">Level</div>
+            <select id="dashLevel" class="user">
+              <option value="hs">HS</option>
+              <option value="jh">JH / Youth</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="kpi k3">
+          <div class="box">
+            <div class="k">Bouts completed (entered)</div>
+            <div class="v" id="boutsCompleted">0</div>
+          </div>
+          <div class="box">
+            <div class="k">Avg bouts / hr (overall)</div>
+            <div class="v" id="avgPerHour">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Estimated end time</div>
+            <div class="v" id="estEndTime">-</div>
+          </div>
+        </div>
+
+        <div style="padding:12px 14px">
+          <table id="hourTable">
+            <thead>
+              <tr>
+                <th style="width:20%">Start</th>
+                <th style="width:20%">End</th>
+                <th style="width:30%" class="right">Completed (this hour)</th>
+                <th style="width:30%" class="right">Per-mat average</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="actions">
+          <button id="addHour">+ Add hour row</button>
+          <button id="clearHours">Clear hour inputs</button>
+        </div>
+
+        <div class="note">
+          Tip: even 2–3 filled hours gives you a usable “end time” forecast from your real pace.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid3">
+      <div class="card">
+        <h2>Module 3 — What-if simulator (end time)</h2>
+
+        <div class="row">
+          <div class="field small">
             <div class="label">Scenario: mats available</div>
             <input id="simMats" class="user" type="number" min="1" step="1" value="8"/>
           </div>
-          <div class="field">
+          <div class="field small">
             <div class="label">Scenario: pace (bouts / mat / hr)</div>
             <input id="simPace" class="user" type="number" min="6" max="20" step="0.5" value="12"/>
           </div>
-          <div class="field">
-            <div class="label">Tournament start (used for end time)</div>
+          <div class="field small">
+            <div class="label">Tournament start</div>
             <input id="simStart" class="user" type="time" value="09:00"/>
+          </div>
+          <div class="field">
+            <div class="label">Total bouts (from Planner unless overridden)</div>
+            <input id="simTotalBouts" class="user" type="number" min="0" step="1" value="0"/>
+            <div class="mini">If you want this driven by live pace instead of projections, use Module 2.</div>
           </div>
         </div>
 
         <div class="kpi">
-          <div class="box">
-            <div class="k">Total bouts (from planner)</div>
-            <div class="v" id="simTotalBouts">-</div>
-          </div>
           <div class="box">
             <div class="k">Estimated duration</div>
             <div class="v" id="simDuration">-</div>
@@ -270,54 +362,32 @@
             <div class="k">Delta vs planner</div>
             <div class="v" id="simDelta">-</div>
           </div>
-        </div>
-
-        <div style="padding:0 14px 14px 14px">
-          <div class="label">Matches remaining by location (optional, live)</div>
-          <div class="mini">If you’re mid-tournament, enter remaining matches per gym below. This estimates finish time from remaining matches at your scenario pace.</div>
-        </div>
-
-        <div style="padding:0 14px 14px 14px">
-          <table id="remainingTable">
-            <thead>
-              <tr>
-                <th style="width:40%">Location</th>
-                <th style="width:20%" class="right"># Mats</th>
-                <th style="width:40%" class="right">Matches remaining</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-              <tr>
-                <th>Total</th>
-                <th class="right" id="remTotalMats">0</th>
-                <th class="right" id="remTotal">0</th>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        <div class="kpi">
           <div class="box">
-            <div class="k">Remaining hours (scenario pace)</div>
-            <div class="v" id="remHours">-</div>
-          </div>
-          <div class="box">
-            <div class="k">Estimated finish time (from now)</div>
-            <div class="v" id="remEnd">-</div>
-          </div>
-          <div class="box">
-            <div class="k">Remaining matches / mat</div>
-            <div class="v" id="remMPM">-</div>
-          </div>
-          <div class="box">
-            <div class="k">Reset</div>
-            <div class="v" style="font-size:12px; font-weight:650; color:var(--muted);"><button id="resetAll">Reset all</button></div>
+            <div class="k">Note</div>
+            <div class="v" style="font-size:12px; font-weight:650; color:var(--muted);">Next: drop-mats + finals bottleneck.</div>
           </div>
         </div>
 
         <div class="note">
-          Next upgrade: “Drop mats at X time” + “Finals on 1 mat” bottleneck simulation.
+          This module answers “what happens if we drop to 4 mats?” instantly.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Module 4 — Utilities</h2>
+        <div style="padding:12px 14px" class="small">
+          This page stores everything locally in your browser (localStorage). Use these buttons if you want a clean slate.
+        </div>
+        <div class="actions">
+          <button id="resetAll">Reset everything</button>
+          <button id="exportJson">Export saved data (JSON)</button>
+          <button id="importJson">Import saved data (JSON)</button>
+        </div>
+        <div style="padding:0 14px 14px 14px">
+          <textarea id="jsonBox" style="width:100%; height:240px; border:1px solid var(--grid); border-radius:12px; padding:10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px;" placeholder="Export/import data here..."></textarea>
+        </div>
+        <div class="note">
+          Export/import is handy if you want to move the plan from your laptop to a Chromebook mat table.
         </div>
       </div>
     </div>
@@ -343,182 +413,208 @@
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
   function el(id){ return document.getElementById(id); }
 
-  // Double elimination, placing 1st–6th (single 5th-place winner => includes 5th/6th match)
   function boutsTop6(n){
     n = Math.floor(Number(n||0));
     if(n <= 1) return 0;
     if(n === 2) return 1;
     if(n === 3) return 3;
     if(n === 4) return 5;
-    return 2*n - 5; // n >= 5
+    return 2*n - 5;
   }
 
-  const defaultWeights = Array.from({length:13}, (_,i)=>({ name:`W${i+1}`, wrestlers:16 }));
-  const defaultLocations = [{ name:"Gym A", mats:6 }, { name:"Gym B", mats:2 }];
+  const LS_KEY = "flo_all_modules_v1";
+  const DEFAULTS = {
+    level: "hs",
+    days: "2",
+    numWeights: 13,
+    day1Start: "16:00",
+    day1End: "22:00",
+    day2Start: "09:00",
+    pace: 12,
+    weights: Array.from({length:13}, (_,i)=>({ name:`W${i+1}`, wrestlers:16 })),
+    locations: [
+      { name:"Gym 1", mats:3, remaining:35 },
+      { name:"Gym 2", mats:2, remaining:17 },
+      { name:"Aux 1", mats:0, remaining:0 },
+      { name:"Aux 2", mats:0, remaining:0 }
+    ],
+    usePlannerTotal: true,
+    totalBoutsOverride: 0,
+    startTime: "09:00",
+    dashLevel: "hs",
+    hours: Array.from({length:14}, ()=>({ completed:"" })),
+    simMats: 8,
+    simPace: 12,
+    simStart: "09:00",
+    simTotalBoutsOverride: 0
+  };
 
-  const LS_KEY = "flo_planner_v2";
+  function deepMerge(a,b){
+    for(const k of Object.keys(b||{})){
+      if(b[k] && typeof b[k] === "object" && !Array.isArray(b[k]) && a[k] && typeof a[k] === "object" && !Array.isArray(a[k])){
+        a[k] = deepMerge(a[k], b[k]);
+      } else {
+        a[k] = b[k];
+      }
+    }
+    return a;
+  }
+
   function loadState(){
-    try{ return JSON.parse(localStorage.getItem(LS_KEY) || "null") || null; }
-    catch(e){ return null; }
+    try{
+      const s = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+      return s ? deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), s) : JSON.parse(JSON.stringify(DEFAULTS));
+    } catch(e){
+      return JSON.parse(JSON.stringify(DEFAULTS));
+    }
   }
   function saveState(){
-    const st = {
-      level: el("level").value,
-      days: el("days").value,
-      numWeights: Number(el("numWeights").value||13),
-      day1Start: el("day1Start").value,
-      day1End: el("day1End").value,
-      day2Start: el("day2Start").value,
-      day2End: el("day2End").value,
-      pace: Number(el("pace").value||12),
-      weights,
-      locations,
-      remainingRows,
-      simMats: Number(el("simMats").value||8),
-      simPace: Number(el("simPace").value||12),
-      simStart: el("simStart").value
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify(st));
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
   }
-  function resetState(){
-    localStorage.removeItem(LS_KEY);
-    window.location.reload();
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   let state = loadState();
-  let weights = state?.weights || JSON.parse(JSON.stringify(defaultWeights));
-  let locations = state?.locations || JSON.parse(JSON.stringify(defaultLocations));
 
-  function makeRemainingFromLocations(locs){
-    return locs.map(l => ({ name:l.name, mats:Number(l.mats)||0, remaining:0 }));
-  }
-  let remainingRows = state?.remainingRows || makeRemainingFromLocations(locations);
-
-  function initFromState(){
-    if(!state) return;
-    el("level").value = state.level || "hs";
-    el("days").value = state.days || "2";
-    el("numWeights").value = state.numWeights ?? 13;
-    el("day1Start").value = state.day1Start || "16:00";
-    el("day1End").value = state.day1End || "22:00";
-    el("day2Start").value = state.day2Start || "09:00";
-    el("day2End").value = state.day2End || "17:00";
-    el("pace").value = state.pace ?? 12;
-    el("simMats").value = state.simMats ?? 8;
-    el("simPace").value = state.simPace ?? 12;
-    el("simStart").value = state.simStart || "09:00";
+  function totalMats(){
+    return state.locations.reduce((s,l)=>s+(Number(l.mats)||0),0);
   }
 
-  function setPaceDefaults(){
+  function initControls(){
+    el("level").value = state.level;
+    el("days").value = state.days;
+    el("numWeights").value = state.numWeights;
+    el("day1Start").value = state.day1Start;
+    el("day1End").value = state.day1End;
+    el("day2Start").value = state.day2Start;
+    el("pace").value = state.pace;
+
+    el("usePlannerTotal").checked = !!state.usePlannerTotal;
+    el("totalBouts").value = state.totalBoutsOverride || 0;
+    el("startTime").value = state.startTime;
+    el("dashLevel").value = state.dashLevel;
+
+    el("simMats").value = state.simMats;
+    el("simPace").value = state.simPace;
+    el("simStart").value = state.simStart;
+    el("simTotalBouts").value = state.simTotalBoutsOverride || 0;
+
+    setPaceDefaults(false);
+  }
+
+  function setPaceDefaults(force){
     const lvl = el("level").value;
     const hint = (lvl === "hs") ? "Default HS pace is 12." : "Default JH/Youth pace is 14.";
     el("paceHint").textContent = hint;
-    if(!state){
-      const p = (lvl === "hs") ? 12 : 14;
-      el("pace").value = p;
-      el("simPace").value = p;
-    }
-  }
 
-  function syncRemainingNames(){
-    const newRem = [];
-    locations.forEach((l, idx) => {
-      const prev = remainingRows[idx];
-      newRem.push({
-        name: l.name,
-        mats: Number(l.mats)||0,
-        remaining: prev ? Number(prev.remaining)||0 : 0
-      });
-    });
-    remainingRows = newRem;
+    const defaultP = (lvl === "hs") ? 12 : 14;
+    if(force){
+      el("pace").value = defaultP;
+      el("simPace").value = defaultP;
+      state.pace = defaultP;
+      state.simPace = defaultP;
+    }
   }
 
   function renderWeights(){
     const n = clamp(Math.floor(Number(el("numWeights").value||13)), 1, 30);
-    while(weights.length < n) weights.push({ name:`W${weights.length+1}`, wrestlers:0 });
-    while(weights.length > n) weights.pop();
+    while(state.weights.length < n) state.weights.push({ name:`W${state.weights.length+1}`, wrestlers:0 });
+    while(state.weights.length > n) state.weights.pop();
 
     const tbody = document.querySelector("#weightsTable tbody");
     tbody.innerHTML = "";
-    weights.forEach((w, idx) => {
+    state.weights.forEach((w, idx) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><input class="user" data-wi="${idx}" data-f="name" value="${w.name}"></td>
-        <td class="right"><input class="user right" type="number" min="0" step="1" data-wi="${idx}" data-f="wrestlers" value="${w.wrestlers}"></td>
+        <td><input class="user" data-wi="${idx}" data-f="name" value="${escapeHtml(w.name)}"></td>
+        <td class="right"><input class="user right" type="number" min="0" step="1" data-wi="${idx}" data-f="wrestlers" value="${Number(w.wrestlers)||0}"></td>
         <td class="right" id="wb-${idx}">-</td>
       `;
       tbody.appendChild(tr);
     });
+
     tbody.querySelectorAll("input").forEach(inp => {
       inp.addEventListener("input", (e) => {
         const i = Number(e.target.dataset.wi);
         const f = e.target.dataset.f;
         let v = e.target.value;
         if(f === "wrestlers") v = Number(v||0);
-        weights[i][f] = v;
+        state.weights[i][f] = v;
         rebalanceAssignments();
-        recalc();
+        recalcAll();
         saveState();
       });
     });
   }
 
   function renderLocations(){
-    const tbody = document.querySelector("#locTable tbody");
-    tbody.innerHTML = "";
-    locations.forEach((loc, idx) => {
+    const tbodyP = document.querySelector("#locTablePlanner tbody");
+    tbodyP.innerHTML = "";
+    state.locations.forEach((loc, idx) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><input class="user" data-li="${idx}" data-f="name" value="${loc.name}"></td>
-        <td class="right"><input class="user right" type="number" min="0" step="1" data-li="${idx}" data-f="mats" value="${loc.mats}"></td>
+        <td><input class="user" data-li="${idx}" data-f="name" value="${escapeHtml(loc.name)}"></td>
+        <td class="right"><input class="user right" type="number" min="0" step="1" data-li="${idx}" data-f="mats" value="${Number(loc.mats)||0}"></td>
         <td class="right" id="lab-${idx}">-</td>
       `;
-      tbody.appendChild(tr);
+      tbodyP.appendChild(tr);
     });
-    tbody.querySelectorAll("input").forEach(inp => {
+
+    tbodyP.querySelectorAll("input").forEach(inp => {
       inp.addEventListener("input", (e) => {
         const i = Number(e.target.dataset.li);
         const f = e.target.dataset.f;
         let v = e.target.value;
         if(f === "mats") v = Number(v||0);
-        locations[i][f] = v;
-        syncRemainingNames();
-        renderRemaining();
+        state.locations[i][f] = v;
+        renderLocationsLive();
         rebalanceAssignments();
-        recalc();
+        recalcAll();
         saveState();
       });
     });
+
+    renderLocationsLive();
   }
 
-  function renderRemaining(){
-    const tbody = document.querySelector("#remainingTable tbody");
-    tbody.innerHTML = "";
-    remainingRows.forEach((r, idx) => {
+  function renderLocationsLive(){
+    const tbodyL = document.querySelector("#locTableLive tbody");
+    tbodyL.innerHTML = "";
+    state.locations.forEach((loc, idx) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${r.name}</td>
-        <td class="right">${Number(r.mats)||0}</td>
-        <td class="right"><input class="user right" type="number" min="0" step="1" data-ri="${idx}" value="${r.remaining ?? 0}"></td>
+        <td>${escapeHtml(loc.name)}</td>
+        <td class="right">${Number(loc.mats)||0}</td>
+        <td class="right"><input class="user right" type="number" min="0" step="1" data-ri="${idx}" value="${Number(loc.remaining)||0}"></td>
+        <td class="right" id="mpm-${idx}">-</td>
       `;
-      tbody.appendChild(tr);
+      tbodyL.appendChild(tr);
     });
-    tbody.querySelectorAll("input[data-ri]").forEach(inp => {
+
+    tbodyL.querySelectorAll("input[data-ri]").forEach(inp => {
       inp.addEventListener("input", (e) => {
         const i = Number(e.target.dataset.ri);
-        remainingRows[i].remaining = Number(e.target.value||0);
-        recalc();
+        state.locations[i].remaining = Number(e.target.value||0);
+        recalcLive();
         saveState();
       });
     });
   }
 
-  // Balancing (greedy by lowest bouts/mat load)
   let assignments = [];
   function rebalanceAssignments(){
-    const weightsWithBouts = weights.map((w,i)=>({ idx:i, bouts:boutsTop6(w.wrestlers) }))
+    const weightsWithBouts = state.weights.map((w,i)=>({ idx:i, bouts:boutsTop6(w.wrestlers) }))
       .sort((a,b)=>b.bouts-a.bouts);
-    const loads = locations.map((l,i)=>({ locIdx:i, mats:Number(l.mats)||0, weights:[], bouts:0 }));
+
+    const loads = state.locations.map((l,i)=>({ locIdx:i, mats:Number(l.mats)||0, weights:[], bouts:0 }));
+
     weightsWithBouts.forEach(wb=>{
       let best=-1, bestScore=Infinity;
       loads.forEach((l,i)=>{
@@ -531,6 +627,7 @@
         loads[best].bouts += wb.bouts;
       }
     });
+
     assignments = loads;
     renderAssignments();
   }
@@ -539,23 +636,55 @@
     const tbody = document.querySelector("#assignmentTable tbody");
     tbody.innerHTML = "";
     assignments.forEach(a=>{
-      const loc = locations[a.locIdx];
-      const names = a.weights.map(i=>weights[i]?.name).filter(Boolean);
+      const loc = state.locations[a.locIdx];
+      const names = a.weights.map(i=>state.weights[i]?.name).filter(Boolean);
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${loc?.name ?? "?"}</td>
-        <td>${names.length ? names.join(", ") : "<span style='color:var(--muted)'>—</span>"}</td>
+        <td>${escapeHtml(loc?.name ?? "?")}</td>
+        <td>${names.length ? names.map(escapeHtml).join(", ") : "<span style='color:var(--muted)'>—</span>"}</td>
         <td class="right">${a.bouts}</td>
       `;
       tbody.appendChild(tr);
       const cell = document.getElementById(`lab-${a.locIdx}`);
       if(cell) cell.textContent = a.bouts;
     });
+
+    el("totalAssignedBouts").textContent = assignments.reduce((s,a)=>s+a.bouts,0);
   }
 
-  function recalc(){
-    let totalW=0, totalB=0;
-    weights.forEach((w, idx)=>{
+  function renderHours(){
+    const tbody = document.querySelector("#hourTable tbody");
+    tbody.innerHTML = "";
+    const start = parseTimeToMinutes(el("startTime").value);
+
+    state.hours.forEach((h, idx) => {
+      const rowStart = (start ?? 0) + idx*60;
+      const rowEnd = rowStart + 60;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span id="hs-${idx}">${minutesToTime(rowStart)}</span></td>
+        <td><span id="he-${idx}">${minutesToTime(rowEnd)}</span></td>
+        <td class="right">
+          <input class="user right" type="number" min="0" step="1" data-hidx="${idx}" value="${h.completed}">
+        </td>
+        <td class="right" id="hpm-${idx}">-</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll("input[data-hidx]").forEach(inp => {
+      inp.addEventListener("input", (e) => {
+        const i = Number(e.target.dataset.hidx);
+        state.hours[i].completed = e.target.value;
+        recalcLive();
+        saveState();
+      });
+    });
+  }
+
+  function recalcPlanner(){
+    let totalW = 0, totalB = 0;
+    state.weights.forEach((w, idx)=>{
       const n = Number(w.wrestlers)||0;
       const b = boutsTop6(n);
       totalW += n;
@@ -564,25 +693,22 @@
       if(cell) cell.textContent = b;
     });
     el("totalWrestlers").textContent = totalW;
-    el("totalBouts").textContent = totalB;
+    el("plannerTotalBouts").textContent = totalB;
 
-    el("simTotalBouts").textContent = totalB;
-
-    const totalMats = locations.reduce((s,l)=>s+(Number(l.mats)||0),0);
-    el("totalMats").textContent = totalMats;
-    el("kpiMats").textContent = totalMats>0 ? totalMats : "-";
+    const mats = totalMats();
+    el("totalMatsPlanner").textContent = mats;
+    el("kpiMats").textContent = mats>0 ? mats : "-";
 
     const pace = Number(el("pace").value||12);
-    const totalHours = (totalMats>0 && pace>0) ? (totalB/(totalMats*pace)) : null;
+    const totalHours = (mats>0 && pace>0) ? (totalB/(mats*pace)) : null;
     el("kpiHours").textContent = totalHours!==null ? `${fmt(totalHours,2)} hrs` : "-";
 
     const day1Start = parseTimeToMinutes(el("day1Start").value);
     const day1End = parseTimeToMinutes(el("day1End").value);
     const day1Hours = (day1Start!==null && day1End!==null) ? Math.max(0, (day1End-day1Start)/60) : null;
-    const day1Cap = (day1Hours!==null && totalMats>0 && pace>0) ? (day1Hours*totalMats*pace) : null;
+    const day1Cap = (day1Hours!==null && mats>0 && pace>0) ? (day1Hours*mats*pace) : null;
     el("kpiDay1Cap").textContent = day1Cap!==null ? `${Math.round(day1Cap)} bouts` : "-";
 
-    // status
     const days = Number(el("days").value||2);
     let statusText="-", statusClass="badge";
     if(days === 1){
@@ -601,17 +727,16 @@
     }
     el("kpiStatus").innerHTML = `<span class="${statusClass}">${statusText}</span>`;
 
-    // stop point text (heuristic)
     const stopText = el("stopPointText");
     const stopMini = el("stopPointMini");
     if(days === 1){
       if(totalHours!==null && day1Start!==null){
         stopText.textContent = `Expected finish around ${minutesToTime(day1Start + Math.round(totalHours*60))} (projected).`;
-        stopMini.textContent = `Assumes ${pace} bouts/mat/hr on ${totalMats} mats.`;
-      }else{
+        stopMini.textContent = `Assumes ${pace} bouts/mat/hr on ${mats} mats.`;
+      } else {
         stopText.textContent="-"; stopMini.textContent="";
       }
-    }else{
+    } else {
       if(day1Cap!==null && totalB>0){
         const pct = clamp(day1Cap/totalB,0,1);
         let rec;
@@ -621,99 +746,220 @@
         else rec = "Friday is too short for clean round boundaries. Add mats/hours or expect a late Saturday.";
         stopText.textContent = rec;
         stopMini.textContent = `Friday capacity ≈ ${Math.round(day1Cap)} bouts (~${fmt(day1Hours,1)} hrs) ≈ ${(pct*100).toFixed(0)}% of ${totalB} projected bouts.`;
-      }else{
+      } else {
         stopText.textContent="-"; stopMini.textContent="";
       }
     }
 
-    // simulator (projected)
+    if(el("usePlannerTotal").checked){
+      el("totalBouts").value = totalB;
+      state.totalBoutsOverride = totalB;
+    }
+    if(Number(el("simTotalBouts").value||0) === 0 || el("usePlannerTotal").checked){
+      el("simTotalBouts").value = totalB;
+      state.simTotalBoutsOverride = totalB;
+    }
+
+    return totalB;
+  }
+
+  function recalcSim(){
+    const plannerTotal = Number(el("plannerTotalBouts").textContent||0);
     const simMats = Number(el("simMats").value||0);
     const simPace = Number(el("simPace").value||0);
     const simStart = parseTimeToMinutes(el("simStart").value);
-    const simHours = (simMats>0 && simPace>0) ? (totalB/(simMats*simPace)) : null;
+    const simTotal = Number(el("simTotalBouts").value||0);
+
+    const baseMats = totalMats();
+    const basePace = Number(el("pace").value||12);
+    const baseHours = (baseMats>0 && basePace>0) ? (plannerTotal/(baseMats*basePace)) : null;
+
+    const simHours = (simMats>0 && simPace>0) ? (simTotal/(simMats*simPace)) : null;
     el("simDuration").textContent = simHours!==null ? `${fmt(simHours,2)} hrs` : "-";
     el("simEnd").textContent = (simHours!==null && simStart!==null) ? minutesToTime(simStart + Math.round(simHours*60)) : "-";
-    if(simHours!==null && totalHours!==null){
-      const delta = simHours - totalHours;
+
+    if(simHours!==null && baseHours!==null){
+      const delta = simHours - baseHours;
       const sign = delta >= 0 ? "+" : "−";
       el("simDelta").textContent = `${sign}${fmt(Math.abs(delta),2)} hrs`;
-    }else{
+    } else {
       el("simDelta").textContent = "-";
     }
+  }
 
-    // remaining (live)
-    const remTotalMats = remainingRows.reduce((s,r)=>s+(Number(r.mats)||0),0);
-    const remTotal = remainingRows.reduce((s,r)=>s+(Number(r.remaining)||0),0);
-    el("remTotalMats").textContent = remTotalMats;
-    el("remTotal").textContent = remTotal;
+  function recalcLive(){
+    const mats = totalMats();
+    const totalRemaining = state.locations.reduce((s,l)=>s+(Number(l.remaining)||0),0);
 
-    const remHours = (remTotalMats>0 && simPace>0) ? (remTotal/(remTotalMats*simPace)) : null;
-    el("remHours").textContent = remHours!==null ? `${fmt(remHours,2)} hrs` : "-";
-    el("remMPM").textContent = remTotalMats>0 ? fmt(remTotal/remTotalMats,2) : "-";
+    el("liveTotalMats").textContent = mats;
+    el("liveTotalRemaining").textContent = totalRemaining;
+    el("liveOverallMPM").textContent = mats>0 ? fmt(totalRemaining/mats,2) : "-";
 
-    const now = new Date();
-    const nowMins = now.getHours()*60 + now.getMinutes();
-    el("remEnd").textContent = remHours!==null ? minutesToTime(nowMins + Math.round(remHours*60)) : "-";
+    state.locations.forEach((loc, idx)=>{
+      const m = Number(loc.mats)||0;
+      const r = Number(loc.remaining)||0;
+      const cell = document.getElementById(`mpm-${idx}`);
+      if(cell) cell.textContent = m>0 ? fmt(r/m,2) : "-";
+    });
+
+    const totalBouts = Number(el("totalBouts").value || 0);
+    const completedNums = state.hours
+      .map(h => h.completed === "" ? null : Number(h.completed))
+      .filter(v => v !== null && !Number.isNaN(v));
+
+    const boutsCompleted = completedNums.reduce((s,n)=>s+n,0);
+    const avgPerHour = completedNums.length ? (boutsCompleted / completedNums.length) : null;
+
+    el("boutsCompleted").textContent = boutsCompleted;
+    el("avgPerHour").textContent = avgPerHour!==null ? fmt(avgPerHour,2) : "-";
+
+    const startMin = parseTimeToMinutes(el("startTime").value) ?? 0;
+    state.hours.forEach((h, idx) => {
+      const hs = document.getElementById(`hs-${idx}`);
+      const he = document.getElementById(`he-${idx}`);
+      if(hs) hs.textContent = minutesToTime(startMin + idx*60);
+      if(he) he.textContent = minutesToTime(startMin + (idx+1)*60);
+
+      const c = (h.completed === "" ? null : Number(h.completed));
+      const perMat = (c !== null && !Number.isNaN(c) && mats>0) ? (c/mats) : null;
+      const hpm = document.getElementById(`hpm-${idx}`);
+      if(hpm) hpm.textContent = perMat!==null ? fmt(perMat,2) : "-";
+    });
+
+    if(avgPerHour !== null && avgPerHour > 0){
+      const estTotalHours = totalBouts / avgPerHour;
+      el("estEndTime").textContent = minutesToTime(startMin + Math.round(estTotalHours*60));
+    } else {
+      el("estEndTime").textContent = "-";
+    }
+
+    recalcSim();
+  }
+
+  function recalcAll(){
+    recalcPlanner();
+    recalcLive();
+
+    state.level = el("level").value;
+    state.days = el("days").value;
+    state.numWeights = Number(el("numWeights").value||13);
+    state.day1Start = el("day1Start").value;
+    state.day1End = el("day1End").value;
+    state.day2Start = el("day2Start").value;
+    state.pace = Number(el("pace").value||12);
+
+    state.usePlannerTotal = el("usePlannerTotal").checked;
+    state.totalBoutsOverride = Number(el("totalBouts").value||0);
+    state.startTime = el("startTime").value;
+    state.dashLevel = el("dashLevel").value;
+
+    state.simMats = Number(el("simMats").value||0);
+    state.simPace = Number(el("simPace").value||0);
+    state.simStart = el("simStart").value;
+    state.simTotalBoutsOverride = Number(el("simTotalBouts").value||0);
   }
 
   function bind(){
-    ["level","days","numWeights","day1Start","day1End","day2Start","day2End","pace"].forEach(id=>{
+    ["level","days","numWeights","day1Start","day1End","day2Start","pace"].forEach(id=>{
       el(id).addEventListener("input", ()=>{
-        if(id==="level"){ setPaceDefaults(); }
+        if(id==="level"){ setPaceDefaults(true); }
         renderWeights();
         rebalanceAssignments();
-        syncRemainingNames();
-        renderLocations();
-        renderRemaining();
-        recalc();
+        recalcAll();
         saveState();
       });
     });
-    ["simMats","simPace","simStart"].forEach(id=>{
-      el(id).addEventListener("input", ()=>{ recalc(); saveState(); });
+
+    el("usePlannerTotal").addEventListener("change", ()=>{
+      recalcAll(); saveState();
+    });
+
+    ["totalBouts","startTime","dashLevel"].forEach(id=>{
+      el(id).addEventListener("input", ()=>{
+        recalcLive(); saveState();
+      });
+    });
+
+    ["simMats","simPace","simStart","simTotalBouts"].forEach(id=>{
+      el(id).addEventListener("input", ()=>{
+        recalcSim(); saveState();
+      });
+    });
+
+    el("addHour").addEventListener("click", ()=>{
+      state.hours.push({completed:""});
+      renderHours();
+      recalcLive();
+      saveState();
+    });
+
+    el("clearHours").addEventListener("click", ()=>{
+      if(!confirm("Clear all hourly completed inputs?")) return;
+      state.hours = state.hours.map(()=>({completed:""}));
+      renderHours();
+      recalcLive();
+      saveState();
     });
 
     el("addLoc").addEventListener("click", ()=>{
-      locations.push({ name:`Location ${locations.length+1}`, mats:0 });
-      syncRemainingNames();
+      state.locations.push({name:`Location ${state.locations.length+1}`, mats:0, remaining:0});
       renderLocations();
-      renderRemaining();
       rebalanceAssignments();
-      recalc();
+      recalcAll();
       saveState();
     });
+
     el("resetLoc").addEventListener("click", ()=>{
       if(!confirm("Reset locations to defaults?")) return;
-      locations = JSON.parse(JSON.stringify(defaultLocations));
-      syncRemainingNames();
+      state.locations = JSON.parse(JSON.stringify(DEFAULTS.locations));
       renderLocations();
-      renderRemaining();
       rebalanceAssignments();
-      recalc();
+      recalcAll();
       saveState();
     });
+
     el("rebalance").addEventListener("click", ()=>{
       rebalanceAssignments();
-      recalc();
+      recalcAll();
       saveState();
     });
+
     el("resetAll").addEventListener("click", ()=>{
-      if(!confirm("Reset everything (inputs + saved state)?")) return;
-      resetState();
+      if(!confirm("Reset everything? This will wipe saved values.")) return;
+      localStorage.removeItem(LS_KEY);
+      location.reload();
+    });
+
+    el("exportJson").addEventListener("click", ()=>{
+      el("jsonBox").value = JSON.stringify(state, null, 2);
+    });
+
+    el("importJson").addEventListener("click", ()=>{
+      try{
+        const incoming = JSON.parse(el("jsonBox").value || "null");
+        if(!incoming || typeof incoming !== "object") throw new Error("Invalid JSON");
+        state = deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), incoming);
+        saveState();
+        boot();
+      }catch(e){
+        alert("Could not import JSON. Make sure it is valid.");
+      }
     });
   }
 
-  // boot
-  initFromState();
-  setPaceDefaults();
-  renderWeights();
-  renderLocations();
-  syncRemainingNames();
-  renderRemaining();
-  rebalanceAssignments();
+  function boot(){
+    state = loadState();
+    initControls();
+    renderWeights();
+    renderLocations();
+    renderHours();
+    rebalanceAssignments();
+    recalcAll();
+    saveState();
+  }
+
+  boot();
   bind();
-  recalc();
-  saveState();
 </script>
 </body>
 </html>
