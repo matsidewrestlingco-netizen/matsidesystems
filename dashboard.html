@@ -6,17 +6,17 @@
   <title>FloArena Tournament Suite (Planner + Live Dashboard)</title>
   <style>
     :root{
-      --grid:#262626;
+      --grid:#2a2a2a;
       --text:#f2f2f2;
       --muted:#a7a7a7;
       --bg:#0b0b0b;
       --card:#121212;
+      --panel:#0f0f0f;
       --input:#ffb74d;
       --inputText:#111;
       --good:#37d67a;
       --warn:#ffb020;
       --bad:#ff5b5b;
-      --panel:#0f0f0f;
     }
     body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
     .wrap{max-width:1250px; margin:0 auto; padding:18px;}
@@ -25,7 +25,7 @@
     .grid{display:grid; grid-template-columns: 1fr 1fr; gap:16px;}
     .grid3{display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px;}
     .card{background:var(--card); border:1px solid var(--grid); border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); overflow:hidden;}
-    .card h2{margin:0; padding:12px 14px; font-size:14px; background:var(--panel); border-bottom:1px solid var(--grid);}
+    .card h2{margin:0; padding:12px 14px; font-size:14px; background:#f3f3f3; border-bottom:1px solid var(--grid);}
     .row{display:flex; gap:10px; padding:12px 14px; align-items:end; flex-wrap:wrap;}
     .field{min-width:170px; flex:1;}
     .field.small{min-width:130px; flex:0.75;}
@@ -34,10 +34,10 @@
       width:100%;
       box-sizing:border-box;
       padding:7px 9px;
-      border:1px solid var(--grid);
+      border:1px solid #bdbdbd;
       border-radius:10px;
       font-size:13px;
-      background:var(--card);
+      background:#fff;
       color:var(--text);
       outline:none;
     }
@@ -49,28 +49,28 @@
     }
     table{border-collapse:collapse; width:100%;}
     th,td{border:1px solid var(--grid); padding:8px 10px; font-size:13px; vertical-align:middle;}
-    th{background:var(--panel); text-align:left; font-weight:650;}
+    th{background:#f8f8f8; text-align:left; font-weight:650;}
     .right{text-align:right;}
     .kpi{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; padding:12px 14px;}
     .kpi.k3{grid-template-columns: repeat(3, 1fr);}
     .kpi .box{border:1px solid var(--grid); border-radius:12px; padding:10px;}
     .kpi .box .k{font-size:11px; color:var(--muted);}
     .kpi .box .v{font-size:18px; font-weight:850; margin-top:4px;}
-    .badge{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; border:1px solid var(--grid); background:var(--card);}
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; border:1px solid var(--grid); background:#fff;}
     .badge.good{color:var(--good); border-color:#a5d6a7; background:#e8f5e9;}
     .badge.warn{color:var(--warn); border-color:#ffcc80; background:#fff3e0;}
     .badge.bad{color:var(--bad); border-color:#ef9a9a; background:#ffebee;}
     .note{padding:10px 14px; color:var(--muted); font-size:12px; border-top:1px solid var(--grid);}
-    .actions{display:flex; gap:10px; padding:12px 14px; border-top:1px solid var(--grid); background:var(--card); flex-wrap:wrap;}
+    .actions{display:flex; gap:10px; padding:12px 14px; border-top:1px solid var(--grid); background:#fff; flex-wrap:wrap;}
     button{
       border:1px solid var(--grid);
-      background:var(--card);
+      background:#fff;
       padding:8px 10px;
       border-radius:10px;
       cursor:pointer;
       font-weight:650;
     }
-    button:hover{background:#171717;}
+    button:hover{background:#f6f6f6;}
     .twoCol{display:grid; grid-template-columns: 1fr 1fr; gap:14px; padding:12px 14px;}
     .mini{font-size:12px; color:var(--muted);}
     .small{font-size:12px; color:var(--muted);}
@@ -82,8 +82,19 @@
       .kpi.k3{grid-template-columns: 1fr;}
       .twoCol{grid-template-columns: 1fr;}
     }
-      a{color:#ffffff;}
+  
+    /* Matside dark theme overrides */
+    .card h2{background:var(--panel) !important;}
+    th{background:var(--panel) !important;}
+    button{color:var(--text) !important; background:#161616 !important; border-color:var(--grid) !important;}
+    button:hover{background:#1d1d1d !important;}
+    input, select, textarea{background:#0f0f0f; color:var(--text); border-color:var(--grid);}
+    input.user, select.user{background:var(--input) !important; color:var(--inputText) !important; border-color:#d0831f !important;}
+    textarea{background:#0f0f0f; color:var(--text);}
+    .badge{background:#111 !important; color:var(--text);}
+    a{color:#ffffff;}
     a:hover{opacity:.9;}
+
 </style>
 </head>
 <body>
@@ -418,7 +429,7 @@
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
   function el(id){ return document.getElementById(id); }
 
-  function boutsForFormat(n, el(\"format\").value){
+  function boutsTop6(n){
     n = Math.floor(Number(n||0));
     if(n <= 1) return 0;
     if(n === 2) return 1;
@@ -428,23 +439,23 @@
   }
 
   function boutsTop4(n){
-    // Same bracket as top6, minus the single 5th/6th placement bout (for n>=4)
-    n = Math.floor(Number(n||0));
-    if(n <= 1) return 0;
-    if(n === 2) return 1;
-    if(n === 3) return 3; // small-bracket behavior varies; keep conservative
-    if(n === 4) return 4;
-    return Math.max(0, boutsForFormat(n, el(\"format\").value) - 1);
-  }
-
-  function boutsTop8(n){
-    // Same bracket as top6, plus a 7th/8th placement bout (for n>=5)
+    // Top-4 is top-6 minus the single 5th/6th placement bout (typical Flo-style)
     n = Math.floor(Number(n||0));
     if(n <= 1) return 0;
     if(n === 2) return 1;
     if(n === 3) return 3;
-    if(n === 4) return 5; // aligns with common 4-man double-elim structure
-    return boutsForFormat(n, el(\"format\").value) + 1;
+    if(n === 4) return 4;
+    return Math.max(0, boutsTop6(n) - 1);
+  }
+
+  function boutsTop8(n){
+    // Top-8 is top-6 plus the single 7th/8th placement bout (typical Flo-style)
+    n = Math.floor(Number(n||0));
+    if(n <= 1) return 0;
+    if(n === 2) return 1;
+    if(n === 3) return 3;
+    if(n === 4) return 5;
+    return boutsTop6(n) + 1;
   }
 
   function boutsForFormat(n, fmt){
@@ -452,7 +463,7 @@
       case "de_top4": return boutsTop4(n);
       case "de_top8": return boutsTop8(n);
       case "de_top6":
-      default: return boutsForFormat(n, el(\"format\").value);
+      default: return boutsTop6(n);
     }
   }
 
@@ -646,7 +657,7 @@
 
   let assignments = [];
   function rebalanceAssignments(){
-    const weightsWithBouts = state.weights.map((w,i)=>({ idx:i, bouts:boutsForFormat(w.wrestlers, el(\"format\").value) }))
+    const weightsWithBouts = state.weights.map((w,i)=>({ idx:i, bouts:boutsForFormat(w.wrestlers, el("format").value) }))
       .sort((a,b)=>b.bouts-a.bouts);
 
     const loads = state.locations.map((l,i)=>({ locIdx:i, mats:Number(l.mats)||0, weights:[], bouts:0 }));
@@ -722,7 +733,7 @@
     let totalW = 0, totalB = 0;
     state.weights.forEach((w, idx)=>{
       const n = Number(w.wrestlers)||0;
-      const b = boutsForFormat(n, el(\"format\").value);
+      const b = boutsForFormat(n, el("format").value);
       totalW += n;
       totalB += b;
       const cell = document.getElementById(`wb-${idx}`);
