@@ -735,7 +735,6 @@
     return { wrestlebacks: stages, placements };
   }
 
-  
   function estimateRoundMapForWeight(n, fmt, maxB){
     n = Math.floor(Number(n||0));
     const total = boutsForFormat(n, fmt);
@@ -743,81 +742,6 @@
     const rounds = getRoundSequence(maxB, fmt);
     rounds.forEach(r => map[r] = 0);
     if(n <= 1) return { map, total };
-
-    // Championship bouts (based on effective bracket size maxB)
-    // For planning, we assume a standard bracket where:
-    // - R64 exists only if maxB>=64, etc.
-    if(maxB >= 64) map["R64"] = (n > 32 ? (n - 32) : 0);
-    if(maxB >= 32) map["R32"] = 16;
-    if(maxB >= 16) map["R16"] = 8;
-    if(maxB >= 8)  map["Quarterfinals / R8"] = 4;
-    if(maxB >= 4)  map["Semifinals / R4"] = 2;
-    map["Finals"] = 1;
-
-    // Consolations: use exact full-bracket counts for each stage that exists in the sequence.
-    // This matches Flo-style expectations for common brackets (16/32/64) and keeps end-stage rounds stable.
-    if(maxB >= 64){
-      map["Consy R32 #1"] = 16;
-      map["Consy R32 #2"] = 16;
-    }
-    if(maxB >= 32){
-      map["Consy R16 #1"] = 8;
-      map["Consy R16 #2"] = 8;
-    }
-    if(maxB >= 16){
-      map["Consy R8 #1"] = 4;
-      map["Consy R8 #2"] = 4;
-    }
-    if(maxB >= 8){
-      map["Consy R4"] = 2;
-      map["Consy Semifinals"] = 2;
-    }
-
-    // Placement matches (only if format includes them and bracket is large enough)
-    map["Third"] = (n >= 4) ? 1 : 0;
-    map["Fifth"] = ((fmt === "de_top6" || fmt === "de_top8") && n >= 6) ? 1 : 0;
-    map["Seventh"] = (fmt === "de_top8" && n >= 8) ? 1 : 0;
-
-    // If the bracket is smaller than the stage implies, zero out stages that shouldn't exist.
-    // (This prevents showing consy rounds for tiny brackets.)
-    if(n < 8){
-      map["Quarterfinals / R8"] = 0;
-      map["Consy R8 #1"] = 0;
-      map["Consy R8 #2"] = 0;
-      map["Consy R4"] = (n >= 4) ? 1 : 0; // small-bracket wrestlebacks vary; keep conservative
-      map["Consy Semifinals"] = (n >= 4) ? 1 : 0;
-    }
-    if(n < 16){
-      map["R16"] = 0;
-      map["Consy R16 #1"] = 0;
-      map["Consy R16 #2"] = 0;
-    }
-    if(n < 32){
-      map["R32"] = 0;
-      map["Consy R32 #1"] = 0;
-      map["Consy R32 #2"] = 0;
-    }
-    if(n < 64){
-      map["R64"] = 0;
-    }
-
-    // Recompute champ early round counts for non-full brackets where needed
-    // If maxB >= 16 and n is between 9..16, R16 is present with (n-8) matches.
-    if(maxB >= 16 && n > 8 && n < 16){
-      map["R16"] = n - 8;
-    }
-    if(maxB >= 32 && n > 16 && n < 32){
-      map["R32"] = n - 16;
-    }
-    if(maxB >= 64 && n > 32 && n < 64){
-      map["R64"] = n - 32;
-    }
-
-    return { map, total };
-  }
-
-
-
 
     // --- Championship bouts (by bracket stage) ---
     // We estimate champ matches per weight using the same bracket-size logic as before.
@@ -1033,101 +957,13 @@ const LS_KEY = "flo_all_modules_v2";
 
   function loadState(){
     try{
-      // Find the "best" saved state across any prior keys on this origin.
-      // Score by how complete it is (weights present, hours present, locations present, etc).
-      const keys = [];
-      for(let i=0;i<localStorage.length;i++){
-        const k = localStorage.key(i);
-        if(!k) continue;
-        if(k.includes("flo_all_modules") || k.includes("floarena") || k.includes("matside") || k.includes("tournament")){
-          keys.push(k);
-        }
-      }
-      // Always consider our current key first (if present)
-      keys.unshift(LS_KEY);
-
-      let best = null;
-      let bestKey = null;
-      let bestScore = -1;
-
-      for(const k of keys){
-        const raw = localStorage.getItem(k);
-        if(!raw) continue;
-        let s = null;
-        try{ s = JSON.parse(raw); } catch(e){ continue; }
-        if(!s || typeof s !== "object") continue;
-
-        const wLen = Array.isArray(s.weights) ? s.weights.length : 0;
-        const hLen = Array.isArray(s.hours) ? s.hours.length : 0;
-        const locLen = Array.isArray(s.locations) ? s.locations.length : 0;
-
-        // Prefer states with named weights (not blank) and real wrestler counts.
-        const namedWeights = (Array.isArray(s.weights) ? s.weights.filter(w=>String(w?.name||"").trim().length>0).length : 0);
-        const nonZeroWeights = (Array.isArray(s.weights) ? s.weights.filter(w=>Number(w?.wrestlers||0)>0).length : 0);
-
-        const score = (wLen*1000) + (namedWeights*200) + (nonZeroWeights*100) + (hLen*10) + (locLen*5);
-        if(score > bestScore){
-          bestScore = score;
-          best = s;
-          bestKey = k;
-        }
-      }
-
-      const base = JSON.parse(JSON.stringify(DEFAULTS));
-      const merged = best ? deepMerge(base, best) : base;
-
-      // Defensive: if weights are missing/empty, restore a sensible default list (13 weights).
-      if(!Array.isArray(merged.weights) || merged.weights.length === 0){
-        merged.weights = [];
-        for(let i=1;i<=13;i++){
-          merged.weights.push({ name: `Weight ${i}`, wrestlers: 0 });
-        }
-      }
-
-      // Migration: trim hour rows to 4 by default (you can add more if needed)
-      if(Array.isArray(merged.hours) && merged.hours.length > 4){
-        merged.hours = merged.hours.slice(0,4);
-      }
-
-      // Migration: if older saved state includes Aux gyms, reset to Gym A/B defaults
-      if(Array.isArray(merged.locations)){
-        const hasAux = merged.locations.some(l => String(l?.name||"").toLowerCase().includes("aux"));
-        if(hasAux){
-          merged.locations = JSON.parse(JSON.stringify(DEFAULTS.locations));
-        }
-      }
-
-      // Expose what we loaded for quick debugging
-      merged.__loadedFromKey = bestKey || LS_KEY;
-      return merged;
-
-    } catch(e){
-      const d = JSON.parse(JSON.stringify(DEFAULTS));
-      d.__loadedFromKey = "DEFAULTS";
-      return d;
-    }
-  }
-      const s = JSON.parse(raw || "null");
+      const s = JSON.parse(localStorage.getItem(LS_KEY) || "null");
       if(!s) return JSON.parse(JSON.stringify(DEFAULTS));
 
       // Migration: trim hour rows to 4 by default (you can add more if needed)
       if(Array.isArray(s.hours) && s.hours.length > 4){
         s.hours = s.hours.slice(0,4);
       }
-
-      // Migration: if older saved state includes Aux gyms, reset to Gym A/B defaults
-      if(Array.isArray(s.locations)){
-        const hasAux = s.locations.some(l => String(l?.name||"").toLowerCase().includes("aux"));
-        if(hasAux){
-          s.locations = JSON.parse(JSON.stringify(DEFAULTS.locations));
-        }
-      }
-
-      return deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), s);
-    } catch(e){
-      return JSON.parse(JSON.stringify(DEFAULTS));
-    }
-  }
       if(Array.isArray(s.hourly) && s.hourly.length > 4){
         s.hourly = s.hourly.slice(0,4);
       }
@@ -1159,13 +995,6 @@ const LS_KEY = "flo_all_modules_v2";
   }
 
   let state = loadState();
-
-    try{
-      const lb = document.getElementById("loadedBadge");
-      if(lb){
-        lb.textContent = `Loaded: ${state.__loadedFromKey || "-" } • weights: ${(state.weights||[]).length}`;
-      }
-    }catch(e){}
 
   function totalMats(){
     return state.locations.reduce((s,l)=>s+(Number(l.mats)||0),0);
@@ -1687,6 +1516,7 @@ function recalcLive(){
 
   function boot(){
     // Clean up old storage key so defaults apply.
+    try{ localStorage.removeItem("flo_all_modules_v1"); }catch(e){}
     state = loadState();
     initControls();
     renderWeights();
