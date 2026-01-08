@@ -644,11 +644,40 @@
   }
 
   function buildConsiStages(maxB, fmt){
-    // A pragmatic set of wrestleback stages for planning purposes.
-    const stages = [];
-    if(maxB >= 64) stages.push("Consi R64");
-    if(maxB >= 32) stages.push("Consi R32");
-    if(maxB >= 16) { stages.push("Consi R16 #1"); stages.push("Consi R16 #2"); }
+    // Exact Flo-style round sequence (requested)
+    const sequence = [
+      "R64",
+      "Consy R32 #1",
+      "R32",
+      "Consy R32 #2",
+      "R16",
+      "Consy R16 #1",
+      "Consy R16 #2",
+      "Quarterfinals / R8",
+      "Consy R8 #1",
+      "Consy R8 #2",
+      "Semifinals / R4",
+      "Consy R4",
+      "Consy Semifinals",
+      "Finals",
+      "Third",
+      "Fifth",
+      "Seventh"
+    ];
+
+    const placements = [];
+    if(fmt === "de_top4"){
+      placements.push("Third");
+    }
+    if(fmt === "de_top6"){
+      placements.push("Third","Fifth");
+    }
+    if(fmt === "de_top8"){
+      placements.push("Third","Fifth","Seventh");
+    }
+
+    return { sequence, placements };
+  }
     if(maxB >= 8)  stages.push("Consi QF");
     if(maxB >= 4)  stages.push("Consi SF");
 
@@ -662,36 +691,45 @@
 
   function estimateRoundMapForWeight(n, fmt, maxB){
     n = Math.floor(Number(n||0));
-    const champ = buildChampRoundsForN(n);
-    const champTotal = Math.max(0, n - 1);
     const total = boutsForFormat(n, fmt);
+    const map = {};
+    const seq = buildConsiStages(maxB, fmt).sequence;
+    seq.forEach(r => map[r] = 0);
+    if(n <= 1) return { map, total };
 
-    const { wrestlebacks, placements } = buildConsiStages(maxB, fmt);
+    // Championship rounds
+    if(n > 32) map["R64"] = Math.max(0, n - 32);
+    if(n > 16) map["R32"] = Math.max(0, Math.min(16, n - 16));
+    if(n > 8)  map["R16"] = Math.max(0, Math.min(8, n - 8));
+    if(n > 4)  map["Quarterfinals / R8"] = 4;
+    if(n > 2)  map["Semifinals / R4"] = 2;
+    if(n > 1)  map["Finals"] = 1;
 
-    // Placement bouts (only when meaningful)
-    const placeBouts = {};
-    placeBouts["3rd Place"] = (n >= 4 ? 1 : 0);
-    placeBouts["5th Place"] = ((fmt === "de_top6" || fmt === "de_top8") && n >= 6 ? 1 : 0);
-    placeBouts["7th Place"] = ((fmt === "de_top8") && n >= 8 ? 1 : 0);
+    // Consolations (ordered)
+    if(n >= 32){
+      map["Consy R32 #1"] = 16;
+      map["Consy R32 #2"] = 16;
+    }
+    if(n >= 16){
+      map["Consy R16 #1"] = 8;
+      map["Consy R16 #2"] = 8;
+    }
+    if(n >= 8){
+      map["Consy R8 #1"] = 4;
+      map["Consy R8 #2"] = 4;
+    }
+    if(n >= 4){
+      map["Consy R4"] = 2;
+      map["Consy Semifinals"] = 2;
+    }
 
-    const placementCount = Object.values(placeBouts).reduce((s,v)=>s+v,0);
-    let wrestlebackTotal = Math.max(0, total - champTotal - placementCount);
+    // Placement matches
+    if(n >= 4) map["Third"] = 1;
+    if((fmt === "de_top6" || fmt === "de_top8") && n >= 6) map["Fifth"] = 1;
+    if(fmt === "de_top8" && n >= 8) map["Seventh"] = 1;
 
-    // Distribute wrestlebacks across stages with a simple descending weight
-    const wbCounts = {};
-    const k = wrestlebacks.length;
-    if(k === 0){
-      // none
-    } else {
-      const weights = wrestlebacks.map((_,i)=> (k - i)); // e.g., 5,4,3,2,1
-      const wsum = weights.reduce((s,v)=>s+v,0) || 1;
-      let remaining = wrestlebackTotal;
-      for(let i=0;i<k;i++){
-        const share = (i === k-1) ? remaining : Math.round(wrestlebackTotal * (weights[i]/wsum));
-        const v = Math.max(0, Math.min(remaining, share));
-        wbCounts[wrestlebacks[i]] = v;
-        remaining -= v;
-      }
+    return { map, total };
+  }
       // Fix rounding drift: shove leftover into the earliest stage
       if(remaining !== 0){
         wbCounts[wrestlebacks[0]] = Math.max(0, (wbCounts[wrestlebacks[0]]||0) + remaining);
@@ -718,8 +756,8 @@
 
     // Consi/placements
     const cs = buildConsiStages(maxB, fmt);
-    const allCols = ["Weight", ...champCols, ...cs.wrestlebacks, ...cs.placements, "Total"];
-    return { cols: allCols, champCols, maxB, consi: cs };
+    const allCols = ["Weight", ...cs.sequence, "Total"];
+    return { cols: allCols, champCols: [], maxB, consi: cs };
   }
 
   function ensureRoundDayDefaults(roundNames){
