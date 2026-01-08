@@ -152,6 +152,12 @@
     .topLine .big{font-weight:900; font-size:18px;}
     .topLine .small{font-size:12px; color:var(--muted);}
 
+
+    .roundTableWrap{padding:12px 14px; overflow:auto;}
+    .roundTable{min-width:980px;}
+    .toggleDay{display:inline-flex; gap:8px; align-items:center; justify-content:flex-end;}
+    .toggleDay select{width:auto; min-width:92px;}
+
 </style>
 </head>
 <body>
@@ -494,7 +500,45 @@
         </div>
       </div>
 
+      
       <div class="card">
+        <h2>Module 5 — Round map (bouts by weight + estimated round end times)</h2>
+
+        <div style="padding:12px 14px" class="small">
+          This is a planning view. It estimates bouts per round per weight class for your selected format, then projects end times using your mats + pace.
+          Use the <b>Day</b> toggles to decide which rounds are Day 1 vs Day 2.
+        </div>
+
+        <div class="roundTableWrap">
+          <div class="label">Round schedule (all weights combined)</div>
+          <table class="roundTable" id="roundScheduleTable">
+            <thead>
+              <tr>
+                <th style="min-width:160px">Round</th>
+                <th style="min-width:120px" class="right">Bouts (total)</th>
+                <th style="min-width:120px" class="right">Day</th>
+                <th style="min-width:180px" class="right">Est. end time</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="roundTableWrap" style="padding-top:0">
+          <div class="label">Bouts by weight class</div>
+          <table class="roundTable" id="roundByWeightTable">
+            <thead><tr id="rbwHeadRow"></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="note">
+          Note: Double-elimination wrestleback / consolation structures can vary slightly between rule sets and software settings.
+          This module is meant to be directionally accurate for planning and staffing, not an official bracket guarantee.
+        </div>
+      </div>
+
+<div class="card">
         <h2>Module 4 — Utilities</h2>
         <div style="padding:12px 14px" class="small">
           This page stores everything locally in your browser (localStorage). Use these buttons if you want a clean slate.
@@ -572,10 +616,229 @@
     }
   }
 
-  const LS_KEY = "flo_all_modules_v2";
+  
+  // --- Round map planner helpers (estimates) ---
+  function nextPow2(n){
+    n = Math.max(1, Math.floor(Number(n||1)));
+    return 1 << Math.ceil(Math.log2(n));
+  }
+
+  function buildChampRoundsForN(n){
+    n = Math.floor(Number(n||0));
+    if(n <= 1) return [];
+    let B = nextPow2(n);
+    // If n fits in half the bracket, shrink until it doesn't (avoid empty leading rounds)
+    while(B > 2 && n <= B/2) B = B/2;
+
+    const rounds = [];
+    if(n > B/2){
+      rounds.push({ name: `Round of ${B}`, matches: n - B/2 });
+    }
+    // Subsequent rounds are fixed
+    let S = B/2;
+    while(S >= 2){
+      rounds.push({ name: (S===2 ? "Final" : S===4 ? "Semifinals" : S===8 ? "Quarterfinals" : `Round of ${S}`), matches: S/2 });
+      S = S/2;
+    }
+    return rounds;
+  }
+
+  function buildConsiStages(maxB, fmt){
+    // A pragmatic set of wrestleback stages for planning purposes.
+    const stages = [];
+    if(maxB >= 64) stages.push("Consi R64");
+    if(maxB >= 32) stages.push("Consi R32");
+    if(maxB >= 16) { stages.push("Consi R16 #1"); stages.push("Consi R16 #2"); }
+    if(maxB >= 8)  stages.push("Consi QF");
+    if(maxB >= 4)  stages.push("Consi SF");
+
+    // Placement matches (end-of-bracket)
+    const placements = [];
+    placements.push("3rd Place");
+    if(fmt === "de_top6" || fmt === "de_top8") placements.push("5th Place");
+    if(fmt === "de_top8") placements.push("7th Place");
+    return { wrestlebacks: stages, placements };
+  }
+
+  function estimateRoundMapForWeight(n, fmt, maxB){
+    n = Math.floor(Number(n||0));
+    const champ = buildChampRoundsForN(n);
+    const champTotal = Math.max(0, n - 1);
+    const total = boutsForFormat(n, fmt);
+
+    const { wrestlebacks, placements } = buildConsiStages(maxB, fmt);
+
+    // Placement bouts (only when meaningful)
+    const placeBouts = {};
+    placeBouts["3rd Place"] = (n >= 4 ? 1 : 0);
+    placeBouts["5th Place"] = ((fmt === "de_top6" || fmt === "de_top8") && n >= 6 ? 1 : 0);
+    placeBouts["7th Place"] = ((fmt === "de_top8") && n >= 8 ? 1 : 0);
+
+    const placementCount = Object.values(placeBouts).reduce((s,v)=>s+v,0);
+    let wrestlebackTotal = Math.max(0, total - champTotal - placementCount);
+
+    // Distribute wrestlebacks across stages with a simple descending weight
+    const wbCounts = {};
+    const k = wrestlebacks.length;
+    if(k === 0){
+      // none
+    } else {
+      const weights = wrestlebacks.map((_,i)=> (k - i)); // e.g., 5,4,3,2,1
+      const wsum = weights.reduce((s,v)=>s+v,0) || 1;
+      let remaining = wrestlebackTotal;
+      for(let i=0;i<k;i++){
+        const share = (i === k-1) ? remaining : Math.round(wrestlebackTotal * (weights[i]/wsum));
+        const v = Math.max(0, Math.min(remaining, share));
+        wbCounts[wrestlebacks[i]] = v;
+        remaining -= v;
+      }
+      // Fix rounding drift: shove leftover into the earliest stage
+      if(remaining !== 0){
+        wbCounts[wrestlebacks[0]] = Math.max(0, (wbCounts[wrestlebacks[0]]||0) + remaining);
+      }
+    }
+
+    const map = {};
+    champ.forEach(r => map[r.name] = r.matches);
+    wrestlebacks.forEach(s => map[s] = wbCounts[s] || 0);
+    placements.forEach(p => map[p] = placeBouts[p] || 0);
+
+    return { map, champRounds: champ.map(r=>r.name), wrestlebacks, placements, total, champTotal };
+  }
+
+  function collectRoundColumns(fmt){
+    // Determine the maximum bracket size across weights
+    const ns = state.weights.map(w=>Math.floor(Number(w.wrestlers||0))).filter(n=>n>1);
+    const maxN = ns.length ? Math.max(...ns) : 0;
+    let maxB = maxN ? nextPow2(maxN) : 2;
+    while(maxB > 2 && maxN && maxN <= maxB/2) maxB = maxB/2;
+
+    // Champ columns from maxN
+    const champCols = buildChampRoundsForN(maxN).map(r=>r.name);
+
+    // Consi/placements
+    const cs = buildConsiStages(maxB, fmt);
+    const allCols = ["Weight", ...champCols, ...cs.wrestlebacks, ...cs.placements, "Total"];
+    return { cols: allCols, champCols, maxB, consi: cs };
+  }
+
+  function ensureRoundDayDefaults(roundNames){
+    state.roundDay = state.roundDay || {};
+    // Default: everything on Day 1 except placements on Day 2 (common)
+    roundNames.forEach(r=>{
+      if(state.roundDay[r] !== 1 && state.roundDay[r] !== 2){
+        const lower = r.toLowerCase();
+        state.roundDay[r] = (lower.includes("place") || lower.includes("final") ? 2 : 1);
+      }
+    });
+  }
+
+  function renderRoundPlanner(){
+    const fmtSel = (document.getElementById("format")?.value) || (state.format || "de_top6");
+    const { cols, champCols, maxB, consi } = collectRoundColumns(fmtSel);
+
+    // Ensure day toggles exist
+    const roundNames = cols.filter(c=>c!=="Weight" && c!=="Total");
+    ensureRoundDayDefaults(roundNames);
+
+    // --- Schedule table ---
+    const schedBody = document.querySelector("#roundScheduleTable tbody");
+    if(!schedBody) return;
+    schedBody.innerHTML = "";
+
+    // Compute total bouts per round across all weights
+    const totalsByRound = {};
+    roundNames.forEach(r=>totalsByRound[r]=0);
+
+    const perWeightMaps = [];
+    state.weights.forEach((w)=>{
+      const n = Math.floor(Number(w.wrestlers||0));
+      const { map } = estimateRoundMapForWeight(n, fmtSel, maxB);
+      perWeightMaps.push({ weight: w.name, map, total: boutsForFormat(n, fmtSel) });
+      roundNames.forEach(r => totalsByRound[r] += (map[r]||0));
+    });
+
+    // Estimate end times by day, sequential within each day bucket
+    const mats = totalMats();
+    const pace = Number(document.getElementById("pace")?.value || state.pace || 12);
+    const day1Start = parseTimeToMinutes(document.getElementById("day1Start")?.value || state.day1Start || "16:00") ?? 0;
+    const day2Start = parseTimeToMinutes(document.getElementById("day2Start")?.value || state.day2Start || "09:00") ?? 0;
+
+    let t1 = day1Start;
+    let t2 = day2Start;
+
+    roundNames.forEach(r=>{
+      const bouts = totalsByRound[r] || 0;
+
+      const tr = document.createElement("tr");
+      const day = state.roundDay[r] || 1;
+
+      // duration in minutes
+      const minutes = (mats>0 && pace>0) ? Math.ceil((bouts / (mats*pace)) * 60) : 0;
+      if(day === 1) t1 += minutes;
+      else t2 += minutes;
+
+      const endTime = minutesToTime(day===1 ? t1 : t2);
+
+      tr.innerHTML = `
+        <td>${escapeHtml(r)}</td>
+        <td class="right">${bouts}</td>
+        <td class="right">
+          <span class="toggleDay">
+            <select class="user" data-round="${escapeHtml(r)}">
+              <option value="1"${day===1?" selected":""}>Day 1</option>
+              <option value="2"${day===2?" selected":""}>Day 2</option>
+            </select>
+          </span>
+        </td>
+        <td class="right">${(mats>0 && pace>0) ? endTime : "-"}</td>
+      `;
+      schedBody.appendChild(tr);
+    });
+
+    // Bind day toggles
+    schedBody.querySelectorAll("select[data-round]").forEach(sel=>{
+      sel.addEventListener("change", (e)=>{
+        const rn = e.target.dataset.round;
+        state.roundDay[rn] = Number(e.target.value);
+        recalcAll();
+        saveState();
+      });
+    });
+
+    // --- Per weight table ---
+    const headRow = document.getElementById("rbwHeadRow");
+    const body = document.querySelector("#roundByWeightTable tbody");
+    if(!headRow || !body) return;
+
+    headRow.innerHTML = "";
+    cols.forEach((c, idx)=>{
+      const th = document.createElement("th");
+      th.textContent = c;
+      if(idx>0) th.className = "right";
+      headRow.appendChild(th);
+    });
+
+    body.innerHTML = "";
+    perWeightMaps.forEach(pw=>{
+      const tr = document.createElement("tr");
+      const cells = [];
+      cells.push(`<td>${escapeHtml(pw.weight)}</td>`);
+      cols.forEach((c)=>{
+        if(c==="Weight" || c==="Total") return;
+        cells.push(`<td class="right">${pw.map[c] ?? 0}</td>`);
+      });
+      cells.push(`<td class="right"><b>${pw.total}</b></td>`);
+      tr.innerHTML = cells.join("");
+      body.appendChild(tr);
+    });
+  }
+
+const LS_KEY = "flo_all_modules_v2";
   const DEFAULTS = {
     
-    format: "de_top6",level: "hs",
+    
+    roundDay: {},format: "de_top6",level: "hs",
     days: "2",
     numWeights: 13,
     day1Start: "16:00",
@@ -763,6 +1026,7 @@
         const i = Number(e.target.dataset.ri);
         state.locations[i].remaining = Number(e.target.value||0);
         recalcLive();
+    renderRoundPlanner();
         saveState();
       });
     });
@@ -837,6 +1101,7 @@
         const i = Number(e.target.dataset.hidx);
         state.hours[i].completed = e.target.value;
         recalcLive();
+    renderRoundPlanner();
         saveState();
       });
     });
@@ -1037,6 +1302,7 @@ function recalcLive(){
   function recalcAll(){
     recalcPlanner();
     recalcLive();
+    renderRoundPlanner();
 
     state.level = el("level").value;
     state.days = el("days").value;
@@ -1074,7 +1340,8 @@ function recalcLive(){
 
     ["totalBouts","startTime","dashLevel"].forEach(id=>{
       el(id).addEventListener("input", ()=>{
-        recalcLive(); saveState();
+        recalcLive();
+    renderRoundPlanner(); saveState();
       });
     });
 
@@ -1097,6 +1364,7 @@ function recalcLive(){
       state.hours.push({completed:""});
       renderHours();
       recalcLive();
+    renderRoundPlanner();
       saveState();
     });
 
@@ -1105,6 +1373,7 @@ function recalcLive(){
       state.hours = state.hours.map(()=>({completed:""}));
       renderHours();
       recalcLive();
+    renderRoundPlanner();
       saveState();
     });
 
