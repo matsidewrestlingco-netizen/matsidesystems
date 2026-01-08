@@ -916,7 +916,7 @@
     });
   }
 
-const LS_KEY = "flo_all_modules_v2_v3";
+const LS_KEY = "flo_all_modules_v2_v3_v4";
   const DEFAULTS = {
     
     
@@ -959,7 +959,10 @@ const LS_KEY = "flo_all_modules_v2_v3";
       const s = JSON.parse(localStorage.getItem(LS_KEY) || "null");
       if(!s) return JSON.parse(JSON.stringify(DEFAULTS));
 
-      // Migration: trim hourly rows to 4 by default (you can add more if needed)
+      // Migration: trim hour rows to 4 by default (you can add more if needed)
+      if(Array.isArray(s.hours) && s.hours.length > 4){
+        s.hours = s.hours.slice(0,4);
+      }
       if(Array.isArray(s.hourly) && s.hourly.length > 4){
         s.hourly = s.hourly.slice(0,4);
       }
