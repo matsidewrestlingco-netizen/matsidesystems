@@ -649,6 +649,21 @@
     return 1 << Math.ceil(Math.log2(n));
   }
 
+  function getMaxBFromState(){
+    const ns = (state?.weights || []).map(w=>Math.floor(Number(w?.wrestlers||0))).filter(n=>n>1);
+    const maxN = ns.length ? Math.max(...ns) : 0;
+    let maxB = maxN ? nextPow2(maxN) : 2;
+    while(maxB > 2 && maxN && maxN <= maxB/2) maxB = maxB/2;
+    return maxB;
+  }
+
+  function boutsFromRoundMap(n, fmt, maxB){
+    const { map } = estimateRoundMapForWeight(n, fmt, maxB);
+    const seq = getRoundSequence(maxB, fmt);
+    return seq.reduce((s,r)=> s + (map[r]||0), 0);
+  }
+
+
   function getRoundSequence(maxB, fmt){
     // Requested exact display order (Flo-style naming)
     // We'll include only rounds that can exist for the max bracket size, and only placements for the selected format.
@@ -760,13 +775,6 @@
       map["Seventh"] = (fmt === "de_top8") ? 1 : 0;
       return { map, total };
     }
-
-  function boutsFromRoundMap(n, fmt, maxB){
-    const { map } = estimateRoundMapForWeight(n, fmt, maxB);
-    const seq = getRoundSequence(maxB, fmt);
-    return seq.reduce((s,r)=> s + (map[r]||0), 0);
-  }
-
 
     // --- Championship bouts (by bracket stage) ---
     // We estimate champ matches per weight using the same bracket-size logic as before.
@@ -1150,7 +1158,7 @@ const LS_KEY = "flo_all_modules_v2";
 
   let assignments = [];
   function rebalanceAssignments(){
-    const weightsWithBouts = state.weights.map((w,i)=>({ idx:i, bouts:boutsFromRoundMap(w.wrestlers, el("format").value, maxB1) }))
+    const weightsWithBouts = state.weights.map((w,i)=>({ idx:i, bouts:boutsForFormat(w.wrestlers, el("format").value) }))
       .sort((a,b)=>b.bouts-a.bouts);
 
     const loads = state.locations.map((l,i)=>({ locIdx:i, mats:Number(l.mats)||0, weights:[], bouts:0 }));
@@ -1224,16 +1232,11 @@ const LS_KEY = "flo_all_modules_v2";
   }
 
   function recalcPlanner(){
-    // For consistency with Module 5, compute effective bracket size (maxB) once for all weights.
-    const ns1 = state.weights.map(w=>Math.floor(Number(w.wrestlers||0))).filter(n=>n>1);
-    const maxN1 = ns1.length ? Math.max(...ns1) : 0;
-    let maxB1 = maxN1 ? nextPow2(maxN1) : 2;
-    while(maxB1 > 2 && maxN1 && maxN1 <= maxB1/2) maxB1 = maxB1/2;
-
     let totalW = 0, totalB = 0;
+    const maxB = getMaxBFromState();
     state.weights.forEach((w, idx)=>{
       const n = Number(w.wrestlers)||0;
-      const b = boutsFromRoundMap(n, el("format").value, maxB1);
+      const b = boutsFromRoundMap(n, el("format").value, maxB);
       totalW += n;
       totalB += b;
       const cell = document.getElementById(`wb-${idx}`);
