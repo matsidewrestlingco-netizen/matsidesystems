@@ -777,6 +777,35 @@
       return { map, total };
     }
 
+
+    // Exact mapping for 51-wrestler brackets (Flo-style), placing to 8:
+    // Provided reference totals (sum to 100).
+    if(n === 51){
+      map["R64"] = 19;
+      map["Consy R32 #1"] = 3;
+      map["R32"] = 16;
+      map["Consy R32 #2"] = 16;
+
+      map["R16"] = 8;
+      map["Consy R16 #1"] = 8;
+      map["Consy R16 #2"] = 8;
+
+      map["Consy R8 #1"] = 4;
+      map["Quarterfinals / R8"] = 4;
+      map["Consy R8 #2"] = 4;
+
+      map["Semifinals / R4"] = 2;
+      map["Consy R4"] = 2;
+      map["Consy Semifinals"] = 2;
+
+      map["Finals"] = 1;
+      map["Third"] = 1;
+      map["Fifth"] = (fmt === "de_top6" || fmt === "de_top8") ? 1 : 0;
+      map["Seventh"] = (fmt === "de_top8") ? 1 : 0;
+
+      return { map, total };
+    }
+
     // --- Championship bouts (by bracket stage) ---
     // We estimate champ matches per weight using the same bracket-size logic as before.
     const champ = buildChampRoundsForN(n);
@@ -1637,3 +1666,4 @@ function recalcLive(){
 </script>
 </body>
 </html>
+
