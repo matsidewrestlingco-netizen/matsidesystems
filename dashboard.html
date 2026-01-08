@@ -6,17 +6,24 @@
   <title>FloArena Tournament Suite (Planner + Live Dashboard)</title>
   <style>
     :root{
-      --grid:#2a2a2a;
+      --bg:#05060a;
+      --card:#11131b;
+      --panel:#11131b;
+      --panel-soft:#141824;
+      --grid:rgba(255,255,255,0.08);
+      --grid-strong:rgba(255,255,255,0.16);
       --text:#f2f2f2;
-      --muted:#a7a7a7;
-      --bg:#0b0b0b;
-      --card:#121212;
-      --panel:#0f0f0f;
-      --input:#ffb74d;
-      --inputText:#111;
+      --muted:#9aa0a6;
+      --accent:#1e88e5;
+
+      /* Status colors */
       --good:#37d67a;
       --warn:#ffb020;
       --bad:#ff5b5b;
+
+      /* User input highlight (subtle) */
+      --user-bg: rgba(30,136,229,0.16);
+      --user-border: rgba(30,136,229,0.75);
     }
     body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
     .wrap{max-width:1400px; margin:0 auto; padding:18px;}
@@ -71,7 +78,7 @@
       font-weight:650;
     }
     button:hover{background:#f6f6f6;}
-    .twoCol{display:grid; grid-template-columns: 1fr 1fr; gap:14px; padding:12px 14px;}
+    .twoCol{display:grid; grid-template-columns: 1fr; gap:14px; padding:12px 14px;}
     .mini{font-size:12px; color:var(--muted);}
     .small{font-size:12px; color:var(--muted);}
     .pill{display:inline-flex; gap:8px; align-items:center;}
@@ -80,7 +87,7 @@
       .grid, .grid3{display:grid; grid-template-columns: 1fr; gap:16px; margin-top:16px;}
       .kpi{grid-template-columns: 1fr 1fr;}
       .kpi.k3{grid-template-columns: 1fr;}
-      .twoCol{grid-template-columns: 1fr;}
+      .twoCol{display:grid; grid-template-columns: 1fr; gap:14px; padding:12px 14px;}
     }
   
     /* Matside dark theme overrides */
@@ -93,6 +100,48 @@
     textarea{background:#0f0f0f; color:var(--text);}
     .badge{background:#111 !important; color:var(--text);}
     a{color:#ffffff;}
+    a:hover{opacity:.9;}
+
+
+    /* Matside polish overrides */
+    body{background:var(--bg) !important; color:var(--text) !important;}
+    .card{background:var(--card) !important; border-color:var(--grid) !important;}
+    .card h2{background:var(--panel) !important; border-bottom-color:var(--grid) !important;}
+    th{background:var(--panel) !important;}
+    td, th{border-color:var(--grid) !important;}
+    .note{border-top-color:var(--grid) !important;}
+    .actions{background:transparent !important; border-top-color:var(--grid) !important;}
+
+    input, select, textarea{
+      background:var(--panel-soft) !important;
+      color:var(--text) !important;
+      border-color:var(--grid-strong) !important;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color: var(--user-border) !important;
+      box-shadow: 0 0 0 3px rgba(30,136,229,0.18) !important;
+    }
+
+    /* Subtle highlight for user-input fields */
+    input.user, select.user{
+      background: var(--user-bg) !important;
+      border-color: var(--user-border) !important;
+      color: var(--text) !important;
+      font-weight: 700;
+    }
+
+    button{
+      color: var(--text) !important;
+      background: transparent !important;
+      border-color: var(--grid-strong) !important;
+    }
+    button:hover{
+      background: rgba(255,255,255,0.06) !important;
+      border-color: rgba(30,136,229,0.45) !important;
+    }
+
+    .badge{background:rgba(255,255,255,0.03) !important; border-color:var(--grid) !important;}
+    a{color: var(--text) !important;}
     a:hover{opacity:.9;}
 
 </style>
@@ -479,7 +528,8 @@
     pace: 12,
     weights: Array.from({length:13}, (_,i)=>({ name:`W${i+1}`, wrestlers:16 })),
     locations: [
-      { name:"Gym 1", mats:8, remaining:0 }
+      { name:"Gym A", mats:4, remaining:0 },
+      { name:"Gym B", mats:4, remaining:0 }
     ],
     usePlannerTotal: true,
     totalBoutsOverride: 0,
