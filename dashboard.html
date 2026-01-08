@@ -742,6 +742,57 @@
     const rounds = getRoundSequence(maxB, fmt);
     rounds.forEach(r => map[r] = 0);
     if(n <= 1) return { map, total };
+    // Exact mapping for common full brackets (power-of-two sizes).
+    // This makes the round map deterministic for 2/4/8/16/32/64 wrestler brackets.
+    if(n === 2 || n === 4 || n === 8 || n === 16 || n === 32 || n === 64){
+      // Championship rounds
+      if(n === 64){ map["R64"] = 32; }
+      if(n >= 32){ map["R32"] = 16; }
+      if(n >= 16){ map["R16"] = 8; }
+      if(n >= 8){  map["Quarterfinals / R8"] = 4; }
+      if(n >= 4){  map["Semifinals / R4"] = 2; }
+      if(n >= 2){  map["Finals"] = 1; }
+
+      // Consolations (Flo-style labels by bracket size)
+      if(n === 64){
+        map["Consy R32 #1"] = 16;
+        map["Consy R32 #2"] = 16;
+        map["Consy R16 #1"] = 8;
+        map["Consy R16 #2"] = 8;
+        map["Consy R8 #1"] = 4;
+        map["Consy R8 #2"] = 4;
+        map["Consy R4"] = 2;
+        map["Consy Semifinals"] = 2;
+      } else if(n === 32){
+        map["Consy R16 #1"] = 8;
+        map["Consy R16 #2"] = 8;
+        map["Consy R8 #1"] = 4;
+        map["Consy R8 #2"] = 4;
+        map["Consy R4"] = 2;
+        map["Consy Semifinals"] = 2;
+      } else if(n === 16){
+        map["Consy R8 #1"] = 4;
+        map["Consy R8 #2"] = 4;
+        map["Consy R4"] = 2;
+        map["Consy Semifinals"] = 2;
+      } else if(n === 8){
+        // In an 8-man, the first wrestleback stage has 2 matches (we label it Consy R4),
+        // then Consy Semifinals has 2 matches.
+        map["Consy R4"] = 2;
+        map["Consy Semifinals"] = 2;
+      } else {
+        // 2-man / 4-man: no wrestlebacks beyond placements.
+      }
+
+      // Placement matches
+      map["Third"] = (n >= 4) ? 1 : 0;
+      map["Fifth"] = ((fmt === "de_top6" || fmt === "de_top8") && n >= 6) ? 1 : 0;
+      map["Seventh"] = (fmt === "de_top8" && n >= 8) ? 1 : 0;
+
+      return { map, total };
+    }
+
+
 
     // --- Championship bouts (by bracket stage) ---
     // We estimate champ matches per weight using the same bracket-size logic as before.
