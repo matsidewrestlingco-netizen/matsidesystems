@@ -916,7 +916,7 @@
     });
   }
 
-const LS_KEY = "flo_all_modules_v2";
+const LS_KEY = "flo_all_modules_v2_v3";
   const DEFAULTS = {
     
     
@@ -958,6 +958,11 @@ const LS_KEY = "flo_all_modules_v2";
     try{
       const s = JSON.parse(localStorage.getItem(LS_KEY) || "null");
       if(!s) return JSON.parse(JSON.stringify(DEFAULTS));
+
+      // Migration: trim hourly rows to 4 by default (you can add more if needed)
+      if(Array.isArray(s.hourly) && s.hourly.length > 4){
+        s.hourly = s.hourly.slice(0,4);
+      }
 
       // Migration: if older saved state includes Aux gyms (or >2 default gyms), reset to Gym A/B.
       if(Array.isArray(s.locations)){
