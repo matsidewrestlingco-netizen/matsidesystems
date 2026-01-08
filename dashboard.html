@@ -1033,20 +1033,80 @@ const LS_KEY = "flo_all_modules_v2";
 
   function loadState(){
     try{
-      const candidates = [
-        LS_KEY,
-        "flo_all_modules_v2_v3_v4",
-        "flo_all_modules_v2_v3",
-        "flo_all_modules_v2_v4",
-        "flo_all_modules_v3",
-        "flo_all_modules_v4",
-        "flo_all_modules_v1"
-      ];
-      let raw = null;
-      for(const k of candidates){
-        raw = localStorage.getItem(k);
-        if(raw) break;
+      // Find the "best" saved state across any prior keys on this origin.
+      // Score by how complete it is (weights present, hours present, locations present, etc).
+      const keys = [];
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(!k) continue;
+        if(k.includes("flo_all_modules") || k.includes("floarena") || k.includes("matside") || k.includes("tournament")){
+          keys.push(k);
+        }
       }
+      // Always consider our current key first (if present)
+      keys.unshift(LS_KEY);
+
+      let best = null;
+      let bestKey = null;
+      let bestScore = -1;
+
+      for(const k of keys){
+        const raw = localStorage.getItem(k);
+        if(!raw) continue;
+        let s = null;
+        try{ s = JSON.parse(raw); } catch(e){ continue; }
+        if(!s || typeof s !== "object") continue;
+
+        const wLen = Array.isArray(s.weights) ? s.weights.length : 0;
+        const hLen = Array.isArray(s.hours) ? s.hours.length : 0;
+        const locLen = Array.isArray(s.locations) ? s.locations.length : 0;
+
+        // Prefer states with named weights (not blank) and real wrestler counts.
+        const namedWeights = (Array.isArray(s.weights) ? s.weights.filter(w=>String(w?.name||"").trim().length>0).length : 0);
+        const nonZeroWeights = (Array.isArray(s.weights) ? s.weights.filter(w=>Number(w?.wrestlers||0)>0).length : 0);
+
+        const score = (wLen*1000) + (namedWeights*200) + (nonZeroWeights*100) + (hLen*10) + (locLen*5);
+        if(score > bestScore){
+          bestScore = score;
+          best = s;
+          bestKey = k;
+        }
+      }
+
+      const base = JSON.parse(JSON.stringify(DEFAULTS));
+      const merged = best ? deepMerge(base, best) : base;
+
+      // Defensive: if weights are missing/empty, restore a sensible default list (13 weights).
+      if(!Array.isArray(merged.weights) || merged.weights.length === 0){
+        merged.weights = [];
+        for(let i=1;i<=13;i++){
+          merged.weights.push({ name: `Weight ${i}`, wrestlers: 0 });
+        }
+      }
+
+      // Migration: trim hour rows to 4 by default (you can add more if needed)
+      if(Array.isArray(merged.hours) && merged.hours.length > 4){
+        merged.hours = merged.hours.slice(0,4);
+      }
+
+      // Migration: if older saved state includes Aux gyms, reset to Gym A/B defaults
+      if(Array.isArray(merged.locations)){
+        const hasAux = merged.locations.some(l => String(l?.name||"").toLowerCase().includes("aux"));
+        if(hasAux){
+          merged.locations = JSON.parse(JSON.stringify(DEFAULTS.locations));
+        }
+      }
+
+      // Expose what we loaded for quick debugging
+      merged.__loadedFromKey = bestKey || LS_KEY;
+      return merged;
+
+    } catch(e){
+      const d = JSON.parse(JSON.stringify(DEFAULTS));
+      d.__loadedFromKey = "DEFAULTS";
+      return d;
+    }
+  }
       const s = JSON.parse(raw || "null");
       if(!s) return JSON.parse(JSON.stringify(DEFAULTS));
 
@@ -1099,6 +1159,13 @@ const LS_KEY = "flo_all_modules_v2";
   }
 
   let state = loadState();
+
+    try{
+      const lb = document.getElementById("loadedBadge");
+      if(lb){
+        lb.textContent = `Loaded: ${state.__loadedFromKey || "-" } • weights: ${(state.weights||[]).length}`;
+      }
+    }catch(e){}
 
   function totalMats(){
     return state.locations.reduce((s,l)=>s+(Number(l.mats)||0),0);
