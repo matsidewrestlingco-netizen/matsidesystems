@@ -144,12 +144,68 @@
     a{color: var(--text) !important;}
     a:hover{opacity:.9;}
 
+
+    .progressWrap{padding:12px 14px 14px 14px;}
+    .progressBar{height:10px; border-radius:999px; background:rgba(255,255,255,0.08); overflow:hidden; border:1px solid var(--grid);}
+    .progressBar > div{height:100%; width:0%; background:var(--accent); transition:width .25s ease;}
+    .topLine{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:0 14px 10px 14px;}
+    .topLine .big{font-weight:900; font-size:18px;}
+    .topLine .small{font-size:12px; color:var(--muted);}
+
 </style>
 </head>
 <body>
   <div class="wrap">
     <h1>FloArena Tournament Suite</h1>
     <p class="sub">All modules in one page. Orange fields are user input. Everything else updates automatically. Saved locally in your browser.</p>
+
+    <div class="card" id="topSummaryCard">
+      <h2>Module 0 — Tournament progress</h2>
+
+      <div class="topLine">
+        <div>
+          <div class="small">Overall progress</div>
+          <div class="big"><span id="tpPct">0%</span> complete</div>
+        </div>
+        <div>
+          <div class="small">Bouts</div>
+          <div class="big"><span id="tpDone">0</span> / <span id="tpTotal">0</span></div>
+        </div>
+        <div>
+          <div class="small">Remaining</div>
+          <div class="big"><span id="tpRemaining">0</span></div>
+        </div>
+      </div>
+
+      <div class="progressWrap">
+        <div class="progressBar" aria-label="Tournament progress">
+          <div id="tpBar"></div>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="box">
+          <div class="k">Total mats</div>
+          <div class="v" id="tpMats">-</div>
+        </div>
+        <div class="box">
+          <div class="k">Matches remaining (entered)</div>
+          <div class="v" id="tpRemainEntered">-</div>
+        </div>
+        <div class="box">
+          <div class="k">Avg bouts / hr (overall)</div>
+          <div class="v" id="tpAvgHr">-</div>
+        </div>
+        <div class="box">
+          <div class="k">Estimated end time</div>
+          <div class="v" id="tpEnd">-</div>
+        </div>
+      </div>
+
+      <div class="note">
+        Uses Module 2 inputs (completed per hour + remaining per location). If total bouts is 0, progress stays at 0%.
+      </div>
+    </div>
 
     <div class="grid">
       <div class="card">
@@ -891,7 +947,36 @@
     }
   }
 
-  function recalcLive(){
+  
+  function updateTopProgress(metrics){
+    const totalBouts = Number(metrics.totalBouts||0);
+    const done = Number(metrics.boutsCompleted||0);
+    const remaining = Math.max(0, totalBouts - done);
+    const pct = (totalBouts>0) ? Math.round((done/totalBouts)*100) : 0;
+
+    const bar = document.getElementById("tpBar");
+    const tpPct = document.getElementById("tpPct");
+    const tpDone = document.getElementById("tpDone");
+    const tpTotal = document.getElementById("tpTotal");
+    const tpRemaining = document.getElementById("tpRemaining");
+    const tpMats = document.getElementById("tpMats");
+    const tpRemainEntered = document.getElementById("tpRemainEntered");
+    const tpAvgHr = document.getElementById("tpAvgHr");
+    const tpEnd = document.getElementById("tpEnd");
+
+    if(tpPct) tpPct.textContent = pct + "%";
+    if(tpDone) tpDone.textContent = done;
+    if(tpTotal) tpTotal.textContent = totalBouts;
+    if(tpRemaining) tpRemaining.textContent = remaining;
+    if(bar) bar.style.width = pct + "%";
+
+    if(tpMats) tpMats.textContent = metrics.mats ?? "-";
+    if(tpRemainEntered) tpRemainEntered.textContent = metrics.totalRemaining ?? "-";
+    if(tpAvgHr) tpAvgHr.textContent = metrics.avgPerHourText ?? "-";
+    if(tpEnd) tpEnd.textContent = metrics.estEndTimeText ?? "-";
+  }
+
+function recalcLive(){
     const mats = totalMats();
     const totalRemaining = state.locations.reduce((s,l)=>s+(Number(l.remaining)||0),0);
 
@@ -936,6 +1021,15 @@
     } else {
       el("estEndTime").textContent = "-";
     }
+
+    updateTopProgress({
+      totalBouts,
+      boutsCompleted,
+      mats,
+      totalRemaining,
+      avgPerHourText: (avgPerHour !== null ? fmt(avgPerHour,2) : "-"),
+      estEndTimeText: el("estEndTime").textContent || "-"
+    });
 
     recalcSim();
   }
@@ -986,7 +1080,16 @@
 
     ["simMats","simPace","simStart","simTotalBouts"].forEach(id=>{
       el(id).addEventListener("input", ()=>{
-        recalcSim(); saveState();
+        updateTopProgress({
+      totalBouts,
+      boutsCompleted,
+      mats,
+      totalRemaining,
+      avgPerHourText: (avgPerHour !== null ? fmt(avgPerHour,2) : "-"),
+      estEndTimeText: el("estEndTime").textContent || "-"
+    });
+
+    recalcSim(); saveState();
       });
     });
 
