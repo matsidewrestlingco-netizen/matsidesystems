@@ -623,6 +623,55 @@
     return 1 << Math.ceil(Math.log2(n));
   }
 
+  function getRoundSequence(maxB, fmt){
+    // Requested exact display order (Flo-style naming)
+    // We'll include only rounds that can exist for the max bracket size, and only placements for the selected format.
+    const order = [
+      "R64",
+      "Consy R32 #1",
+      "R32",
+      "Consy R32 #2",
+      "R16",
+      "Consy R16 #1",
+      "Consy R16 #2",
+      "Quarterfinals / R8",
+      "Consy R8 #1",
+      "Consy R8 #2",
+      "Semifinals / R4",
+      "Consy R4",
+      "Consy Semifinals",
+      "Finals",
+      "Third",
+      "Fifth",
+      "Seventh"
+    ];
+
+    const enabled = new Set();
+
+    // Champ rounds enabled by bracket size
+    if(maxB >= 64) enabled.add("R64");
+    if(maxB >= 32) enabled.add("R32");
+    if(maxB >= 16) enabled.add("R16");
+    if(maxB >= 8)  enabled.add("Quarterfinals / R8");
+    if(maxB >= 4)  enabled.add("Semifinals / R4");
+    if(maxB >= 2)  enabled.add("Finals");
+
+    // Consolations enabled by bracket size
+    if(maxB >= 64) enabled.add("Consy R32 #1"); // happens between R64 and R32
+    if(maxB >= 32) enabled.add("Consy R32 #2");
+    if(maxB >= 16){ enabled.add("Consy R16 #1"); enabled.add("Consy R16 #2"); }
+    if(maxB >= 8){ enabled.add("Consy R8 #1"); enabled.add("Consy R8 #2"); }
+    if(maxB >= 4){ enabled.add("Consy R4"); enabled.add("Consy Semifinals"); }
+
+    // Placements by format
+    enabled.add("Third");
+    if(fmt === "de_top6" || fmt === "de_top8") enabled.add("Fifth");
+    if(fmt === "de_top8") enabled.add("Seventh");
+
+    return order.filter(r => enabled.has(r));
+  }
+
+
   function buildChampRoundsForN(n){
     n = Math.floor(Number(n||0));
     if(n <= 1) return [];
@@ -644,40 +693,11 @@
   }
 
   function buildConsiStages(maxB, fmt){
-    // Exact Flo-style round sequence (requested)
-    const sequence = [
-      "R64",
-      "Consy R32 #1",
-      "R32",
-      "Consy R32 #2",
-      "R16",
-      "Consy R16 #1",
-      "Consy R16 #2",
-      "Quarterfinals / R8",
-      "Consy R8 #1",
-      "Consy R8 #2",
-      "Semifinals / R4",
-      "Consy R4",
-      "Consy Semifinals",
-      "Finals",
-      "Third",
-      "Fifth",
-      "Seventh"
-    ];
-
-    const placements = [];
-    if(fmt === "de_top4"){
-      placements.push("Third");
-    }
-    if(fmt === "de_top6"){
-      placements.push("Third","Fifth");
-    }
-    if(fmt === "de_top8"){
-      placements.push("Third","Fifth","Seventh");
-    }
-
-    return { sequence, placements };
-  }
+    // A pragmatic set of wrestleback stages for planning purposes.
+    const stages = [];
+    if(maxB >= 64) stages.push("Consi R64");
+    if(maxB >= 32) stages.push("Consi R32");
+    if(maxB >= 16) { stages.push("Consi R16 #1"); stages.push("Consi R16 #2"); }
     if(maxB >= 8)  stages.push("Consi QF");
     if(maxB >= 4)  stages.push("Consi SF");
 
@@ -693,55 +713,57 @@
     n = Math.floor(Number(n||0));
     const total = boutsForFormat(n, fmt);
     const map = {};
-    const seq = buildConsiStages(maxB, fmt).sequence;
-    seq.forEach(r => map[r] = 0);
+    const rounds = getRoundSequence(maxB, fmt);
+    rounds.forEach(r => map[r] = 0);
     if(n <= 1) return { map, total };
 
-    // Championship rounds
-    if(n > 32) map["R64"] = Math.max(0, n - 32);
-    if(n > 16) map["R32"] = Math.max(0, Math.min(16, n - 16));
-    if(n > 8)  map["R16"] = Math.max(0, Math.min(8, n - 8));
-    if(n > 4)  map["Quarterfinals / R8"] = 4;
-    if(n > 2)  map["Semifinals / R4"] = 2;
-    if(n > 1)  map["Finals"] = 1;
+    // --- Championship bouts (by bracket stage) ---
+    // We estimate champ matches per weight using the same bracket-size logic as before.
+    const champ = buildChampRoundsForN(n);
+    const champByName = {};
+    champ.forEach(r => champByName[r.name] = r.matches);
 
-    // Consolations (ordered)
-    if(n >= 32){
-      map["Consy R32 #1"] = 16;
-      map["Consy R32 #2"] = 16;
-    }
-    if(n >= 16){
-      map["Consy R16 #1"] = 8;
-      map["Consy R16 #2"] = 8;
-    }
-    if(n >= 8){
-      map["Consy R8 #1"] = 4;
-      map["Consy R8 #2"] = 4;
-    }
-    if(n >= 4){
-      map["Consy R4"] = 2;
-      map["Consy Semifinals"] = 2;
-    }
+    // Normalize names into your requested labels
+    // Round of 64 -> R64, Round of 32 -> R32, Round of 16 -> R16,
+    // Quarterfinals/Semifinals/Final already align (with our label variants).
+    map["R64"] = champByName["Round of 64"] || 0;
+    map["R32"] = champByName["Round of 32"] || 0;
+    map["R16"] = champByName["Round of 16"] || 0;
+    map["Quarterfinals / R8"] = champByName["Quarterfinals"] || champByName["Round of 8"] || 0;
+    map["Semifinals / R4"] = champByName["Semifinals"] || champByName["Round of 4"] || 0;
+    map["Finals"] = champByName["Final"] || 0;
 
-    // Placement matches
+    // --- Placement bouts (simple flags) ---
     if(n >= 4) map["Third"] = 1;
     if((fmt === "de_top6" || fmt === "de_top8") && n >= 6) map["Fifth"] = 1;
     if(fmt === "de_top8" && n >= 8) map["Seventh"] = 1;
 
-    return { map, total };
-  }
-      // Fix rounding drift: shove leftover into the earliest stage
+    // --- Consolations (allocate remaining bouts across the ordered consi stages) ---
+    const champTotal = Math.max(0, n - 1);
+    const placementCount = (map["Third"]||0) + (map["Fifth"]||0) + (map["Seventh"]||0);
+    let wrestlebackTotal = Math.max(0, total - champTotal - placementCount);
+
+    const consiStages = rounds.filter(r => r.toLowerCase().includes("consy"));
+    if(consiStages.length){
+      // Weighted distribution (earlier consi stages get more)
+      const k = consiStages.length;
+      const weights = consiStages.map((_,i)=> (k - i));
+      const wsum = weights.reduce((s,v)=>s+v,0) || 1;
+      let remaining = wrestlebackTotal;
+
+      for(let i=0;i<k;i++){
+        const stage = consiStages[i];
+        const share = (i === k-1) ? remaining : Math.round(wrestlebackTotal * (weights[i]/wsum));
+        const v = Math.max(0, Math.min(remaining, share));
+        map[stage] = v;
+        remaining -= v;
+      }
       if(remaining !== 0){
-        wbCounts[wrestlebacks[0]] = Math.max(0, (wbCounts[wrestlebacks[0]]||0) + remaining);
+        map[consiStages[0]] = Math.max(0, (map[consiStages[0]]||0) + remaining);
       }
     }
 
-    const map = {};
-    champ.forEach(r => map[r.name] = r.matches);
-    wrestlebacks.forEach(s => map[s] = wbCounts[s] || 0);
-    placements.forEach(p => map[p] = placeBouts[p] || 0);
-
-    return { map, champRounds: champ.map(r=>r.name), wrestlebacks, placements, total, champTotal };
+    return { map, total };
   }
 
   function collectRoundColumns(fmt){
@@ -751,13 +773,9 @@
     let maxB = maxN ? nextPow2(maxN) : 2;
     while(maxB > 2 && maxN && maxN <= maxB/2) maxB = maxB/2;
 
-    // Champ columns from maxN
-    const champCols = buildChampRoundsForN(maxN).map(r=>r.name);
-
-    // Consi/placements
-    const cs = buildConsiStages(maxB, fmt);
-    const allCols = ["Weight", ...cs.sequence, "Total"];
-    return { cols: allCols, champCols: [], maxB, consi: cs };
+    const sequence = getRoundSequence(maxB, fmt);
+    const allCols = ["Weight", ...sequence, "Total"];
+    return { cols: allCols, champCols: [], maxB, consi: { sequence } };
   }
 
   function ensureRoundDayDefaults(roundNames){
