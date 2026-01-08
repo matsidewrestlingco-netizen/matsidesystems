@@ -516,7 +516,7 @@
     }
   }
 
-  const LS_KEY = "flo_all_modules_v1";
+  const LS_KEY = "flo_all_modules_v2";
   const DEFAULTS = {
     
     format: "de_top6",level: "hs",
@@ -556,7 +556,17 @@
   function loadState(){
     try{
       const s = JSON.parse(localStorage.getItem(LS_KEY) || "null");
-      return s ? deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), s) : JSON.parse(JSON.stringify(DEFAULTS));
+      if(!s) return JSON.parse(JSON.stringify(DEFAULTS));
+
+      // Migration: if older saved state includes Aux gyms (or >2 default gyms), reset to Gym A/B.
+      if(Array.isArray(s.locations)){
+        const hasAux = s.locations.some(l => String(l?.name||"").toLowerCase().includes("aux"));
+        if(hasAux){
+          s.locations = JSON.parse(JSON.stringify(DEFAULTS.locations));
+        }
+      }
+
+      return deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), s);
     } catch(e){
       return JSON.parse(JSON.stringify(DEFAULTS));
     }
@@ -1042,6 +1052,8 @@
   }
 
   function boot(){
+    // Clean up old storage key so defaults apply.
+    try{ localStorage.removeItem("flo_all_modules_v1"); }catch(e){}
     state = loadState();
     initControls();
     renderWeights();
