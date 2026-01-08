@@ -298,9 +298,10 @@
             <table id="weightsTable">
               <thead>
                 <tr>
-                  <th style="width:40%">Weight</th>
-                  <th style="width:30%" class="right">Wrestlers</th>
-                  <th style="width:30%" class="right">Bouts (est.)</th>
+                  <th style="width:32%">Weight</th>
+                  <th style="width:18%" class="right">Wrestlers</th>
+                  <th style="width:20%" class="right">Bouts</th>
+                  <th style="width:30%" class="right">Location</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -954,7 +955,8 @@ const LS_KEY = "flo_all_modules_v2";
   const DEFAULTS = {
     
     
-    roundDay: {},format: "de_top6",level: "hs",
+    
+    weightLoc: {},roundDay: {},format: "de_top6",level: "hs",
     days: "2",
     numWeights: 13,
     day1Start: "16:00",
@@ -1077,27 +1079,61 @@ const LS_KEY = "flo_all_modules_v2";
 
     const tbody = document.querySelector("#weightsTable tbody");
     tbody.innerHTML = "";
+
+    const maxB = (typeof getMaxBFromState === "function") ? getMaxBFromState() : (function(){
+      const ns = state.weights.map(w=>Math.floor(Number(w.wrestlers||0))).filter(n=>n>1);
+      const maxN = ns.length ? Math.max(...ns) : 0;
+      let mb = maxN ? nextPow2(maxN) : 2;
+      while(mb > 2 && maxN && maxN <= mb/2) mb = mb/2;
+      return mb;
+    })();
+
     state.weights.forEach((w, idx) => {
       const tr = document.createElement("tr");
+      const opts = (state.locations || []).map((l, li) => {
+        const sel = (Number(state.weightLoc?.[idx]) === li) ? " selected" : "";
+        return `<option value="${li}"${sel}>${escapeHtml(l.name || ("Location " + (li+1)))}</option>`;
+      }).join("");
+
       tr.innerHTML = `
         <td><input class="user" data-wi="${idx}" data-f="name" value="${escapeHtml(w.name)}"></td>
         <td class="right"><input class="user right" type="number" min="0" step="1" data-wi="${idx}" data-f="wrestlers" value="${Number(w.wrestlers)||0}"></td>
         <td class="right" id="wb-${idx}">-</td>
+        <td class="right">
+          <select class="user" data-wi="${idx}" data-f="loc">
+            <option value="">Auto</option>
+            ${opts}
+          </select>
+        </td>
       `;
       tbody.appendChild(tr);
     });
 
-    tbody.querySelectorAll("input").forEach(inp => {
-      inp.addEventListener("input", (e) => {
+tbody.querySelectorAll("input,select").forEach(elm => {
+      elm.addEventListener("input", (e) => {
         const i = Number(e.target.dataset.wi);
         const f = e.target.dataset.f;
+
+        if(f === "loc"){
+          const raw = e.target.value;
+          if(raw === "" || raw == null){
+            if(state.weightLoc) delete state.weightLoc[i];
+          } else {
+            state.weightLoc = state.weightLoc || {};
+            state.weightLoc[i] = Number(raw);
+          }
+          recalcAll();
+          saveState();
+          return;
+        }
+
         let v = e.target.value;
         if(f === "wrestlers") v = Number(v||0);
         state.weights[i][f] = v;
-        rebalanceAssignments();
         recalcAll();
         saveState();
       });
+    });
     });
   }
 
@@ -1158,12 +1194,45 @@ const LS_KEY = "flo_all_modules_v2";
 
   let assignments = [];
   function rebalanceAssignments(){
-    const weightsWithBouts = state.weights.map((w,i)=>({ idx:i, bouts:boutsForFormat(w.wrestlers, el("format").value) }))
+    const maxB = (typeof getMaxBFromState === "function") ? getMaxBFromState() : (function(){
+      const ns = state.weights.map(w=>Math.floor(Number(w.wrestlers||0))).filter(n=>n>1);
+      const maxN = ns.length ? Math.max(...ns) : 0;
+      let mb = maxN ? nextPow2(maxN) : 2;
+      while(mb > 2 && maxN && maxN <= mb/2) mb = mb/2;
+      return mb;
+    })();
+
+    const boutFn = (typeof boutsFromRoundMap === "function")
+      ? (n)=>boutsFromRoundMap(n, el("format").value, maxB)
+      : (n)=>boutsForFormat(n, el("format").value);
+
+    const weightsWithBouts = state.weights
+      .map((w,i)=>({ idx:i, bouts:boutFn(w.wrestlers) }))
       .sort((a,b)=>b.bouts-a.bouts);
 
     const loads = state.locations.map((l,i)=>({ locIdx:i, mats:Number(l.mats)||0, weights:[], bouts:0 }));
 
+    // 1) Apply manual assignments first
+    const remaining = [];
     weightsWithBouts.forEach(wb=>{
+      const forced = (state.weightLoc && state.weightLoc[wb.idx] !== undefined && state.weightLoc[wb.idx] !== null)
+        ? Number(state.weightLoc[wb.idx])
+        : null;
+      if(forced === null || Number.isNaN(forced)){
+        remaining.push(wb);
+        return;
+      }
+      const target = loads.find(l => l.locIdx === forced);
+      if(target && target.mats > 0){
+        target.weights.push(wb.idx);
+        target.bouts += wb.bouts;
+      } else {
+        remaining.push(wb);
+      }
+    });
+
+    // 2) Auto-balance everything else
+    remaining.forEach(wb=>{
       let best=-1, bestScore=Infinity;
       loads.forEach((l,i)=>{
         if(l.mats<=0) return;
