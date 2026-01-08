@@ -586,6 +586,35 @@
   </div>
 
 <script>
+/* early error trap */
+(function(){
+  function show(msg){
+    try{
+      var d=document.getElementById("fatalBanner");
+      if(!d){
+        d=document.createElement("div");
+        d.id="fatalBanner";
+        d.style.position="fixed";
+        d.style.left="12px";
+        d.style.right="12px";
+        d.style.bottom="12px";
+        d.style.zIndex="999999";
+        d.style.padding="10px 12px";
+        d.style.border="1px solid rgba(255,91,91,0.6)";
+        d.style.background="rgba(255,91,91,0.12)";
+        d.style.color="var(--text)";
+        d.style.borderRadius="12px";
+        d.style.fontSize="12px";
+        d.style.fontFamily="system-ui,-apple-system,Segoe UI,Roboto,Arial";
+        document.body.appendChild(d);
+      }
+      d.textContent="Dashboard script error: " + msg;
+    }catch(e){}
+  }
+  window.addEventListener("error", function(e){ show(e && e.message ? e.message : "unknown error"); });
+  window.addEventListener("unhandledrejection", function(e){ show(String((e && e.reason) || "unhandled promise rejection")); });
+})();
+
   const pad2 = n => String(n).padStart(2, "0");
   function parseTimeToMinutes(hhmm){
     if(!hhmm) return null;
@@ -650,79 +679,78 @@
     return 1 << Math.ceil(Math.log2(n));
   }
 
-  function estimateRoundMapForWeightSim(n, fmt, maxB){
-    n = Math.floor(Number(n||0));
-    const map = {};
-    const rounds = getRoundSequence(maxB, fmt);
-    rounds.forEach(r => map[r] = 0);
-    if(n <= 1) return { map };
+function estimateRoundMapForWeightSim(n, fmt, maxB){
+  n = Math.floor(Number(n||0));
+  const map = {};
+  const rounds = getRoundSequence(maxB, fmt);
+  rounds.forEach(r => map[r] = 0);
+  if(n <= 1) return { map };
 
-    function reduceRound(entrants, targetWinners){
-      entrants = Math.floor(Number(entrants||0));
-      targetWinners = Math.floor(Number(targetWinners||0));
-      if(entrants <= 0) return { matches: 0, survivors: 0 };
-      if(entrants <= targetWinners) return { matches: 0, survivors: entrants };
-      const matches = entrants - targetWinners;
-      return { matches, survivors: targetWinners };
-    }
-
-    let entrants = n;
-    const losers = {};
-
-    const champPlan = [];
-    if(maxB >= 64) champPlan.push({ label:"R64", target: 32 });
-    if(maxB >= 32) champPlan.push({ label:"R32", target: 16 });
-    if(maxB >= 16) champPlan.push({ label:"R16", target: 8 });
-    if(maxB >= 8)  champPlan.push({ label:"Quarterfinals / R8", target: 4 });
-    if(maxB >= 4)  champPlan.push({ label:"Semifinals / R4", target: 2 });
-    champPlan.push({ label:"Finals", target: 1 });
-
-    for(const step of champPlan){
-      const rr = reduceRound(entrants, step.target);
-      if(map[step.label] !== undefined) map[step.label] = rr.matches;
-      losers[step.label] = rr.matches;
-      entrants = rr.survivors;
-    }
-
-    function applyConsiPair(label1, label2, startEntrants, mergeLosers, target){
-      const r1 = reduceRound(startEntrants, target);
-      if(label1 && map[label1] !== undefined) map[label1] = r1.matches;
-
-      const merged = r1.survivors + (mergeLosers||0);
-      const r2 = reduceRound(merged, target);
-      if(label2 && map[label2] !== undefined) map[label2] = r2.matches;
-
-      return r2.survivors;
-    }
-
-    let consiField = 0;
-    if(maxB >= 64) consiField = losers["R64"] || 0;
-    else if(maxB >= 32) consiField = losers["R32"] || 0;
-    else if(maxB >= 16) consiField = losers["R16"] || 0;
-
-    if(maxB >= 64){
-      consiField = applyConsiPair("Consy R32 #1", "Consy R32 #2", consiField, losers["R32"]||0, 16);
-      consiField = applyConsiPair("Consy R16 #1", "Consy R16 #2", consiField, losers["R16"]||0, 8);
-      consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
-      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
-    } else if(maxB >= 32){
-      consiField = applyConsiPair("Consy R16 #1", "Consy R16 #2", consiField, losers["R16"]||0, 8);
-      consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
-      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
-    } else if(maxB >= 16){
-      consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
-      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
-    } else if(maxB >= 8){
-      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
-    }
-
-    if(map["Third"] !== undefined) map["Third"] = (n >= 4) ? 1 : 0;
-    if(map["Fifth"] !== undefined) map["Fifth"] = ((fmt === "de_top6" || fmt === "de_top8") && n >= 6) ? 1 : 0;
-    if(map["Seventh"] !== undefined) map["Seventh"] = (fmt === "de_top8" && n >= 8) ? 1 : 0;
-
-    return { map };
+  function reduceRound(entrants, targetWinners){
+    entrants = Math.floor(Number(entrants||0));
+    targetWinners = Math.floor(Number(targetWinners||0));
+    if(entrants <= 0) return { matches: 0, survivors: 0 };
+    if(entrants <= targetWinners) return { matches: 0, survivors: entrants };
+    const matches = entrants - targetWinners;
+    return { matches, survivors: targetWinners };
   }
 
+  let entrants = n;
+  const losers = {};
+
+  const champPlan = [];
+  if(maxB >= 64) champPlan.push({ label:"R64", target: 32 });
+  if(maxB >= 32) champPlan.push({ label:"R32", target: 16 });
+  if(maxB >= 16) champPlan.push({ label:"R16", target: 8 });
+  if(maxB >= 8)  champPlan.push({ label:"Quarterfinals / R8", target: 4 });
+  if(maxB >= 4)  champPlan.push({ label:"Semifinals / R4", target: 2 });
+  champPlan.push({ label:"Finals", target: 1 });
+
+  for(const step of champPlan){
+    const rr = reduceRound(entrants, step.target);
+    if(map[step.label] !== undefined) map[step.label] = rr.matches;
+    losers[step.label] = rr.matches;
+    entrants = rr.survivors;
+  }
+
+  function applyConsiPair(label1, label2, startEntrants, mergeLosers, target){
+    const r1 = reduceRound(startEntrants, target);
+    if(label1 && map[label1] !== undefined) map[label1] = r1.matches;
+
+    const merged = r1.survivors + (mergeLosers||0);
+    const r2 = reduceRound(merged, target);
+    if(label2 && map[label2] !== undefined) map[label2] = r2.matches;
+
+    return r2.survivors;
+  }
+
+  let consiField = 0;
+  if(maxB >= 64) consiField = losers["R64"] || 0;
+  else if(maxB >= 32) consiField = losers["R32"] || 0;
+  else if(maxB >= 16) consiField = losers["R16"] || 0;
+
+  if(maxB >= 64){
+    consiField = applyConsiPair("Consy R32 #1", "Consy R32 #2", consiField, losers["R32"]||0, 16);
+    consiField = applyConsiPair("Consy R16 #1", "Consy R16 #2", consiField, losers["R16"]||0, 8);
+    consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
+    consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+  } else if(maxB >= 32){
+    consiField = applyConsiPair("Consy R16 #1", "Consy R16 #2", consiField, losers["R16"]||0, 8);
+    consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
+    consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+  } else if(maxB >= 16){
+    consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
+    consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+  } else if(maxB >= 8){
+    consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+  }
+
+  if(map["Third"] !== undefined) map["Third"] = (n >= 4) ? 1 : 0;
+  if(map["Fifth"] !== undefined) map["Fifth"] = ((fmt === "de_top6" || fmt === "de_top8") && n >= 6) ? 1 : 0;
+  if(map["Seventh"] !== undefined) map["Seventh"] = (fmt === "de_top8" && n >= 8) ? 1 : 0;
+
+  return { map };
+}
 
   function getMaxBFromState(){
     const ns = (state?.weights || []).map(w=>Math.floor(Number(w?.wrestlers||0))).filter(n=>n>1);
@@ -827,10 +855,15 @@
 
   function estimateRoundMapForWeight(n, fmt, maxB){
     n = Math.floor(Number(n||0));
-    const total = boutsForFormat(n, fmt); // legacy; Module 5 totals are sum-of-rounds
-    const { map } = estimateRoundMapForWeightSim(n, fmt, maxB);
+    const total = boutsForFormat(n, fmt);
+    const map = {};
+    const rounds = getRoundSequence(maxB, fmt);
+    rounds.forEach(r => map[r] = 0);
+    if(n <= 1) return { map, total };
 
-    // Exact override: 16-wrestler brackets (Flo-style), placing to 8 => 30 bouts
+
+    // Exact mapping for 16-wrestler brackets (Flo-style), placing to 8:
+    // This matches the standard round counts you specified and sums to 30.
     if(n === 16){
       map["R16"] = 8;
       map["Consy R8 #1"] = 4;
@@ -845,31 +878,6 @@
       map["Seventh"] = (fmt === "de_top8") ? 1 : 0;
       return { map, total };
     }
-
-    // Exact override: 51-wrestler brackets (Flo-style), provided reference => 100 bouts
-    if(n === 51){
-      map["R64"] = 19;
-      map["Consy R32 #1"] = 3;
-      map["R32"] = 16;
-      map["Consy R32 #2"] = 16;
-      map["R16"] = 8;
-      map["Consy R16 #1"] = 8;
-      map["Consy R16 #2"] = 8;
-      map["Consy R8 #1"] = 4;
-      map["Quarterfinals / R8"] = 4;
-      map["Consy R8 #2"] = 4;
-      map["Semifinals / R4"] = 2;
-      map["Consy R4"] = 2;
-      map["Consy Semifinals"] = 2;
-      map["Finals"] = 1;
-      map["Third"] = 1;
-      map["Fifth"] = (fmt === "de_top6" || fmt === "de_top8") ? 1 : 0;
-      map["Seventh"] = (fmt === "de_top8") ? 1 : 0;
-      return { map, total };
-    }
-
-    return { map, total };
-  }
 
     // --- Championship bouts (by bracket stage) ---
     // We estimate champ matches per weight using the same bracket-size logic as before.
@@ -1084,15 +1092,58 @@ const LS_KEY = "flo_all_modules_v2";
     return a;
   }
 
-  function loadState(){
-    try{
-      const s = JSON.parse(localStorage.getItem(LS_KEY) || "null");
-      if(!s) return JSON.parse(JSON.stringify(DEFAULTS));
-
-      // Migration: trim hour rows to 4 by default (you can add more if needed)
-      if(Array.isArray(s.hours) && s.hours.length > 4){
-        s.hours = s.hours.slice(0,4);
+  
+function loadState(){
+  try{
+    // Prefer our key, but recover from any older keys on this same origin.
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k) continue;
+      if(k === LS_KEY || k.includes("flo_all_modules") || k.includes("floarena") || k.includes("matside")){
+        keys.push(k);
       }
+    }
+    if(!keys.includes(LS_KEY)) keys.unshift(LS_KEY);
+
+    let best = null;
+    let bestKey = null;
+    let bestScore = -1;
+
+    for(const k of keys){
+      const raw = localStorage.getItem(k);
+      if(!raw) continue;
+      let s=null;
+      try{ s=JSON.parse(raw); }catch(e){ continue; }
+      if(!s || typeof s !== "object") continue;
+
+      const w = Array.isArray(s.weights) ? s.weights : [];
+      const named = w.filter(x=>String(x?.name||"").trim().length>0).length;
+      const nonZero = w.filter(x=>Number(x?.wrestlers||0)>0).length;
+      const score = (w.length*1000) + (named*50) + (nonZero*25);
+
+      if(score > bestScore){
+        bestScore = score;
+        best = s;
+        bestKey = k;
+      }
+    }
+
+    const merged = deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), best || {});
+    merged.__loadedFromKey = bestKey || "DEFAULTS";
+
+    // Ensure weights exist (never render blank)
+    if(!Array.isArray(merged.weights) || merged.weights.length === 0){
+      merged.weights = JSON.parse(JSON.stringify(DEFAULTS.weights || []));
+    }
+
+    return merged;
+  }catch(e){
+    const d = JSON.parse(JSON.stringify(DEFAULTS));
+    d.__loadedFromKey = "DEFAULTS";
+    return d;
+  }
+}
       if(Array.isArray(s.hourly) && s.hourly.length > 4){
         s.hourly = s.hourly.slice(0,4);
       }
@@ -1124,6 +1175,13 @@ const LS_KEY = "flo_all_modules_v2";
   }
 
   let state = loadState();
+
+    try{
+      const b = document.getElementById("dbgBadge");
+      if(b){
+        b.textContent = `weights: ${(state.weights||[]).length} • ${state.__loadedFromKey||"-"}`;
+      }
+    }catch(e){}
 
   function totalMats(){
     return state.locations.reduce((s,l)=>s+(Number(l.mats)||0),0);
