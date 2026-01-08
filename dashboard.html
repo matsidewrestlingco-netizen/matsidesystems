@@ -753,58 +753,81 @@
 
   function estimateRoundMapForWeight(n, fmt, maxB){
     n = Math.floor(Number(n||0));
-    const total = boutsForFormat(n, fmt);
+    const total = boutsForFormat(n, fmt); // legacy; Module 5 totals use sum-of-rounds
     const map = {};
     const rounds = getRoundSequence(maxB, fmt);
     rounds.forEach(r => map[r] = 0);
     if(n <= 1) return { map, total };
 
-
-    // Exact mapping for 16-wrestler brackets (Flo-style), placing to 8:
-    // This matches the standard round counts you specified and sums to 30.
-    if(n === 16){
-      map["R16"] = 8;
-      map["Consy R8 #1"] = 4;
-      map["Quarterfinals / R8"] = 4;
-      map["Consy R8 #2"] = 4;
-      map["Semifinals / R4"] = 2;
-      map["Consy R4"] = 2;
-      map["Consy Semifinals"] = 2;
-      map["Finals"] = 1;
-      map["Third"] = 1;
-      map["Fifth"] = (fmt === "de_top6" || fmt === "de_top8") ? 1 : 0;
-      map["Seventh"] = (fmt === "de_top8") ? 1 : 0;
-      return { map, total };
+    function reduceRound(entrants, targetWinners){
+      entrants = Math.floor(Number(entrants||0));
+      targetWinners = Math.floor(Number(targetWinners||0));
+      if(entrants <= 0) return { matches: 0, survivors: 0 };
+      if(entrants <= targetWinners) return { matches: 0, survivors: entrants };
+      const matches = entrants - targetWinners;
+      return { matches, survivors: targetWinners };
     }
 
+    // Championship rounds for the effective bracket size
+    let entrants = n;
+    const losers = {}; // losers produced at each champ step by label
 
-    // Exact mapping for 51-wrestler brackets (Flo-style), placing to 8:
-    // Provided reference totals (sum to 100).
-    if(n === 51){
-      map["R64"] = 19;
-      map["Consy R32 #1"] = 3;
-      map["R32"] = 16;
-      map["Consy R32 #2"] = 16;
+    const champPlan = [];
+    if(maxB >= 64) champPlan.push({ label:"R64", target: 32 });
+    if(maxB >= 32) champPlan.push({ label:"R32", target: 16 });
+    if(maxB >= 16) champPlan.push({ label:"R16", target: 8 });
+    if(maxB >= 8)  champPlan.push({ label:"Quarterfinals / R8", target: 4 });
+    if(maxB >= 4)  champPlan.push({ label:"Semifinals / R4", target: 2 });
+    champPlan.push({ label:"Finals", target: 1 });
 
-      map["R16"] = 8;
-      map["Consy R16 #1"] = 8;
-      map["Consy R16 #2"] = 8;
-
-      map["Consy R8 #1"] = 4;
-      map["Quarterfinals / R8"] = 4;
-      map["Consy R8 #2"] = 4;
-
-      map["Semifinals / R4"] = 2;
-      map["Consy R4"] = 2;
-      map["Consy Semifinals"] = 2;
-
-      map["Finals"] = 1;
-      map["Third"] = 1;
-      map["Fifth"] = (fmt === "de_top6" || fmt === "de_top8") ? 1 : 0;
-      map["Seventh"] = (fmt === "de_top8") ? 1 : 0;
-
-      return { map, total };
+    for(const step of champPlan){
+      const rr = reduceRound(entrants, step.target);
+      if(map[step.label] !== undefined) map[step.label] = rr.matches;
+      losers[step.label] = rr.matches;
+      entrants = rr.survivors;
     }
+
+    // Consolations: Flo-style pairs (#1 reduces to target, #2 merges champ losers and reduces again)
+    function applyConsiPair(label1, label2, startEntrants, mergeLosers, target){
+      const r1 = reduceRound(startEntrants, target);
+      if(label1 && map[label1] !== undefined) map[label1] = r1.matches;
+
+      const merged = r1.survivors + (mergeLosers||0);
+      const r2 = reduceRound(merged, target);
+      if(label2 && map[label2] !== undefined) map[label2] = r2.matches;
+
+      return r2.survivors;
+    }
+
+    // Start consi field = losers from the first champ round in this bracket
+    let consiField = 0;
+    if(maxB >= 64) consiField = losers["R64"] || 0;
+    else if(maxB >= 32) consiField = losers["R32"] || 0;
+    else if(maxB >= 16) consiField = losers["R16"] || 0;
+
+    if(maxB >= 64){
+      consiField = applyConsiPair("Consy R32 #1", "Consy R32 #2", consiField, losers["R32"]||0, 16);
+      consiField = applyConsiPair("Consy R16 #1", "Consy R16 #2", consiField, losers["R16"]||0, 8);
+      consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
+      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+    } else if(maxB >= 32){
+      consiField = applyConsiPair("Consy R16 #1", "Consy R16 #2", consiField, losers["R16"]||0, 8);
+      consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
+      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+    } else if(maxB >= 16){
+      consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
+      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+    } else if(maxB >= 8){
+      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+    }
+
+    // Placement matches
+    if(map["Third"] !== undefined) map["Third"] = (n >= 4) ? 1 : 0;
+    if(map["Fifth"] !== undefined) map["Fifth"] = ((fmt === "de_top6" || fmt === "de_top8") && n >= 6) ? 1 : 0;
+    if(map["Seventh"] !== undefined) map["Seventh"] = (fmt === "de_top8" && n >= 8) ? 1 : 0;
+
+    return { map, total };
+  }
 
     // --- Championship bouts (by bracket stage) ---
     // We estimate champ matches per weight using the same bracket-size logic as before.
@@ -1666,4 +1689,3 @@ function recalcLive(){
 </script>
 </body>
 </html>
-
