@@ -735,6 +735,7 @@
     return { wrestlebacks: stages, placements };
   }
 
+  
   function estimateRoundMapForWeight(n, fmt, maxB){
     n = Math.floor(Number(n||0));
     const total = boutsForFormat(n, fmt);
@@ -742,55 +743,79 @@
     const rounds = getRoundSequence(maxB, fmt);
     rounds.forEach(r => map[r] = 0);
     if(n <= 1) return { map, total };
-    // Exact mapping for common full brackets (power-of-two sizes).
-    // This makes the round map deterministic for 2/4/8/16/32/64 wrestler brackets.
-    if(n === 2 || n === 4 || n === 8 || n === 16 || n === 32 || n === 64){
-      // Championship rounds
-      if(n === 64){ map["R64"] = 32; }
-      if(n >= 32){ map["R32"] = 16; }
-      if(n >= 16){ map["R16"] = 8; }
-      if(n >= 8){  map["Quarterfinals / R8"] = 4; }
-      if(n >= 4){  map["Semifinals / R4"] = 2; }
-      if(n >= 2){  map["Finals"] = 1; }
 
-      // Consolations (Flo-style labels by bracket size)
-      if(n === 64){
-        map["Consy R32 #1"] = 16;
-        map["Consy R32 #2"] = 16;
-        map["Consy R16 #1"] = 8;
-        map["Consy R16 #2"] = 8;
-        map["Consy R8 #1"] = 4;
-        map["Consy R8 #2"] = 4;
-        map["Consy R4"] = 2;
-        map["Consy Semifinals"] = 2;
-      } else if(n === 32){
-        map["Consy R16 #1"] = 8;
-        map["Consy R16 #2"] = 8;
-        map["Consy R8 #1"] = 4;
-        map["Consy R8 #2"] = 4;
-        map["Consy R4"] = 2;
-        map["Consy Semifinals"] = 2;
-      } else if(n === 16){
-        map["Consy R8 #1"] = 4;
-        map["Consy R8 #2"] = 4;
-        map["Consy R4"] = 2;
-        map["Consy Semifinals"] = 2;
-      } else if(n === 8){
-        // In an 8-man, the first wrestleback stage has 2 matches (we label it Consy R4),
-        // then Consy Semifinals has 2 matches.
-        map["Consy R4"] = 2;
-        map["Consy Semifinals"] = 2;
-      } else {
-        // 2-man / 4-man: no wrestlebacks beyond placements.
-      }
+    // Championship bouts (based on effective bracket size maxB)
+    // For planning, we assume a standard bracket where:
+    // - R64 exists only if maxB>=64, etc.
+    if(maxB >= 64) map["R64"] = (n > 32 ? (n - 32) : 0);
+    if(maxB >= 32) map["R32"] = 16;
+    if(maxB >= 16) map["R16"] = 8;
+    if(maxB >= 8)  map["Quarterfinals / R8"] = 4;
+    if(maxB >= 4)  map["Semifinals / R4"] = 2;
+    map["Finals"] = 1;
 
-      // Placement matches
-      map["Third"] = (n >= 4) ? 1 : 0;
-      map["Fifth"] = ((fmt === "de_top6" || fmt === "de_top8") && n >= 6) ? 1 : 0;
-      map["Seventh"] = (fmt === "de_top8" && n >= 8) ? 1 : 0;
-
-      return { map, total };
+    // Consolations: use exact full-bracket counts for each stage that exists in the sequence.
+    // This matches Flo-style expectations for common brackets (16/32/64) and keeps end-stage rounds stable.
+    if(maxB >= 64){
+      map["Consy R32 #1"] = 16;
+      map["Consy R32 #2"] = 16;
     }
+    if(maxB >= 32){
+      map["Consy R16 #1"] = 8;
+      map["Consy R16 #2"] = 8;
+    }
+    if(maxB >= 16){
+      map["Consy R8 #1"] = 4;
+      map["Consy R8 #2"] = 4;
+    }
+    if(maxB >= 8){
+      map["Consy R4"] = 2;
+      map["Consy Semifinals"] = 2;
+    }
+
+    // Placement matches (only if format includes them and bracket is large enough)
+    map["Third"] = (n >= 4) ? 1 : 0;
+    map["Fifth"] = ((fmt === "de_top6" || fmt === "de_top8") && n >= 6) ? 1 : 0;
+    map["Seventh"] = (fmt === "de_top8" && n >= 8) ? 1 : 0;
+
+    // If the bracket is smaller than the stage implies, zero out stages that shouldn't exist.
+    // (This prevents showing consy rounds for tiny brackets.)
+    if(n < 8){
+      map["Quarterfinals / R8"] = 0;
+      map["Consy R8 #1"] = 0;
+      map["Consy R8 #2"] = 0;
+      map["Consy R4"] = (n >= 4) ? 1 : 0; // small-bracket wrestlebacks vary; keep conservative
+      map["Consy Semifinals"] = (n >= 4) ? 1 : 0;
+    }
+    if(n < 16){
+      map["R16"] = 0;
+      map["Consy R16 #1"] = 0;
+      map["Consy R16 #2"] = 0;
+    }
+    if(n < 32){
+      map["R32"] = 0;
+      map["Consy R32 #1"] = 0;
+      map["Consy R32 #2"] = 0;
+    }
+    if(n < 64){
+      map["R64"] = 0;
+    }
+
+    // Recompute champ early round counts for non-full brackets where needed
+    // If maxB >= 16 and n is between 9..16, R16 is present with (n-8) matches.
+    if(maxB >= 16 && n > 8 && n < 16){
+      map["R16"] = n - 8;
+    }
+    if(maxB >= 32 && n > 16 && n < 32){
+      map["R32"] = n - 16;
+    }
+    if(maxB >= 64 && n > 32 && n < 64){
+      map["R64"] = n - 32;
+    }
+
+    return { map, total };
+  }
+
 
 
 
@@ -887,7 +912,8 @@
     state.weights.forEach((w)=>{
       const n = Math.floor(Number(w.wrestlers||0));
       const { map } = estimateRoundMapForWeight(n, fmtSel, maxB);
-      perWeightMaps.push({ weight: w.name, map, total: boutsForFormat(n, fmtSel) });
+      const rowTotal = roundNames.reduce((s,r)=> s + (map[r]||0), 0);
+      perWeightMaps.push({ weight: w.name, map, total: rowTotal });
       roundNames.forEach(r => totalsByRound[r] += (map[r]||0));
     });
 
