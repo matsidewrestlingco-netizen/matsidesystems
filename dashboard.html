@@ -755,7 +755,6 @@
   function estimateRoundMapForWeight(n, fmt, maxB){
     n = Math.floor(Number(n||0));
     const total = boutsForFormat(n, fmt); // legacy; Module totals use sum-of-rounds
-
     const map = {};
     const rounds = getRoundSequence(maxB, fmt);
     rounds.forEach(r => map[r] = 0);
@@ -1105,7 +1104,7 @@ const LS_KEY = "flo_all_modules_v2";
       const wtb = document.querySelector("#weightsTable tbody");
       const wlen = Array.isArray(state.weights) ? state.weights.length : 0;
       if(diag){
-        diag.textContent = `VERSION v24 • weights=${wlen} • #weightsTable=${!!wt} • tbody=${!!wtb} • LS_KEY=${(typeof LS_KEY!=="undefined"?LS_KEY:"?")}`;
+        diag.textContent = `VERSION v25 • weights=${wlen} • #weightsTable=${!!wt} • tbody=${!!wtb} • LS_KEY=${(typeof LS_KEY!=="undefined"?LS_KEY:"?")}`;
       }
       if(!Array.isArray(state.weights) || state.weights.length === 0){
         state.weights = JSON.parse(JSON.stringify(DEFAULTS.weights));
@@ -1120,7 +1119,7 @@ const LS_KEY = "flo_all_modules_v2";
             recalcAll();
             saveState();
             const diag2 = document.getElementById("diagBar");
-            if(diag2) diag2.textContent = `VERSION v24 • weights=${state.weights.length} • reset OK`;
+            if(diag2) diag2.textContent = `VERSION v25 • weights=${state.weights.length} • reset OK`;
           }
         });
       }
@@ -1732,3 +1731,4 @@ function recalcLive(){
 </script>
 </body>
 </html>
+
