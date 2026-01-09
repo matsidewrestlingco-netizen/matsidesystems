@@ -1,0 +1,1733 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FloArena Tournament Suite (Planner + Live Dashboard)</title>
+  <style>
+    :root{
+      --bg:#05060a;
+      --card:#11131b;
+      --panel:#11131b;
+      --panel-soft:#141824;
+      --grid:rgba(255,255,255,0.08);
+      --grid-strong:rgba(255,255,255,0.16);
+      --text:#f2f2f2;
+      --muted:#9aa0a6;
+      --accent:#1e88e5;
+
+      /* Status colors */
+      --good:#37d67a;
+      --warn:#ffb020;
+      --bad:#ff5b5b;
+
+      /* User input highlight (subtle) */
+      --user-bg: rgba(30,136,229,0.16);
+      --user-border: rgba(30,136,229,0.75);
+    }
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
+    .wrap{max-width:1400px; margin:0 auto; padding:18px;}
+    h1{font-size:20px; margin:0 0 6px;}
+    .sub{color:var(--muted); margin:0 0 16px; font-size:13px;}
+    .grid{display:grid; grid-template-columns: 1fr; gap:16px;}
+    .grid3{display:grid; grid-template-columns: 1fr; gap:16px; margin-top:16px;}
+    .card{background:var(--card); border:1px solid var(--grid); border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); overflow:hidden;}
+    .card h2{margin:0; padding:12px 14px; font-size:14px; background:#f3f3f3; border-bottom:1px solid var(--grid);}
+    .row{display:flex; gap:10px; padding:12px 14px; align-items:end; flex-wrap:wrap;}
+    .field{min-width:170px; flex:1;}
+    .field.small{min-width:130px; flex:0.75;}
+    .label{font-size:12px; color:var(--muted); margin:0 0 6px;}
+    input, select{
+      width:100%;
+      box-sizing:border-box;
+      padding:7px 9px;
+      border:1px solid #bdbdbd;
+      border-radius:10px;
+      font-size:13px;
+      background:#fff;
+      color:var(--text);
+      outline:none;
+    }
+    input.user, select.user{
+      background:var(--input);
+      color:var(--inputText);
+      border-color:#d0831f;
+      font-weight:700;
+    }
+    table{border-collapse:collapse; width:100%;}
+    th,td{border:1px solid var(--grid); padding:8px 10px; font-size:13px; vertical-align:middle;}
+    th{background:#f8f8f8; text-align:left; font-weight:650;}
+    .right{text-align:right;}
+    .kpi{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; padding:12px 14px;}
+    .kpi.k3{grid-template-columns: repeat(3, 1fr);}
+    .kpi .box{border:1px solid var(--grid); border-radius:12px; padding:10px;}
+    .kpi .box .k{font-size:11px; color:var(--muted);}
+    .kpi .box .v{font-size:18px; font-weight:850; margin-top:4px;}
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; border:1px solid var(--grid); background:#fff;}
+    .badge.good{color:var(--good); border-color:#a5d6a7; background:#e8f5e9;}
+    .badge.warn{color:var(--warn); border-color:#ffcc80; background:#fff3e0;}
+    .badge.bad{color:var(--bad); border-color:#ef9a9a; background:#ffebee;}
+    .note{padding:10px 14px; color:var(--muted); font-size:12px; border-top:1px solid var(--grid);}
+    .actions{display:flex; gap:10px; padding:12px 14px; border-top:1px solid var(--grid); background:#fff; flex-wrap:wrap;}
+    button{
+      border:1px solid var(--grid);
+      background:#fff;
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:650;
+    }
+    button:hover{background:#f6f6f6;}
+    .twoCol{display:grid; grid-template-columns: 1fr; gap:14px; padding:12px 14px;}
+    .mini{font-size:12px; color:var(--muted);}
+    .small{font-size:12px; color:var(--muted);}
+    .pill{display:inline-flex; gap:8px; align-items:center;}
+    .pill input{width:auto;}
+    @media (max-width: 980px){
+      .grid, .grid3{display:grid; grid-template-columns: 1fr; gap:16px; margin-top:16px;}
+      .kpi{grid-template-columns: 1fr 1fr;}
+      .kpi.k3{grid-template-columns: 1fr;}
+      .twoCol{display:grid; grid-template-columns: 1fr; gap:14px; padding:12px 14px;}
+    }
+  
+    /* Matside dark theme overrides */
+    .card h2{background:var(--panel) !important;}
+    th{background:var(--panel) !important;}
+    button{color:var(--text) !important; background:#161616 !important; border-color:var(--grid) !important;}
+    button:hover{background:#1d1d1d !important;}
+    input, select, textarea{background:#0f0f0f; color:var(--text); border-color:var(--grid);}
+    input.user, select.user{background:var(--input) !important; color:var(--inputText) !important; border-color:#d0831f !important;}
+    textarea{background:#0f0f0f; color:var(--text);}
+    .badge{background:#111 !important; color:var(--text);}
+    a{color:#ffffff;}
+    a:hover{opacity:.9;}
+
+
+    /* Matside polish overrides */
+    body{background:var(--bg) !important; color:var(--text) !important;}
+    .card{background:var(--card) !important; border-color:var(--grid) !important;}
+    .card h2{background:var(--panel) !important; border-bottom-color:var(--grid) !important;}
+    th{background:var(--panel) !important;}
+    td, th{border-color:var(--grid) !important;}
+    .note{border-top-color:var(--grid) !important;}
+    .actions{background:transparent !important; border-top-color:var(--grid) !important;}
+
+    input, select, textarea{
+      background:var(--panel-soft) !important;
+      color:var(--text) !important;
+      border-color:var(--grid-strong) !important;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color: var(--user-border) !important;
+      box-shadow: 0 0 0 3px rgba(30,136,229,0.18) !important;
+    }
+
+    /* Subtle highlight for user-input fields */
+    input.user, select.user{
+      background: var(--user-bg) !important;
+      border-color: var(--user-border) !important;
+      color: var(--text) !important;
+      font-weight: 700;
+    }
+
+    button{
+      color: var(--text) !important;
+      background: transparent !important;
+      border-color: var(--grid-strong) !important;
+    }
+    button:hover{
+      background: rgba(255,255,255,0.06) !important;
+      border-color: rgba(30,136,229,0.45) !important;
+    }
+
+    .badge{background:rgba(255,255,255,0.03) !important; border-color:var(--grid) !important;}
+    a{color: var(--text) !important;}
+    a:hover{opacity:.9;}
+
+
+    .progressWrap{padding:12px 14px 14px 14px;}
+    .progressBar{height:10px; border-radius:999px; background:rgba(255,255,255,0.08); overflow:hidden; border:1px solid var(--grid);}
+    .progressBar > div{height:100%; width:0%; background:var(--accent); transition:width .25s ease;}
+    .topLine{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:0 14px 10px 14px;}
+    .topLine .big{font-weight:900; font-size:18px;}
+    .topLine .small{font-size:12px; color:var(--muted);}
+
+
+    .roundTableWrap{padding:12px 14px; overflow:auto;}
+    .roundTable{min-width:980px;}
+    .toggleDay{display:inline-flex; gap:8px; align-items:center; justify-content:flex-end;}
+    .toggleDay select{width:auto; min-width:92px;}
+
+
+    /* Module accents */
+    .card{position:relative;}
+    .card::before{
+      content:"";
+      position:absolute;
+      left:0; top:0; bottom:0;
+      width:4px;
+      background: var(--accent);
+      border-radius:14px 0 0 14px;
+      opacity:.9;
+    }
+    .card.mod0::before{background:#4fc3f7;}
+    .card.mod1::before{background:#81c784;}
+    .card.mod2::before{background:#ffb74d;}
+    .card.mod3::before{background:#ba68c8;}
+    .card.mod5::before{background:#90a4ae;}
+    .card.mod4::before{background:#e57373;}
+    /* soften header tint to match accent */
+    .card.mod0 h2{box-shadow: inset 0 -1px 0 var(--grid), inset 0 1px 0 rgba(79,195,247,0.25);}
+    .card.mod1 h2{box-shadow: inset 0 -1px 0 var(--grid), inset 0 1px 0 rgba(129,199,132,0.22);}
+    .card.mod2 h2{box-shadow: inset 0 -1px 0 var(--grid), inset 0 1px 0 rgba(255,183,77,0.22);}
+    .card.mod3 h2{box-shadow: inset 0 -1px 0 var(--grid), inset 0 1px 0 rgba(186,104,200,0.22);}
+    .card.mod5 h2{box-shadow: inset 0 -1px 0 var(--grid), inset 0 1px 0 rgba(144,164,174,0.22);}
+    .card.mod4 h2{box-shadow: inset 0 -1px 0 var(--grid), inset 0 1px 0 rgba(229,115,115,0.22);}
+
+</style>
+</head>
+<body>
+<div id="diagBar" style="position:sticky;top:0;z-index:9998;background:rgba(255,255,255,0.92);backdrop-filter:blur(6px);border-bottom:1px solid rgba(0,0,0,0.08);padding:8px 12px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;font-size:12px;color:#111;">Loading diagnostics…</div>
+  <div class="wrap">
+    <h1>FloArena Tournament Suite</h1>
+    <p class="sub">All modules in one page. Orange fields are user input. Everything else updates automatically. Saved locally in your browser.</p>
+
+    <div class="card mod0" id="topSummaryCard">
+      <h2>Module 0 — Tournament progress</h2>
+
+      <div class="topLine">
+        <div>
+          <div class="small">Overall progress</div>
+          <div class="big"><span id="tpPct">0%</span> complete</div>
+        </div>
+        <div>
+          <div class="small">Bouts</div>
+          <div class="big"><span id="tpDone">0</span> / <span id="tpTotal">0</span></div>
+        </div>
+        <div>
+          <div class="small">Remaining</div>
+          <div class="big"><span id="tpRemaining">0</span></div>
+        </div>
+      </div>
+
+      <div class="progressWrap">
+        <div class="progressBar" aria-label="Tournament progress">
+          <div id="tpBar"></div>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="box">
+          <div class="k">Total mats</div>
+          <div class="v" id="tpMats">-</div>
+        </div>
+        <div class="box">
+          <div class="k">Matches remaining (entered)</div>
+          <div class="v" id="tpRemainEntered">-</div>
+        </div>
+        <div class="box">
+          <div class="k">Avg bouts / hr (overall)</div>
+          <div class="v" id="tpAvgHr">-</div>
+        </div>
+        <div class="box">
+          <div class="k">Estimated end time</div>
+          <div class="v" id="tpEnd">-</div>
+        </div>
+      </div>
+
+      <div class="note">
+        Uses Module 2 inputs (completed per hour + remaining per location). If total bouts is 0, progress stays at 0%.
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card mod1">
+        <h2>Module 1 — Start-of-tournament planner</h2>
+
+        <div class="row">
+          <div class="field">
+            <div class="label">Tournament level</div>
+            <select id="level" class="user">
+              <option value="hs">HS</option>
+              <option value="jy">JH / Youth</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="label">Format</div>
+            <select id="format" class="user">
+              <option value="de_top4">Double elimination — places 1st–4th</option>
+              <option value="de_top6">Double elimination — places 1st–6th</option>
+              <option value="de_top8">Double elimination — places 1st–8th</option>
+            </select>
+          </div>
+          <div class="field small">
+            <div class="label">Days</div>
+            <select id="days" class="user">
+              <option value="2">2-day</option>
+              <option value="1">1-day</option>
+            </select>
+          </div>
+          <div class="field small">
+            <div class="label">Weight classes</div>
+            <input id="numWeights" class="user" type="number" min="1" step="1" value="13"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field small">
+            <div class="label">Day 1 start</div>
+            <input id="day1Start" class="user" type="time" value="16:00"/>
+          </div>
+          <div class="field small">
+            <div class="label">Day 1 end</div>
+            <input id="day1End" class="user" type="time" value="22:00"/>
+          </div>
+          <div class="field small">
+            <div class="label">Day 2 start</div>
+            <input id="day2Start" class="user" type="time" value="09:00"/>
+          </div>
+          <div class="field small">
+            <div class="label">Assumed pace (bouts / mat / hr)</div>
+            <input id="pace" class="user" type="number" min="6" max="20" step="0.5" value="12"/>
+            <div class="mini" id="paceHint"></div>
+          </div>
+        </div>
+
+        <div class="twoCol">
+          <div>
+            <div class="label">Wrestlers per weight</div>
+            <table id="weightsTable">
+              <thead>
+                <tr>
+                  <th style="width:32%">Weight</th>
+                  <th style="width:18%" class="right">Wrestlers</th>
+                  <th style="width:20%" class="right">Bouts</th>
+                  <th style="width:30%" class="right">Location</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot>
+                <tr>
+                  <th>Total</th>
+                  <th class="right" id="totalWrestlers">0</th>
+                  <th class="right" id="plannerTotalBouts">0</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div>
+            <div class="label">Gym / locations (shared across modules)</div>
+            <div class="small" style="padding:0 0 10px 0;">Set mats here once; Live Dashboard + What-if use the same mats automatically.</div>
+            <table id="locTablePlanner">
+              <thead>
+                <tr>
+                  <th style="width:40%">Location</th>
+                  <th style="width:20%" class="right"># Mats</th>
+                  <th style="width:40%" class="right">Assigned bouts</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot>
+                <tr>
+                  <th>Total</th>
+                  <th class="right" id="totalMatsPlanner">0</th>
+                  <th class="right" id="totalAssignedBouts">0</th>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div class="actions">
+              <button id="addLoc">+ Add location</button>
+              <button id="resetLoc">Reset locations</button>
+              <button id="rebalance">Rebalance weights across gyms</button>
+            </div>
+
+            <div style="padding:0 14px 12px 14px" class="mini">
+              Balancing logic: assigns heavier “bouts” weights to gyms to keep <b>bouts per mat</b> as even as possible.
+            </div>
+
+            <table id="assignmentTable" style="margin:0 14px 14px 14px; width: calc(100% - 28px);">
+              <thead>
+                <tr>
+                  <th style="width:32%">Location</th>
+                  <th style="width:48%">Assigned weights</th>
+                  <th style="width:20%" class="right">Bouts</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+
+          </div>
+        </div>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="k">Total mats</div>
+            <div class="v" id="kpiMats">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Estimated total hours (all mats)</div>
+            <div class="v" id="kpiHours">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Friday capacity (bouts)</div>
+            <div class="v" id="kpiDay1Cap">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Plan status</div>
+            <div class="v" id="kpiStatus">-</div>
+          </div>
+        </div>
+
+        <div style="padding:0 14px 14px 14px">
+          <div class="label">Recommended Day 1 stop point</div>
+          <div id="stopPointText" style="font-weight:750; font-size:13px;">-</div>
+          <div class="mini" id="stopPointMini"></div>
+        </div>
+
+        <div class="note">
+          Planner estimates bouts for double-elimination with placement to 4/6/8 (Flo-style).
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Module 2 — Live dashboard (matches remaining + hourly pace)</h2>
+
+        <div style="padding:12px 14px" class="small">
+          Enter <b>matches remaining</b> per location. It calculates “matches per mat” and overall remaining load.
+        </div>
+
+        <table id="locTableLive">
+          <thead>
+            <tr>
+              <th style="width:34%">Location</th>
+              <th style="width:16%" class="right"># Mats</th>
+              <th style="width:22%" class="right">Matches remaining</th>
+              <th style="width:28%" class="right">Matches / mat</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr>
+              <th>Total</th>
+              <th class="right" id="liveTotalMats">0</th>
+              <th class="right" id="liveTotalRemaining">0</th>
+              <th class="right" id="liveOverallMPM">-</th>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="row">
+          <div class="field">
+            <div class="label">Total estimated bouts</div>
+            <div class="pill">
+              <input id="usePlannerTotal" type="checkbox" checked />
+              <span class="mini">Use Planner total</span>
+            </div>
+            <input id="totalBouts" class="user" type="number" min="0" step="1" value="0" />
+          </div>
+          <div class="field small">
+            <div class="label">Start time</div>
+            <input id="startTime" class="user" type="time" value="09:00" />
+          </div>
+          <div class="field small">
+            <div class="label">Level</div>
+            <select id="dashLevel" class="user">
+              <option value="hs">HS</option>
+              <option value="jh">JH / Youth</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="kpi k3">
+          <div class="box">
+            <div class="k">Bouts completed (entered)</div>
+            <div class="v" id="boutsCompleted">0</div>
+          </div>
+          <div class="box">
+            <div class="k">Avg bouts / hr (overall)</div>
+            <div class="v" id="avgPerHour">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Estimated end time</div>
+            <div class="v" id="estEndTime">-</div>
+          </div>
+        </div>
+
+        <div style="padding:12px 14px">
+          <table id="hourTable">
+            <thead>
+              <tr>
+                <th style="width:20%">Start</th>
+                <th style="width:20%">End</th>
+                <th style="width:30%" class="right">Completed (this hour)</th>
+                <th style="width:30%" class="right">Per-mat average</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="actions">
+          <button id="addHour">+ Add hour row</button>
+          <button id="clearHours">Clear hour inputs</button>
+        </div>
+
+        <div class="note">
+          Tip: even 2–3 filled hours gives you a usable “end time” forecast from your real pace.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid3">
+      <div class="card">
+        <h2>Module 3 — What-if simulator (end time)</h2>
+
+        <div class="row">
+          <div class="field small">
+            <div class="label">Scenario: mats available</div>
+            <input id="simMats" class="user" type="number" min="1" step="1" value="8"/>
+          </div>
+          <div class="field small">
+            <div class="label">Scenario: pace (bouts / mat / hr)</div>
+            <input id="simPace" class="user" type="number" min="6" max="20" step="0.5" value="12"/>
+          </div>
+          <div class="field small">
+            <div class="label">Tournament start</div>
+            <input id="simStart" class="user" type="time" value="09:00"/>
+          </div>
+          <div class="field">
+            <div class="label">Total bouts (from Planner unless overridden)</div>
+            <input id="simTotalBouts" class="user" type="number" min="0" step="1" value="0"/>
+            <div class="mini">If you want this driven by live pace instead of projections, use Module 2.</div>
+          </div>
+        </div>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="k">Estimated duration</div>
+            <div class="v" id="simDuration">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Estimated end time</div>
+            <div class="v" id="simEnd">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Delta vs planner</div>
+            <div class="v" id="simDelta">-</div>
+          </div>
+          <div class="box">
+            <div class="k">Note</div>
+            <div class="v" style="font-size:12px; font-weight:650; color:var(--muted);">Next: drop-mats + finals bottleneck.</div>
+          </div>
+        </div>
+
+        <div class="note">
+          This module answers “what happens if we drop to 4 mats?” instantly.
+        </div>
+      </div>
+
+      
+      <div class="card mod5">
+        <h2>Module 5 — Round map (bouts by weight + estimated round end times)</h2>
+
+        <div style="padding:12px 14px" class="small">
+          This is a planning view. It estimates bouts per round per weight class for your selected format, then projects end times using your mats + pace.
+          Use the <b>Day</b> toggles to decide which rounds are Day 1 vs Day 2.
+        </div>
+
+        <div class="roundTableWrap">
+          <div class="label">Round schedule (all weights combined)</div>
+          <table class="roundTable" id="roundScheduleTable">
+            <thead>
+              <tr>
+                <th style="min-width:160px">Round</th>
+                <th style="min-width:120px" class="right">Bouts (total)</th>
+                <th style="min-width:120px" class="right">Day</th>
+                <th style="min-width:180px" class="right">Est. end time</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="roundTableWrap" style="padding-top:0">
+          <div class="label">Bouts by weight class</div>
+          <table class="roundTable" id="roundByWeightTable">
+            <thead><tr id="rbwHeadRow"></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="note">
+          Note: Double-elimination wrestleback / consolation structures can vary slightly between rule sets and software settings.
+          This module is meant to be directionally accurate for planning and staffing, not an official bracket guarantee.
+        </div>
+      </div>
+
+<div class="card mod4">
+        <h2>Module 4 — Utilities</h2>
+        <div style="padding:12px 14px" class="small">
+          This page stores everything locally in your browser (localStorage). Use these buttons if you want a clean slate.
+        </div>
+        <div class="actions">
+          <button id="resetAll">Reset everything</button>
+          <button id="exportJson">Export saved data (JSON)</button>
+          <button id="importJson">Import saved data (JSON)</button>
+        </div>
+        <div style="padding:0 14px 14px 14px">
+          <textarea id="jsonBox" style="width:100%; height:240px; border:1px solid var(--grid); border-radius:12px; padding:10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px;" placeholder="Export/import data here..."></textarea>
+        </div>
+        <div class="note">
+          Export/import is handy if you want to move the plan from your laptop to a Chromebook mat table.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const pad2 = n => String(n).padStart(2, "0");
+  function parseTimeToMinutes(hhmm){
+    if(!hhmm) return null;
+    const [h,m] = hhmm.split(":").map(Number);
+    if(Number.isNaN(h) || Number.isNaN(m)) return null;
+    return h*60+m;
+  }
+  function minutesToTime(mins){
+    mins = ((mins % 1440) + 1440) % 1440;
+    const h = Math.floor(mins/60), m = mins%60;
+    return `${pad2(h)}:${pad2(m)}`;
+  }
+  function fmt(n, d=2){
+    if(n === null || n === undefined || Number.isNaN(n) || !Number.isFinite(n)) return "-";
+    return n.toFixed(d).replace(/\.00$/,"");
+  }
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+  function el(id){ return document.getElementById(id); }
+
+  function boutsTop6(n){
+    n = Math.floor(Number(n||0));
+    if(n <= 1) return 0;
+    if(n === 2) return 1;
+    if(n === 3) return 3;
+    if(n === 4) return 5;
+    return 2*n - 5;
+  }
+
+  function boutsTop4(n){
+    // Top-4 is top-6 minus the single 5th/6th placement bout (typical Flo-style)
+    n = Math.floor(Number(n||0));
+    if(n <= 1) return 0;
+    if(n === 2) return 1;
+    if(n === 3) return 3;
+    if(n === 4) return 4;
+    return Math.max(0, boutsTop6(n) - 1);
+  }
+
+  function boutsTop8(n){
+    // Top-8 is top-6 plus the single 7th/8th placement bout (typical Flo-style)
+    n = Math.floor(Number(n||0));
+    if(n <= 1) return 0;
+    if(n === 2) return 1;
+    if(n === 3) return 3;
+    if(n === 4) return 5;
+    return boutsTop6(n) + 1;
+  }
+
+  function boutsForFormat(n, fmt){
+    switch(fmt){
+      case "de_top4": return boutsTop4(n);
+      case "de_top8": return boutsTop8(n);
+      case "de_top6":
+      default: return boutsTop6(n);
+    }
+  }
+
+  
+  // --- Round map planner helpers (estimates) ---
+  function nextPow2(n){
+    n = Math.max(1, Math.floor(Number(n||1)));
+    return 1 << Math.ceil(Math.log2(n));
+  }
+
+  function getMaxBFromState(){
+    const ns = (state?.weights || []).map(w=>Math.floor(Number(w?.wrestlers||0))).filter(n=>n>1);
+    const maxN = ns.length ? Math.max(...ns) : 0;
+    let maxB = maxN ? nextPow2(maxN) : 2;
+    while(maxB > 2 && maxN && maxN <= maxB/2) maxB = maxB/2;
+    return maxB;
+  }
+
+  function boutsFromRoundMap(n, fmt, maxB){
+    const { map } = estimateRoundMapForWeight(n, fmt, maxB);
+    const seq = getRoundSequence(maxB, fmt);
+    return seq.reduce((s,r)=> s + (map[r]||0), 0);
+  }
+
+
+  function getRoundSequence(maxB, fmt){
+    // Requested exact display order (Flo-style naming)
+    // We'll include only rounds that can exist for the max bracket size, and only placements for the selected format.
+    const order = [
+      "R64",
+      "Consy R32 #1",
+      "R32",
+      "Consy R32 #2",
+      "R16",
+      "Consy R16 #1",
+      "Consy R16 #2",
+      "Quarterfinals / R8",
+      "Consy R8 #1",
+      "Consy R8 #2",
+      "Semifinals / R4",
+      "Consy R4",
+      "Consy Semifinals",
+      "Finals",
+      "Third",
+      "Fifth",
+      "Seventh"
+    ];
+
+    const enabled = new Set();
+
+    // Champ rounds enabled by bracket size
+    if(maxB >= 64) enabled.add("R64");
+    if(maxB >= 32) enabled.add("R32");
+    if(maxB >= 16) enabled.add("R16");
+    if(maxB >= 8)  enabled.add("Quarterfinals / R8");
+    if(maxB >= 4)  enabled.add("Semifinals / R4");
+    if(maxB >= 2)  enabled.add("Finals");
+
+    // Consolations enabled by bracket size
+    if(maxB >= 64) enabled.add("Consy R32 #1"); // happens between R64 and R32
+    if(maxB >= 32) enabled.add("Consy R32 #2");
+    if(maxB >= 16){ enabled.add("Consy R16 #1"); enabled.add("Consy R16 #2"); }
+    if(maxB >= 8){ enabled.add("Consy R8 #1"); enabled.add("Consy R8 #2"); }
+    if(maxB >= 4){ enabled.add("Consy R4"); enabled.add("Consy Semifinals"); }
+
+    // Placements by format
+    enabled.add("Third");
+    if(fmt === "de_top6" || fmt === "de_top8") enabled.add("Fifth");
+    if(fmt === "de_top8") enabled.add("Seventh");
+
+    return order.filter(r => enabled.has(r));
+  }
+
+
+  function buildChampRoundsForN(n){
+    n = Math.floor(Number(n||0));
+    if(n <= 1) return [];
+    let B = nextPow2(n);
+    // If n fits in half the bracket, shrink until it doesn't (avoid empty leading rounds)
+    while(B > 2 && n <= B/2) B = B/2;
+
+    const rounds = [];
+    if(n > B/2){
+      rounds.push({ name: `Round of ${B}`, matches: n - B/2 });
+    }
+    // Subsequent rounds are fixed
+    let S = B/2;
+    while(S >= 2){
+      rounds.push({ name: (S===2 ? "Final" : S===4 ? "Semifinals" : S===8 ? "Quarterfinals" : `Round of ${S}`), matches: S/2 });
+      S = S/2;
+    }
+    return rounds;
+  }
+
+  function buildConsiStages(maxB, fmt){
+    // A pragmatic set of wrestleback stages for planning purposes.
+    const stages = [];
+    if(maxB >= 64) stages.push("Consi R64");
+    if(maxB >= 32) stages.push("Consi R32");
+    if(maxB >= 16) { stages.push("Consi R16 #1"); stages.push("Consi R16 #2"); }
+    if(maxB >= 8)  stages.push("Consi QF");
+    if(maxB >= 4)  stages.push("Consi SF");
+
+    // Placement matches (end-of-bracket)
+    const placements = [];
+    placements.push("3rd Place");
+    if(fmt === "de_top6" || fmt === "de_top8") placements.push("5th Place");
+    if(fmt === "de_top8") placements.push("7th Place");
+    return { wrestlebacks: stages, placements };
+  }
+
+  function estimateRoundMapForWeight(n, fmt, maxB){
+    n = Math.floor(Number(n||0));
+    const total = boutsForFormat(n, fmt); // legacy; Module totals use sum-of-rounds
+    const map = {};
+    const rounds = getRoundSequence(maxB, fmt);
+    rounds.forEach(r => map[r] = 0);
+    if(n <= 1) return { map, total };
+
+    // Exact lookup (6–64) for DE formats based on your verified bout-count sheets.
+    if(BOUT_TABLE && BOUT_TABLE[fmt] && BOUT_TABLE[fmt][String(n)]){
+      const row = BOUT_TABLE[fmt][String(n)];
+      rounds.forEach(r => { map[r] = Number(row[r]||0); });
+      return { map, total };
+    }
+
+    // Fallback: deterministic approximation for sizes outside the sheet (e.g., <6),
+    // so the UI still works even if the table doesn't cover it.
+    function reduceRound(entrants, targetWinners){
+      entrants = Math.floor(Number(entrants||0));
+      targetWinners = Math.floor(Number(targetWinners||0));
+      if(entrants <= 0) return { matches: 0, survivors: 0 };
+      if(entrants <= targetWinners) return { matches: 0, survivors: entrants };
+      const matches = entrants - targetWinners;
+      return { matches, survivors: targetWinners };
+    }
+
+    let entrants = n;
+    const losers = {};
+    const champPlan = [];
+    if(maxB >= 64) champPlan.push({ label:"R64", target: 32 });
+    if(maxB >= 32) champPlan.push({ label:"R32", target: 16 });
+    if(maxB >= 16) champPlan.push({ label:"R16", target: 8 });
+    if(maxB >= 8)  champPlan.push({ label:"Quarterfinals / R8", target: 4 });
+    if(maxB >= 4)  champPlan.push({ label:"Semifinals / R4", target: 2 });
+    champPlan.push({ label:"Finals", target: 1 });
+
+    for(const step of champPlan){
+      const rr = reduceRound(entrants, step.target);
+      if(map[step.label] !== undefined) map[step.label] = rr.matches;
+      losers[step.label] = rr.matches;
+      entrants = rr.survivors;
+    }
+
+    function applyConsiPair(label1, label2, startEntrants, mergeLosers, target){
+      const r1 = reduceRound(startEntrants, target);
+      if(label1 && map[label1] !== undefined) map[label1] = r1.matches;
+
+      const merged = r1.survivors + (mergeLosers||0);
+      const r2 = reduceRound(merged, target);
+      if(label2 && map[label2] !== undefined) map[label2] = r2.matches;
+
+      return r2.survivors;
+    }
+
+    let consiField = 0;
+    if(maxB >= 64) consiField = losers["R64"] || 0;
+    else if(maxB >= 32) consiField = losers["R32"] || 0;
+    else if(maxB >= 16) consiField = losers["R16"] || 0;
+
+    if(maxB >= 64){
+      consiField = applyConsiPair("Consy R32 #1", "Consy R32 #2", consiField, losers["R32"]||0, 16);
+      consiField = applyConsiPair("Consy R16 #1", "Consy R16 #2", consiField, losers["R16"]||0, 8);
+      consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
+      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+    } else if(maxB >= 32){
+      consiField = applyConsiPair("Consy R16 #1", "Consy R16 #2", consiField, losers["R16"]||0, 8);
+      consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
+      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+    } else if(maxB >= 16){
+      consiField = applyConsiPair("Consy R8 #1", "Consy R8 #2", consiField, losers["Quarterfinals / R8"]||0, 4);
+      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+    } else if(maxB >= 8){
+      consiField = applyConsiPair("Consy R4", "Consy Semifinals", consiField, losers["Semifinals / R4"]||0, 2);
+    }
+
+    if(map["Third"] !== undefined) map["Third"] = (n >= 4) ? 1 : 0;
+    if(map["Fifth"] !== undefined) map["Fifth"] = ((fmt === "de_top6" || fmt === "de_top8") && n >= 6) ? 1 : 0;
+    if(map["Seventh"] !== undefined) map["Seventh"] = (fmt === "de_top8" && n >= 8) ? 1 : 0;
+
+    return { map, total };
+  }
+
+    // --- Championship bouts (by bracket stage) ---
+    // We estimate champ matches per weight using the same bracket-size logic as before.
+    const champ = buildChampRoundsForN(n);
+    const champByName = {};
+    champ.forEach(r => champByName[r.name] = r.matches);
+
+    // Normalize names into your requested labels
+    // Round of 64 -> R64, Round of 32 -> R32, Round of 16 -> R16,
+    // Quarterfinals/Semifinals/Final already align (with our label variants).
+    map["R64"] = champByName["Round of 64"] || 0;
+    map["R32"] = champByName["Round of 32"] || 0;
+    map["R16"] = champByName["Round of 16"] || 0;
+    map["Quarterfinals / R8"] = champByName["Quarterfinals"] || champByName["Round of 8"] || 0;
+    map["Semifinals / R4"] = champByName["Semifinals"] || champByName["Round of 4"] || 0;
+    map["Finals"] = champByName["Final"] || 0;
+
+    // --- Placement bouts (simple flags) ---
+    if(n >= 4) map["Third"] = 1;
+    if((fmt === "de_top6" || fmt === "de_top8") && n >= 6) map["Fifth"] = 1;
+    if(fmt === "de_top8" && n >= 8) map["Seventh"] = 1;
+
+    // --- Consolations (allocate remaining bouts across the ordered consi stages) ---
+    const champTotal = Math.max(0, n - 1);
+    const placementCount = (map["Third"]||0) + (map["Fifth"]||0) + (map["Seventh"]||0);
+    let wrestlebackTotal = Math.max(0, total - champTotal - placementCount);
+
+    const consiStages = rounds.filter(r => r.toLowerCase().includes("consy"));
+    if(consiStages.length){
+      // Weighted distribution (earlier consi stages get more)
+      const k = consiStages.length;
+      const weights = consiStages.map((_,i)=> (k - i));
+      const wsum = weights.reduce((s,v)=>s+v,0) || 1;
+      let remaining = wrestlebackTotal;
+
+      for(let i=0;i<k;i++){
+        const stage = consiStages[i];
+        const share = (i === k-1) ? remaining : Math.round(wrestlebackTotal * (weights[i]/wsum));
+        const v = Math.max(0, Math.min(remaining, share));
+        map[stage] = v;
+        remaining -= v;
+      }
+      if(remaining !== 0){
+        map[consiStages[0]] = Math.max(0, (map[consiStages[0]]||0) + remaining);
+      }
+    }
+
+    return { map, total };
+  }
+
+  function collectRoundColumns(fmt){
+    // Determine the maximum bracket size across weights
+    const ns = state.weights.map(w=>Math.floor(Number(w.wrestlers||0))).filter(n=>n>1);
+    const maxN = ns.length ? Math.max(...ns) : 0;
+    let maxB = maxN ? nextPow2(maxN) : 2;
+    while(maxB > 2 && maxN && maxN <= maxB/2) maxB = maxB/2;
+
+    const sequence = getRoundSequence(maxB, fmt);
+    const allCols = ["Weight", ...sequence, "Total"];
+    return { cols: allCols, champCols: [], maxB, consi: { sequence } };
+  }
+
+  function ensureRoundDayDefaults(roundNames){
+    state.roundDay = state.roundDay || {};
+    // Default: everything on Day 1 except placements on Day 2 (common)
+    roundNames.forEach(r=>{
+      if(state.roundDay[r] !== 1 && state.roundDay[r] !== 2){
+        const lower = r.toLowerCase();
+        state.roundDay[r] = (lower.includes("place") || lower.includes("final") ? 2 : 1);
+      }
+    });
+  }
+
+  function renderRoundPlanner(){
+    const fmtSel = (document.getElementById("format")?.value) || (state.format || "de_top6");
+    const { cols, champCols, maxB, consi } = collectRoundColumns(fmtSel);
+
+    // Ensure day toggles exist
+    const roundNames = cols.filter(c=>c!=="Weight" && c!=="Total");
+    ensureRoundDayDefaults(roundNames);
+
+    // --- Schedule table ---
+    const schedBody = document.querySelector("#roundScheduleTable tbody");
+    if(!schedBody) return;
+    schedBody.innerHTML = "";
+
+    // Compute total bouts per round across all weights
+    const totalsByRound = {};
+    roundNames.forEach(r=>totalsByRound[r]=0);
+
+    const perWeightMaps = [];
+    state.weights.forEach((w)=>{
+      const n = Math.floor(Number(w.wrestlers||0));
+      const { map } = estimateRoundMapForWeight(n, fmtSel, maxB);
+      const rowTotal = roundNames.reduce((s,r)=> s + (map[r]||0), 0);
+      perWeightMaps.push({ weight: w.name, map, total: rowTotal });
+      roundNames.forEach(r => totalsByRound[r] += (map[r]||0));
+    });
+
+    // Estimate end times by day, sequential within each day bucket
+    const mats = totalMats();
+    const pace = Number(document.getElementById("pace")?.value || state.pace || 12);
+    const day1Start = parseTimeToMinutes(document.getElementById("day1Start")?.value || state.day1Start || "16:00") ?? 0;
+    const day2Start = parseTimeToMinutes(document.getElementById("day2Start")?.value || state.day2Start || "09:00") ?? 0;
+
+    let t1 = day1Start;
+    let t2 = day2Start;
+
+    roundNames.forEach(r=>{
+      const bouts = totalsByRound[r] || 0;
+
+      const tr = document.createElement("tr");
+      const day = state.roundDay[r] || 1;
+
+      // duration in minutes
+      const minutes = (mats>0 && pace>0) ? Math.ceil((bouts / (mats*pace)) * 60) : 0;
+      if(day === 1) t1 += minutes;
+      else t2 += minutes;
+
+      const endTime = minutesToTime(day===1 ? t1 : t2);
+
+      tr.innerHTML = `
+        <td>${escapeHtml(r)}</td>
+        <td class="right">${bouts}</td>
+        <td class="right">
+          <span class="toggleDay">
+            <select class="user" data-round="${escapeHtml(r)}">
+              <option value="1"${day===1?" selected":""}>Day 1</option>
+              <option value="2"${day===2?" selected":""}>Day 2</option>
+            </select>
+          </span>
+        </td>
+        <td class="right">${(mats>0 && pace>0) ? endTime : "-"}</td>
+      `;
+      schedBody.appendChild(tr);
+    });
+
+    // Bind day toggles
+    schedBody.querySelectorAll("select[data-round]").forEach(sel=>{
+      sel.addEventListener("change", (e)=>{
+        const rn = e.target.dataset.round;
+        state.roundDay[rn] = Number(e.target.value);
+        recalcAll();
+        saveState();
+      });
+    });
+
+    // --- Per weight table ---
+    const headRow = document.getElementById("rbwHeadRow");
+    const body = document.querySelector("#roundByWeightTable tbody");
+    if(!headRow || !body) return;
+
+    headRow.innerHTML = "";
+    cols.forEach((c, idx)=>{
+      const th = document.createElement("th");
+      th.textContent = c;
+      if(idx>0) th.className = "right";
+      headRow.appendChild(th);
+    });
+
+    body.innerHTML = "";
+    perWeightMaps.forEach(pw=>{
+      const tr = document.createElement("tr");
+      const cells = [];
+      cells.push(`<td>${escapeHtml(pw.weight)}</td>`);
+      cols.forEach((c)=>{
+        if(c==="Weight" || c==="Total") return;
+        cells.push(`<td class="right">${pw.map[c] ?? 0}</td>`);
+      });
+      cells.push(`<td class="right"><b>${pw.total}</b></td>`);
+      tr.innerHTML = cells.join("");
+      body.appendChild(tr);
+    });
+  }
+
+const LS_KEY = "flo_all_modules_v2";
+  const DEFAULTS = {
+    
+    
+    
+    weightLoc: {},roundDay: {},format: "de_top6",level: "hs",
+    days: "2",
+    numWeights: 13,
+    day1Start: "16:00",
+    day1End: "22:00",
+    day2Start: "09:00",
+    pace: 12,
+    weights: Array.from({length:13}, (_,i)=>({ name:`W${i+1}`, wrestlers:16 })),
+    locations: [
+      { name:"Gym A", mats:4, remaining:0 },
+      { name:"Gym B", mats:4, remaining:0 }
+    ],
+    usePlannerTotal: true,
+    totalBoutsOverride: 0,
+    startTime: "09:00",
+    dashLevel: "hs",
+    hours: Array.from({length:14}, ()=>({ completed:"" })),
+    simMats: 8,
+    simPace: 12,
+    simStart: "09:00",
+    simTotalBoutsOverride: 0
+  };
+
+  // Exact bout-count lookup table derived from bout_counts.xlsx (Top 8/6/4)
+  const BOUT_TABLE = {"de_top8":{"64":{"R64":32,"Consy R32 #1":16,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"63":{"R64":31,"Consy R32 #1":15,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"62":{"R64":30,"Consy R32 #1":14,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"61":{"R64":29,"Consy R32 #1":13,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"60":{"R64":28,"Consy R32 #1":12,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"59":{"R64":27,"Consy R32 #1":11,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"58":{"R64":26,"Consy R32 #1":10,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"57":{"R64":25,"Consy R32 #1":9,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"56":{"R64":24,"Consy R32 #1":8,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"55":{"R64":23,"Consy R32 #1":7,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"54":{"R64":22,"Consy R32 #1":6,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"53":{"R64":21,"Consy R32 #1":5,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"52":{"R64":20,"Consy R32 #1":4,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"51":{"R64":19,"Consy R32 #1":3,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"50":{"R64":18,"Consy R32 #1":2,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"49":{"R64":17,"Consy R32 #1":1,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"48":{"R64":16,"Consy R32 #1":0,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"47":{"R64":15,"Consy R32 #1":0,"R32":16,"Consy R32 #2":15,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"46":{"R64":14,"Consy R32 #1":0,"R32":16,"Consy R32 #2":14,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"45":{"R64":13,"Consy R32 #1":0,"R32":16,"Consy R32 #2":13,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"44":{"R64":12,"Consy R32 #1":0,"R32":16,"Consy R32 #2":12,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"43":{"R64":11,"Consy R32 #1":0,"R32":16,"Consy R32 #2":11,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"42":{"R64":10,"Consy R32 #1":0,"R32":16,"Consy R32 #2":10,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"41":{"R64":9,"Consy R32 #1":0,"R32":16,"Consy R32 #2":9,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"40":{"R64":8,"Consy R32 #1":0,"R32":16,"Consy R32 #2":8,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"39":{"R64":7,"Consy R32 #1":0,"R32":16,"Consy R32 #2":7,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"38":{"R64":6,"Consy R32 #1":0,"R32":16,"Consy R32 #2":6,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"37":{"R64":5,"Consy R32 #1":0,"R32":16,"Consy R32 #2":5,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"36":{"R64":4,"Consy R32 #1":0,"R32":16,"Consy R32 #2":4,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"35":{"R64":3,"Consy R32 #1":0,"R32":16,"Consy R32 #2":3,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"34":{"R64":2,"Consy R32 #1":0,"R32":16,"Consy R32 #2":2,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"33":{"R64":1,"Consy R32 #1":0,"R32":16,"Consy R32 #2":1,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"32":{"R64":0,"Consy R32 #1":0,"R32":16,"Consy R32 #2":0,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"31":{"R64":0,"Consy R32 #1":0,"R32":15,"Consy R32 #2":0,"R16":8,"Consy R16 #1":7,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"30":{"R64":0,"Consy R32 #1":0,"R32":14,"Consy R32 #2":0,"R16":8,"Consy R16 #1":6,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"29":{"R64":0,"Consy R32 #1":0,"R32":13,"Consy R32 #2":0,"R16":8,"Consy R16 #1":5,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"28":{"R64":0,"Consy R32 #1":0,"R32":12,"Consy R32 #2":0,"R16":8,"Consy R16 #1":4,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"27":{"R64":0,"Consy R32 #1":0,"R32":11,"Consy R32 #2":0,"R16":8,"Consy R16 #1":3,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"26":{"R64":0,"Consy R32 #1":0,"R32":10,"Consy R32 #2":0,"R16":8,"Consy R16 #1":2,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"25":{"R64":0,"Consy R32 #1":0,"R32":9,"Consy R32 #2":0,"R16":8,"Consy R16 #1":1,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"24":{"R64":0,"Consy R32 #1":0,"R32":8,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"23":{"R64":0,"Consy R32 #1":0,"R32":7,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":7,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"22":{"R64":0,"Consy R32 #1":0,"R32":6,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":6,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"21":{"R64":0,"Consy R32 #1":0,"R32":5,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":5,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"20":{"R64":0,"Consy R32 #1":0,"R32":4,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":4,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"19":{"R64":0,"Consy R32 #1":0,"R32":3,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":3,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"18":{"R64":0,"Consy R32 #1":0,"R32":2,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":2,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"17":{"R64":0,"Consy R32 #1":0,"R32":1,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":1,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"16":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"15":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":7,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":3,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"14":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":6,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":2,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"13":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":5,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":1,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"12":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":4,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"11":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":3,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":3,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"10":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":2,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":2,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"9":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":1,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":1,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"8":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":0,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":0,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":1},"7":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":0,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":3,"Consy R8 #1":0,"Consy R8 #2":0,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":0},"6":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":0,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":2,"Consy R8 #1":0,"Consy R8 #2":0,"Semifinals / R4":2,"Consy R4":1,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1,"Seventh":0}},"de_top6":{"64":{"R64":32,"Consy R32 #1":16,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"63":{"R64":31,"Consy R32 #1":15,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"62":{"R64":30,"Consy R32 #1":14,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"61":{"R64":29,"Consy R32 #1":13,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"60":{"R64":28,"Consy R32 #1":12,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"59":{"R64":27,"Consy R32 #1":11,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"58":{"R64":26,"Consy R32 #1":10,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"57":{"R64":25,"Consy R32 #1":9,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"56":{"R64":24,"Consy R32 #1":8,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"55":{"R64":23,"Consy R32 #1":7,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"54":{"R64":22,"Consy R32 #1":6,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"53":{"R64":21,"Consy R32 #1":5,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"52":{"R64":20,"Consy R32 #1":4,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"51":{"R64":19,"Consy R32 #1":3,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"50":{"R64":18,"Consy R32 #1":2,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"49":{"R64":17,"Consy R32 #1":1,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"48":{"R64":16,"Consy R32 #1":0,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"47":{"R64":15,"Consy R32 #1":0,"R32":16,"Consy R32 #2":15,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"46":{"R64":14,"Consy R32 #1":0,"R32":16,"Consy R32 #2":14,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"45":{"R64":13,"Consy R32 #1":0,"R32":16,"Consy R32 #2":13,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"44":{"R64":12,"Consy R32 #1":0,"R32":16,"Consy R32 #2":12,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"43":{"R64":11,"Consy R32 #1":0,"R32":16,"Consy R32 #2":11,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"42":{"R64":10,"Consy R32 #1":0,"R32":16,"Consy R32 #2":10,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"41":{"R64":9,"Consy R32 #1":0,"R32":16,"Consy R32 #2":9,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"40":{"R64":8,"Consy R32 #1":0,"R32":16,"Consy R32 #2":8,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"39":{"R64":7,"Consy R32 #1":0,"R32":16,"Consy R32 #2":7,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"38":{"R64":6,"Consy R32 #1":0,"R32":16,"Consy R32 #2":6,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"37":{"R64":5,"Consy R32 #1":0,"R32":16,"Consy R32 #2":5,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"36":{"R64":4,"Consy R32 #1":0,"R32":16,"Consy R32 #2":4,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"35":{"R64":3,"Consy R32 #1":0,"R32":16,"Consy R32 #2":3,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"34":{"R64":2,"Consy R32 #1":0,"R32":16,"Consy R32 #2":2,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"33":{"R64":1,"Consy R32 #1":0,"R32":16,"Consy R32 #2":1,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"32":{"R64":0,"Consy R32 #1":0,"R32":16,"Consy R32 #2":0,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"31":{"R64":0,"Consy R32 #1":0,"R32":15,"Consy R32 #2":0,"R16":8,"Consy R16 #1":7,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"30":{"R64":0,"Consy R32 #1":0,"R32":14,"Consy R32 #2":0,"R16":8,"Consy R16 #1":6,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"29":{"R64":0,"Consy R32 #1":0,"R32":13,"Consy R32 #2":0,"R16":8,"Consy R16 #1":5,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"28":{"R64":0,"Consy R32 #1":0,"R32":12,"Consy R32 #2":0,"R16":8,"Consy R16 #1":4,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"27":{"R64":0,"Consy R32 #1":0,"R32":11,"Consy R32 #2":0,"R16":8,"Consy R16 #1":3,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"26":{"R64":0,"Consy R32 #1":0,"R32":10,"Consy R32 #2":0,"R16":8,"Consy R16 #1":2,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"25":{"R64":0,"Consy R32 #1":0,"R32":9,"Consy R32 #2":0,"R16":8,"Consy R16 #1":1,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"24":{"R64":0,"Consy R32 #1":0,"R32":8,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"23":{"R64":0,"Consy R32 #1":0,"R32":7,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":7,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"22":{"R64":0,"Consy R32 #1":0,"R32":6,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":6,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"21":{"R64":0,"Consy R32 #1":0,"R32":5,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":5,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"20":{"R64":0,"Consy R32 #1":0,"R32":4,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":4,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"19":{"R64":0,"Consy R32 #1":0,"R32":3,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":3,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"18":{"R64":0,"Consy R32 #1":0,"R32":2,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":2,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"17":{"R64":0,"Consy R32 #1":0,"R32":1,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":1,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"16":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"15":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":7,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":3,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"14":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":6,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":2,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"13":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":5,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":1,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"12":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":4,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"11":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":3,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":3,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"10":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":2,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":2,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"9":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":1,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":1,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"8":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":0,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":0,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"7":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":0,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":3,"Consy R8 #1":0,"Consy R8 #2":0,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1},"6":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":0,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":2,"Consy R8 #1":0,"Consy R8 #2":0,"Semifinals / R4":2,"Consy R4":1,"Consy Semifinals":2,"Finals":1,"Third":1,"Fifth":1}},"de_top4":{"64":{"R64":32,"Consy R32 #1":16,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"63":{"R64":31,"Consy R32 #1":15,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"62":{"R64":30,"Consy R32 #1":14,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"61":{"R64":29,"Consy R32 #1":13,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"60":{"R64":28,"Consy R32 #1":12,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"59":{"R64":27,"Consy R32 #1":11,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"58":{"R64":26,"Consy R32 #1":10,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"57":{"R64":25,"Consy R32 #1":9,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"56":{"R64":24,"Consy R32 #1":8,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"55":{"R64":23,"Consy R32 #1":7,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"54":{"R64":22,"Consy R32 #1":6,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"53":{"R64":21,"Consy R32 #1":5,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"52":{"R64":20,"Consy R32 #1":4,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"51":{"R64":19,"Consy R32 #1":3,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"50":{"R64":18,"Consy R32 #1":2,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"49":{"R64":17,"Consy R32 #1":1,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"48":{"R64":16,"Consy R32 #1":0,"R32":16,"Consy R32 #2":16,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"47":{"R64":15,"Consy R32 #1":0,"R32":16,"Consy R32 #2":15,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"46":{"R64":14,"Consy R32 #1":0,"R32":16,"Consy R32 #2":14,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"45":{"R64":13,"Consy R32 #1":0,"R32":16,"Consy R32 #2":13,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"44":{"R64":12,"Consy R32 #1":0,"R32":16,"Consy R32 #2":12,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"43":{"R64":11,"Consy R32 #1":0,"R32":16,"Consy R32 #2":11,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"42":{"R64":10,"Consy R32 #1":0,"R32":16,"Consy R32 #2":10,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"41":{"R64":9,"Consy R32 #1":0,"R32":16,"Consy R32 #2":9,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"40":{"R64":8,"Consy R32 #1":0,"R32":16,"Consy R32 #2":8,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"39":{"R64":7,"Consy R32 #1":0,"R32":16,"Consy R32 #2":7,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"38":{"R64":6,"Consy R32 #1":0,"R32":16,"Consy R32 #2":6,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"37":{"R64":5,"Consy R32 #1":0,"R32":16,"Consy R32 #2":5,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"36":{"R64":4,"Consy R32 #1":0,"R32":16,"Consy R32 #2":4,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"35":{"R64":3,"Consy R32 #1":0,"R32":16,"Consy R32 #2":3,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"34":{"R64":2,"Consy R32 #1":0,"R32":16,"Consy R32 #2":2,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"33":{"R64":1,"Consy R32 #1":0,"R32":16,"Consy R32 #2":1,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"32":{"R64":0,"Consy R32 #1":0,"R32":16,"Consy R32 #2":0,"R16":8,"Consy R16 #1":8,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"31":{"R64":0,"Consy R32 #1":0,"R32":15,"Consy R32 #2":0,"R16":8,"Consy R16 #1":7,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"30":{"R64":0,"Consy R32 #1":0,"R32":14,"Consy R32 #2":0,"R16":8,"Consy R16 #1":6,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"29":{"R64":0,"Consy R32 #1":0,"R32":13,"Consy R32 #2":0,"R16":8,"Consy R16 #1":5,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"28":{"R64":0,"Consy R32 #1":0,"R32":12,"Consy R32 #2":0,"R16":8,"Consy R16 #1":4,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"27":{"R64":0,"Consy R32 #1":0,"R32":11,"Consy R32 #2":0,"R16":8,"Consy R16 #1":3,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"26":{"R64":0,"Consy R32 #1":0,"R32":10,"Consy R32 #2":0,"R16":8,"Consy R16 #1":2,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"25":{"R64":0,"Consy R32 #1":0,"R32":9,"Consy R32 #2":0,"R16":8,"Consy R16 #1":1,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"24":{"R64":0,"Consy R32 #1":0,"R32":8,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":8,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"23":{"R64":0,"Consy R32 #1":0,"R32":7,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":7,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"22":{"R64":0,"Consy R32 #1":0,"R32":6,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":6,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"21":{"R64":0,"Consy R32 #1":0,"R32":5,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":5,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"20":{"R64":0,"Consy R32 #1":0,"R32":4,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":4,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"19":{"R64":0,"Consy R32 #1":0,"R32":3,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":3,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"18":{"R64":0,"Consy R32 #1":0,"R32":2,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":2,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"17":{"R64":0,"Consy R32 #1":0,"R32":1,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":1,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"16":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":8,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":4,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"15":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":7,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":3,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"14":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":6,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":2,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"13":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":5,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":1,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"12":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":4,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":4,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"11":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":3,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":3,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"10":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":2,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":2,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"9":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":1,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":1,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"8":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":0,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":4,"Consy R8 #1":0,"Consy R8 #2":0,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"7":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":0,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":3,"Consy R8 #1":0,"Consy R8 #2":0,"Semifinals / R4":2,"Consy R4":2,"Consy Semifinals":2,"Finals":1,"Third":1},"6":{"R64":0,"Consy R32 #1":0,"R32":0,"Consy R32 #2":0,"R16":0,"Consy R16 #1":0,"Consy R16 #2":0,"Quarterfinals / R8":2,"Consy R8 #1":0,"Consy R8 #2":0,"Semifinals / R4":2,"Consy R4":1,"Consy Semifinals":2,"Finals":1,"Third":1}}};
+
+
+  function deepMerge(a,b){
+    for(const k of Object.keys(b||{})){
+      if(b[k] && typeof b[k] === "object" && !Array.isArray(b[k]) && a[k] && typeof a[k] === "object" && !Array.isArray(a[k])){
+        a[k] = deepMerge(a[k], b[k]);
+      } else {
+        a[k] = b[k];
+      }
+    }
+    return a;
+  }
+
+  function loadState(){
+    try{
+      const s = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+      if(!s) return JSON.parse(JSON.stringify(DEFAULTS));
+
+      // repair weights if missing/empty
+      if(!Array.isArray(s.weights) || s.weights.length === 0){
+        s.weights = JSON.parse(JSON.stringify(DEFAULTS.weights));
+      }
+
+      // Migration: trim hour rows to 4 by default (you can add more if needed)
+      if(Array.isArray(s.hours) && s.hours.length > 4){
+        s.hours = s.hours.slice(0,4);
+      }
+      if(Array.isArray(s.hourly) && s.hourly.length > 4){
+        s.hourly = s.hourly.slice(0,4);
+      }
+
+      // Migration: if older saved state includes Aux gyms (or >2 default gyms), reset to Gym A/B.
+      if(Array.isArray(s.locations)){
+        const hasAux = s.locations.some(l => String(l?.name||"").toLowerCase().includes("aux"));
+        if(hasAux){
+          s.locations = JSON.parse(JSON.stringify(DEFAULTS.locations));
+        }
+      }
+
+      return deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), s);
+    } catch(e){
+      return JSON.parse(JSON.stringify(DEFAULTS));
+    }
+  }
+  function saveState(){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  let state = loadState();
+
+    // Diagnostics + guard
+    try{
+      const diag = document.getElementById("diagBar");
+      const wt = document.querySelector("#weightsTable");
+      const wtb = document.querySelector("#weightsTable tbody");
+      const wlen = Array.isArray(state.weights) ? state.weights.length : 0;
+      if(diag){
+        diag.textContent = `VERSION v25 • weights=${wlen} • #weightsTable=${!!wt} • tbody=${!!wtb} • LS_KEY=${(typeof LS_KEY!=="undefined"?LS_KEY:"?")}`;
+      }
+      if(!Array.isArray(state.weights) || state.weights.length === 0){
+        state.weights = JSON.parse(JSON.stringify(DEFAULTS.weights));
+        try{ saveState(); }catch(e){}
+      }
+      const rb = document.getElementById("resetWeightsBtn");
+      if(rb){
+        rb.addEventListener("click", ()=>{
+          if(confirm("Reset weights back to 13 default rows? This will overwrite your current weight list.")){
+            state.weights = JSON.parse(JSON.stringify(DEFAULTS.weights));
+            if(state.weightLoc) state.weightLoc = {};
+            recalcAll();
+            saveState();
+            const diag2 = document.getElementById("diagBar");
+            if(diag2) diag2.textContent = `VERSION v25 • weights=${state.weights.length} • reset OK`;
+          }
+        });
+      }
+    }catch(e){}
+
+  function totalMats(){
+    return state.locations.reduce((s,l)=>s+(Number(l.mats)||0),0);
+  }
+
+  function initControls(){
+    el("level").value = state.level;
+    el("format").value = state.format || "de_top6";
+    el("days").value = state.days;
+    el("numWeights").value = state.numWeights;
+    el("day1Start").value = state.day1Start;
+    el("day1End").value = state.day1End;
+    el("day2Start").value = state.day2Start;
+    el("pace").value = state.pace;
+
+    el("usePlannerTotal").checked = !!state.usePlannerTotal;
+    el("totalBouts").value = state.totalBoutsOverride || 0;
+    el("startTime").value = state.startTime;
+    el("dashLevel").value = state.dashLevel;
+
+    el("simMats").value = state.simMats;
+    el("simPace").value = state.simPace;
+    el("simStart").value = state.simStart;
+    el("simTotalBouts").value = state.simTotalBoutsOverride || 0;
+
+    setPaceDefaults(false);
+  }
+
+  function setPaceDefaults(force){
+    const lvl = el("level").value;
+    const hint = (lvl === "hs") ? "Default HS pace is 12." : "Default JH/Youth pace is 14.";
+    el("paceHint").textContent = hint;
+
+    const defaultP = (lvl === "hs") ? 12 : 14;
+    if(force){
+      el("pace").value = defaultP;
+      el("simPace").value = defaultP;
+      state.pace = defaultP;
+      state.simPace = defaultP;
+    }
+  }
+
+  function renderWeights(){
+    const n = clamp(Math.floor(Number(el("numWeights").value||13)), 1, 30);
+    while(state.weights.length < n) state.weights.push({ name:`W${state.weights.length+1}`, wrestlers:0 });
+    while(state.weights.length > n) state.weights.pop();
+
+    const tbody = document.querySelector("#weightsTable tbody");
+    tbody.innerHTML = "";
+
+    const maxB = (typeof getMaxBFromState === "function") ? getMaxBFromState() : (function(){
+      const ns = state.weights.map(w=>Math.floor(Number(w.wrestlers||0))).filter(n=>n>1);
+      const maxN = ns.length ? Math.max(...ns) : 0;
+      let mb = maxN ? nextPow2(maxN) : 2;
+      while(mb > 2 && maxN && maxN <= mb/2) mb = mb/2;
+      return mb;
+    })();
+
+    state.weights.forEach((w, idx) => {
+      const tr = document.createElement("tr");
+
+      const locOpts = (state.locations || []).map((l, li) => {
+        const sel = (state.weightLoc && Number(state.weightLoc[idx]) === li) ? " selected" : "";
+        const nm = l && l.name ? l.name : ("Location " + (li+1));
+        return `<option value="${li}"${sel}>${escapeHtml(nm)}</option>`;
+      }).join("");
+
+      tr.innerHTML = `
+        <td><input class="user" data-wi="${idx}" data-f="name" value="${escapeHtml(w.name)}"></td>
+        <td class="right"><input class="user right" type="number" min="0" step="1" data-wi="${idx}" data-f="wrestlers" value="${Number(w.wrestlers)||0}"></td>
+        <td class="right" id="wb-${idx}">-</td>
+        <td class="right">
+          <select class="user" data-wi="${idx}" data-f="loc">
+            <option value="">Auto</option>
+            ${locOpts}
+          </select>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+tbody.querySelectorAll("input,select").forEach(elm => {
+      elm.addEventListener("input", (e) => {
+        const i = Number(e.target.dataset.wi);
+        const f = e.target.dataset.f;
+
+        if(f === "loc"){
+          const raw = e.target.value;
+          state.weightLoc = state.weightLoc || {};
+          if(raw === "" || raw == null){
+            delete state.weightLoc[i];
+          } else {
+            state.weightLoc[i] = Number(raw);
+          }
+          recalcAll();
+          saveState();
+          return;
+        }
+
+        let v = e.target.value;
+        if(f === "wrestlers") v = Number(v||0);
+        state.weights[i][f] = v;
+        recalcAll();
+        saveState();
+      });
+    });
+
+}
+
+  function renderLocations(){
+    const tbodyP = document.querySelector("#locTablePlanner tbody");
+    tbodyP.innerHTML = "";
+    state.locations.forEach((loc, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input class="user" data-li="${idx}" data-f="name" value="${escapeHtml(loc.name)}"></td>
+        <td class="right"><input class="user right" type="number" min="0" step="1" data-li="${idx}" data-f="mats" value="${Number(loc.mats)||0}"></td>
+        <td class="right" id="lab-${idx}">-</td>
+      `;
+      tbodyP.appendChild(tr);
+    });
+
+    tbodyP.querySelectorAll("input").forEach(inp => {
+      inp.addEventListener("input", (e) => {
+        const i = Number(e.target.dataset.li);
+        const f = e.target.dataset.f;
+        let v = e.target.value;
+        if(f === "mats") v = Number(v||0);
+        state.locations[i][f] = v;
+        renderLocationsLive();
+        rebalanceAssignments();
+        recalcAll();
+        saveState();
+      });
+    });
+
+    renderLocationsLive();
+  }
+
+  function renderLocationsLive(){
+    const tbodyL = document.querySelector("#locTableLive tbody");
+    tbodyL.innerHTML = "";
+    state.locations.forEach((loc, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(loc.name)}</td>
+        <td class="right">${Number(loc.mats)||0}</td>
+        <td class="right"><input class="user right" type="number" min="0" step="1" data-ri="${idx}" value="${Number(loc.remaining)||0}"></td>
+        <td class="right" id="mpm-${idx}">-</td>
+      `;
+      tbodyL.appendChild(tr);
+    });
+
+    tbodyL.querySelectorAll("input[data-ri]").forEach(inp => {
+      inp.addEventListener("input", (e) => {
+        const i = Number(e.target.dataset.ri);
+        state.locations[i].remaining = Number(e.target.value||0);
+        recalcLive();
+    renderRoundPlanner();
+        saveState();
+      });
+    });
+  }
+
+  let assignments = [];
+  function rebalanceAssignments(){
+    const maxB = (typeof getMaxBFromState === "function") ? getMaxBFromState() : (function(){
+      const ns = state.weights.map(w=>Math.floor(Number(w.wrestlers||0))).filter(n=>n>1);
+      const maxN = ns.length ? Math.max(...ns) : 0;
+      let mb = maxN ? nextPow2(maxN) : 2;
+      while(mb > 2 && maxN && maxN <= mb/2) mb = mb/2;
+      return mb;
+    })();
+
+    const fmt = el("format").value;
+
+    const boutFn = (typeof boutsFromRoundMap === "function")
+      ? (n)=>boutsFromRoundMap(n, fmt, maxB)
+      : (n)=>boutsForFormat(n, fmt);
+
+    const weightsWithBouts = state.weights
+      .map((w,i)=>({ idx:i, bouts:boutFn(w.wrestlers) }))
+      .sort((a,b)=>b.bouts-a.bouts);
+
+    const loads = state.locations.map((l,i)=>({ locIdx:i, mats:Number(l.mats)||0, weights:[], bouts:0 }));
+
+    const remaining = [];
+    weightsWithBouts.forEach(wb=>{
+      const forced = (state.weightLoc && state.weightLoc[wb.idx] !== undefined && state.weightLoc[wb.idx] !== null && state.weightLoc[wb.idx] !== "")
+        ? Number(state.weightLoc[wb.idx])
+        : null;
+      if(forced === null || Number.isNaN(forced)){
+        remaining.push(wb);
+        return;
+      }
+      const target = loads.find(x=>x.locIdx===forced);
+      if(target && target.mats>0){
+        target.weights.push(wb.idx);
+        target.bouts += wb.bouts;
+      } else {
+        remaining.push(wb);
+      }
+    });
+
+    remaining.forEach(wb=>{
+      let best=-1, bestScore=Infinity;
+      loads.forEach((l,i)=>{
+        if(l.mats<=0) return;
+        const score = l.bouts / l.mats;
+        if(score < bestScore){ bestScore=score; best=i; }
+      });
+      if(best>=0){
+        loads[best].weights.push(wb.idx);
+        loads[best].bouts += wb.bouts;
+      }
+    });
+
+    assignments = loads;
+    renderAssignments();
+  }
+
+  function renderAssignments(){
+    const tbody = document.querySelector("#assignmentTable tbody");
+    tbody.innerHTML = "";
+    assignments.forEach(a=>{
+      const loc = state.locations[a.locIdx];
+      const names = a.weights.map(i=>state.weights[i]?.name).filter(Boolean);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(loc?.name ?? "?")}</td>
+        <td>${names.length ? names.map(escapeHtml).join(", ") : "<span style='color:var(--muted)'>—</span>"}</td>
+        <td class="right">${a.bouts}</td>
+      `;
+      tbody.appendChild(tr);
+      const cell = document.getElementById(`lab-${a.locIdx}`);
+      if(cell) cell.textContent = a.bouts;
+    });
+
+    el("totalAssignedBouts").textContent = assignments.reduce((s,a)=>s+a.bouts,0);
+  }
+
+  function renderHours(){
+    const tbody = document.querySelector("#hourTable tbody");
+    tbody.innerHTML = "";
+    const start = parseTimeToMinutes(el("startTime").value);
+
+    state.hours.forEach((h, idx) => {
+      const rowStart = (start ?? 0) + idx*60;
+      const rowEnd = rowStart + 60;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span id="hs-${idx}">${minutesToTime(rowStart)}</span></td>
+        <td><span id="he-${idx}">${minutesToTime(rowEnd)}</span></td>
+        <td class="right">
+          <input class="user right" type="number" min="0" step="1" data-hidx="${idx}" value="${h.completed}">
+        </td>
+        <td class="right" id="hpm-${idx}">-</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll("input[data-hidx]").forEach(inp => {
+      inp.addEventListener("input", (e) => {
+        const i = Number(e.target.dataset.hidx);
+        state.hours[i].completed = e.target.value;
+        recalcLive();
+    renderRoundPlanner();
+        saveState();
+      });
+    });
+  }
+
+  function recalcPlanner(){
+    let totalW = 0, totalB = 0;
+    const maxB = getMaxBFromState();
+    state.weights.forEach((w, idx)=>{
+      const n = Number(w.wrestlers)||0;
+      const b = boutsFromRoundMap(n, el("format").value, maxB);
+      totalW += n;
+      totalB += b;
+      const cell = document.getElementById(`wb-${idx}`);
+      if(cell) cell.textContent = b;
+    });
+    el("totalWrestlers").textContent = totalW;
+    el("plannerTotalBouts").textContent = totalB;
+
+    const mats = totalMats();
+    el("totalMatsPlanner").textContent = mats;
+    el("kpiMats").textContent = mats>0 ? mats : "-";
+
+    const pace = Number(el("pace").value||12);
+    const totalHours = (mats>0 && pace>0) ? (totalB/(mats*pace)) : null;
+    el("kpiHours").textContent = totalHours!==null ? `${fmt(totalHours,2)} hrs` : "-";
+
+    const day1Start = parseTimeToMinutes(el("day1Start").value);
+    const day1End = parseTimeToMinutes(el("day1End").value);
+    const day1Hours = (day1Start!==null && day1End!==null) ? Math.max(0, (day1End-day1Start)/60) : null;
+    const day1Cap = (day1Hours!==null && mats>0 && pace>0) ? (day1Hours*mats*pace) : null;
+    el("kpiDay1Cap").textContent = day1Cap!==null ? `${Math.round(day1Cap)} bouts` : "-";
+
+    const days = Number(el("days").value||2);
+    let statusText="-", statusClass="badge";
+    if(days === 1){
+      if(totalHours!==null && day1Hours!==null){
+        const fits = totalHours <= day1Hours;
+        statusText = fits ? "Fits in 1 day" : "Likely runs long";
+        statusClass = fits ? "badge good" : "badge warn";
+      }
+    }else{
+      if(day1Cap!==null && totalB>0){
+        const pct = clamp(day1Cap/totalB, 0, 1);
+        if(pct >= 0.60){ statusText="Strong split"; statusClass="badge good"; }
+        else if(pct >= 0.45){ statusText="OK split"; statusClass="badge warn"; }
+        else { statusText="Saturday heavy"; statusClass="badge bad"; }
+      }
+    }
+    el("kpiStatus").innerHTML = `<span class="${statusClass}">${statusText}</span>`;
+
+    const stopText = el("stopPointText");
+    const stopMini = el("stopPointMini");
+    if(days === 1){
+      if(totalHours!==null && day1Start!==null){
+        stopText.textContent = `Expected finish around ${minutesToTime(day1Start + Math.round(totalHours*60))} (projected).`;
+        stopMini.textContent = `Assumes ${pace} bouts/mat/hr on ${mats} mats.`;
+      } else {
+        stopText.textContent="-"; stopMini.textContent="";
+      }
+    } else {
+      if(day1Cap!==null && totalB>0){
+        const pct = clamp(day1Cap/totalB,0,1);
+        let rec;
+        if(pct >= 0.62) rec = "Finish through Championship R16 and try to start Quarterfinals if pace holds.";
+        else if(pct >= 0.52) rec = "Finish through Championship R16 and at least the first wrestleback layer (early consolations).";
+        else if(pct >= 0.42) rec = "Aim to complete early championship rounds and as many early consolations as possible; Saturday will be heavy.";
+        else rec = "Friday is too short for clean round boundaries. Add mats/hours or expect a late Saturday.";
+        stopText.textContent = rec;
+        stopMini.textContent = `Friday capacity ≈ ${Math.round(day1Cap)} bouts (~${fmt(day1Hours,1)} hrs) ≈ ${(pct*100).toFixed(0)}% of ${totalB} projected bouts.`;
+      } else {
+        stopText.textContent="-"; stopMini.textContent="";
+      }
+    }
+
+    if(el("usePlannerTotal").checked){
+      el("totalBouts").value = totalB;
+      state.totalBoutsOverride = totalB;
+    }
+    if(Number(el("simTotalBouts").value||0) === 0 || el("usePlannerTotal").checked){
+      el("simTotalBouts").value = totalB;
+      state.simTotalBoutsOverride = totalB;
+    }
+
+    return totalB;
+  }
+
+  function recalcSim(){
+    const plannerTotal = Number(el("plannerTotalBouts").textContent||0);
+    const simMats = Number(el("simMats").value||0);
+    const simPace = Number(el("simPace").value||0);
+    const simStart = parseTimeToMinutes(el("simStart").value);
+    const simTotal = Number(el("simTotalBouts").value||0);
+
+    const baseMats = totalMats();
+    const basePace = Number(el("pace").value||12);
+    const baseHours = (baseMats>0 && basePace>0) ? (plannerTotal/(baseMats*basePace)) : null;
+
+    const simHours = (simMats>0 && simPace>0) ? (simTotal/(simMats*simPace)) : null;
+    el("simDuration").textContent = simHours!==null ? `${fmt(simHours,2)} hrs` : "-";
+    el("simEnd").textContent = (simHours!==null && simStart!==null) ? minutesToTime(simStart + Math.round(simHours*60)) : "-";
+
+    if(simHours!==null && baseHours!==null){
+      const delta = simHours - baseHours;
+      const sign = delta >= 0 ? "+" : "−";
+      el("simDelta").textContent = `${sign}${fmt(Math.abs(delta),2)} hrs`;
+    } else {
+      el("simDelta").textContent = "-";
+    }
+  }
+
+  
+  function updateTopProgress(metrics){
+    const totalBouts = Number(metrics.totalBouts||0);
+    const done = Number(metrics.boutsCompleted||0);
+    const remaining = Math.max(0, totalBouts - done);
+    const pct = (totalBouts>0) ? Math.round((done/totalBouts)*100) : 0;
+
+    const bar = document.getElementById("tpBar");
+    const tpPct = document.getElementById("tpPct");
+    const tpDone = document.getElementById("tpDone");
+    const tpTotal = document.getElementById("tpTotal");
+    const tpRemaining = document.getElementById("tpRemaining");
+    const tpMats = document.getElementById("tpMats");
+    const tpRemainEntered = document.getElementById("tpRemainEntered");
+    const tpAvgHr = document.getElementById("tpAvgHr");
+    const tpEnd = document.getElementById("tpEnd");
+
+    if(tpPct) tpPct.textContent = pct + "%";
+    if(tpDone) tpDone.textContent = done;
+    if(tpTotal) tpTotal.textContent = totalBouts;
+    if(tpRemaining) tpRemaining.textContent = remaining;
+    if(bar) bar.style.width = pct + "%";
+
+    if(tpMats) tpMats.textContent = metrics.mats ?? "-";
+    if(tpRemainEntered) tpRemainEntered.textContent = metrics.totalRemaining ?? "-";
+    if(tpAvgHr) tpAvgHr.textContent = metrics.avgPerHourText ?? "-";
+    if(tpEnd) tpEnd.textContent = metrics.estEndTimeText ?? "-";
+  }
+
+function recalcLive(){
+    const mats = totalMats();
+    const totalRemaining = state.locations.reduce((s,l)=>s+(Number(l.remaining)||0),0);
+
+    el("liveTotalMats").textContent = mats;
+    el("liveTotalRemaining").textContent = totalRemaining;
+    el("liveOverallMPM").textContent = mats>0 ? fmt(totalRemaining/mats,2) : "-";
+
+    state.locations.forEach((loc, idx)=>{
+      const m = Number(loc.mats)||0;
+      const r = Number(loc.remaining)||0;
+      const cell = document.getElementById(`mpm-${idx}`);
+      if(cell) cell.textContent = m>0 ? fmt(r/m,2) : "-";
+    });
+
+    const totalBouts = Number(el("totalBouts").value || 0);
+    const completedNums = state.hours
+      .map(h => h.completed === "" ? null : Number(h.completed))
+      .filter(v => v !== null && !Number.isNaN(v));
+
+    const boutsCompleted = completedNums.reduce((s,n)=>s+n,0);
+    const avgPerHour = completedNums.length ? (boutsCompleted / completedNums.length) : null;
+
+    el("boutsCompleted").textContent = boutsCompleted;
+    el("avgPerHour").textContent = avgPerHour!==null ? fmt(avgPerHour,2) : "-";
+
+    const startMin = parseTimeToMinutes(el("startTime").value) ?? 0;
+    state.hours.forEach((h, idx) => {
+      const hs = document.getElementById(`hs-${idx}`);
+      const he = document.getElementById(`he-${idx}`);
+      if(hs) hs.textContent = minutesToTime(startMin + idx*60);
+      if(he) he.textContent = minutesToTime(startMin + (idx+1)*60);
+
+      const c = (h.completed === "" ? null : Number(h.completed));
+      const perMat = (c !== null && !Number.isNaN(c) && mats>0) ? (c/mats) : null;
+      const hpm = document.getElementById(`hpm-${idx}`);
+      if(hpm) hpm.textContent = perMat!==null ? fmt(perMat,2) : "-";
+    });
+
+    if(avgPerHour !== null && avgPerHour > 0){
+      const estTotalHours = totalBouts / avgPerHour;
+      el("estEndTime").textContent = minutesToTime(startMin + Math.round(estTotalHours*60));
+    } else {
+      el("estEndTime").textContent = "-";
+    }
+
+    updateTopProgress({
+      totalBouts,
+      boutsCompleted,
+      mats,
+      totalRemaining,
+      avgPerHourText: (avgPerHour !== null ? fmt(avgPerHour,2) : "-"),
+      estEndTimeText: el("estEndTime").textContent || "-"
+    });
+
+    recalcSim();
+  }
+
+  function recalcAll(){
+    recalcPlanner();
+    recalcLive();
+    renderRoundPlanner();
+
+    state.level = el("level").value;
+    state.days = el("days").value;
+    state.numWeights = Number(el("numWeights").value||13);
+    state.day1Start = el("day1Start").value;
+    state.day1End = el("day1End").value;
+    state.day2Start = el("day2Start").value;
+    state.pace = Number(el("pace").value||12);
+
+    state.usePlannerTotal = el("usePlannerTotal").checked;
+    state.totalBoutsOverride = Number(el("totalBouts").value||0);
+    state.startTime = el("startTime").value;
+    state.dashLevel = el("dashLevel").value;
+
+    state.simMats = Number(el("simMats").value||0);
+    state.simPace = Number(el("simPace").value||0);
+    state.simStart = el("simStart").value;
+    state.simTotalBoutsOverride = Number(el("simTotalBouts").value||0);
+  }
+
+  function bind(){
+    ["level","format","days","numWeights","day1Start","day1End","day2Start","pace"].forEach(id=>{
+      el(id).addEventListener("input", ()=>{
+        if(id==="level"){ setPaceDefaults(true); }
+        renderWeights();
+        rebalanceAssignments();
+        recalcAll();
+        saveState();
+      });
+    });
+
+    el("usePlannerTotal").addEventListener("change", ()=>{
+      recalcAll(); saveState();
+    });
+
+    ["totalBouts","startTime","dashLevel"].forEach(id=>{
+      el(id).addEventListener("input", ()=>{
+        recalcLive();
+    renderRoundPlanner(); saveState();
+      });
+    });
+
+    ["simMats","simPace","simStart","simTotalBouts"].forEach(id=>{
+      el(id).addEventListener("input", ()=>{
+        updateTopProgress({
+      totalBouts,
+      boutsCompleted,
+      mats,
+      totalRemaining,
+      avgPerHourText: (avgPerHour !== null ? fmt(avgPerHour,2) : "-"),
+      estEndTimeText: el("estEndTime").textContent || "-"
+    });
+
+    recalcSim(); saveState();
+      });
+    });
+
+    el("addHour").addEventListener("click", ()=>{
+      state.hours.push({completed:""});
+      renderHours();
+      recalcLive();
+    renderRoundPlanner();
+      saveState();
+    });
+
+    el("clearHours").addEventListener("click", ()=>{
+      if(!confirm("Clear all hourly completed inputs?")) return;
+      state.hours = state.hours.map(()=>({completed:""}));
+      renderHours();
+      recalcLive();
+    renderRoundPlanner();
+      saveState();
+    });
+
+    el("addLoc").addEventListener("click", ()=>{
+      state.locations.push({name:`Location ${state.locations.length+1}`, mats:0, remaining:0});
+      renderLocations();
+      rebalanceAssignments();
+      recalcAll();
+      saveState();
+    });
+
+    el("resetLoc").addEventListener("click", ()=>{
+      if(!confirm("Reset locations to defaults?")) return;
+      state.locations = JSON.parse(JSON.stringify(DEFAULTS.locations));
+      renderLocations();
+      rebalanceAssignments();
+      recalcAll();
+      saveState();
+    });
+
+    el("rebalance").addEventListener("click", ()=>{
+      rebalanceAssignments();
+      recalcAll();
+      saveState();
+    });
+
+    el("resetAll").addEventListener("click", ()=>{
+      if(!confirm("Reset everything? This will wipe saved values.")) return;
+      localStorage.removeItem(LS_KEY);
+      location.reload();
+    });
+
+    el("exportJson").addEventListener("click", ()=>{
+      el("jsonBox").value = JSON.stringify(state, null, 2);
+    });
+
+    el("importJson").addEventListener("click", ()=>{
+      try{
+        const incoming = JSON.parse(el("jsonBox").value || "null");
+        if(!incoming || typeof incoming !== "object") throw new Error("Invalid JSON");
+        state = deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), incoming);
+        saveState();
+        boot();
+      }catch(e){
+        alert("Could not import JSON. Make sure it is valid.");
+      }
+    });
+  }
+
+  function boot(){
+    // Clean up old storage key so defaults apply.
+    try{ localStorage.removeItem("flo_all_modules_v1"); }catch(e){}
+    state = loadState();
+    initControls();
+    renderWeights();
+    renderLocations();
+    renderHours();
+    rebalanceAssignments();
+    recalcAll();
+    saveState();
+  }
+
+  boot();
+  bind();
+</script>
+</body>
+</html>
