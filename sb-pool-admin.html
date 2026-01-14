@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SB Pool Admin | SAWA</title>
+  <style>
+    :root { --bg:#0b0f1a; --card:#121a2b; --ink:#eef2ff; --muted:#b8c2e0; --good:#1fbf75; --bad:#ff4d4d; --warn:#ffcc00; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--ink); }
+    .wrap { max-width:1100px; margin:0 auto; padding:20px; }
+    .card { background:var(--card); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:14px; margin-bottom:14px; }
+    h1,h2 { margin:0 0 10px; }
+    label { display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; }
+    input, select { width:100%; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:var(--ink); }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    @media (max-width: 860px) { .row { grid-template-columns:1fr; } }
+    .btn { display:inline-block; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.10); color:var(--ink); text-decoration:none; border:1px solid rgba(255,255,255,0.18); cursor:pointer; }
+    .btn:hover { background:rgba(255,255,255,0.14); }
+    .btn-good { border-color: rgba(31,191,117,0.35); background: rgba(31,191,117,0.12); }
+    .btn-warn { border-color: rgba(255,204,0,0.35); background: rgba(255,204,0,0.12); }
+    .btn-bad { border-color: rgba(255,77,77,0.35); background: rgba(255,77,77,0.12); }
+    .muted { color:var(--muted); }
+    table { width:100%; border-collapse:collapse; }
+    th, td { text-align:left; padding:10px 8px; border-bottom:1px solid rgba(255,255,255,0.10); vertical-align:top; }
+    th { color:var(--muted); font-size:12px; font-weight:800; }
+    .tag { display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,0.18); color:var(--muted); font-size:12px; }
+    .ok { color:var(--good); font-weight:800; }
+    .err { color:var(--bad); font-weight:800; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>SB Pool Admin</h1>
+      <div id="authArea"></div>
+    </div>
+
+    <div class="card">
+      <h2>Axis Numbers</h2>
+      <div class="muted" id="axisStatus">Loading…</div>
+      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-warn" id="drawAxisBtn">Draw Axis Numbers (one-time)</button>
+        <button class="btn" id="refreshBtn">Refresh</button>
+        <button class="btn btn-bad" id="signOutBtn" style="margin-left:auto;">Sign out</button>
+      </div>
+      <div id="axisDigits" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Requests (first come, first served)</h2>
+      <div class="muted">Tip: When you confirm payment, assign squares and mark PAID. If you want to temporarily reserve squares, assign and leave as PENDING.</div>
+      <div id="requestsArea" style="margin-top:10px;">Loading…</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const SUPABASE_URL = "https://polfteqwekkhzlhfjhsn.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvbGZ0ZXF3ZWtraHpsaGZqaHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTU2MzAsImV4cCI6MjA4MDY5MTYzMH0.npJCJJKOLTQddFH-xtU_ZtlT9_M8JWWpScDIsZAGY4M";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const authArea = document.getElementById("authArea");
+    const requestsArea = document.getElementById("requestsArea");
+    const axisStatus = document.getElementById("axisStatus");
+    const axisDigits = document.getElementById("axisDigits");
+
+    document.getElementById("refreshBtn").addEventListener("click", () => boot());
+    document.getElementById("signOutBtn").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      boot();
+    });
+
+    document.getElementById("drawAxisBtn").addEventListener("click", async () => {
+      const { data: settings } = await supabase.from("sb_pool_settings").select("*").eq("id", 1).single();
+      if (!settings) return;
+      if (settings.axis_drawn) {
+        alert("Axis numbers already drawn.");
+        return;
+      }
+
+      if (!confirm("Draw axis numbers now? This should only be done once, after all 100 blocks are sold.")) return;
+
+      const digits = [0,1,2,3,4,5,6,7,8,9];
+      const afc = shuffle(digits);
+      const nfc = shuffle(digits);
+
+      const { error } = await supabase.from("sb_pool_settings").update({
+        axis_drawn: true,
+        axis_drawn_at: new Date().toISOString(),
+        afc_digits: afc,
+        nfc_digits: nfc
+      }).eq("id", 1);
+
+      if (error) {
+        console.error(error);
+        alert("Failed to draw axis numbers. (Are you logged in as an admin?)");
+        return;
+      }
+      boot();
+    });
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function ensureAuthUI() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        authArea.innerHTML = `<div class="ok">Signed in as ${escapeHtml(session.user.email || "admin")}</div>`;
+        return true;
+      }
+
+      authArea.innerHTML = `
+        <div class="row">
+          <div>
+            <label>Email</label>
+            <input id="email" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label>Password</label>
+            <input id="pw" type="password" placeholder="••••••••" />
+          </div>
+        </div>
+        <button class="btn btn-good" id="loginBtn" style="margin-top:10px;">Sign in</button>
+        <div class="muted" style="margin-top:8px;">Note: You must be in the sb_pool_admins allowlist.</div>
+        <div id="authMsg" style="margin-top:8px;"></div>
+      `;
+
+      document.getElementById("loginBtn").addEventListener("click", async () => {
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("pw").value.trim();
+        const authMsg = document.getElementById("authMsg");
+        authMsg.textContent = "";
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          authMsg.innerHTML = `<div class="err">${escapeHtml(error.message)}</div>`;
+          return;
+        }
+        boot();
+      });
+
+      return false;
+    }
+
+    async function loadAxis() {
+      const { data: settings, error } = await supabase.from("sb_pool_settings").select("*").eq("id", 1).single();
+      if (error) {
+        axisStatus.innerHTML = `<span class="err">Cannot load settings (admin access?)</span>`;
+        axisDigits.innerHTML = "";
+        return;
+      }
+
+      if (!settings.axis_drawn) {
+        axisStatus.innerHTML = `<span class="muted">Axis not drawn yet.</span>`;
+        axisDigits.innerHTML = "";
+        return;
+      }
+
+      axisStatus.innerHTML = `<span class="ok">Axis drawn.</span> <span class="muted">(AFC top + NFC left)</span>`;
+      axisDigits.innerHTML = `
+        <div class="tag">AFC: ${settings.afc_digits.join(" ")}</div>
+        <div class="tag" style="margin-left:8px;">NFC: ${settings.nfc_digits.join(" ")}</div>
+      `;
+    }
+
+    async function loadRequestsAndSquares() {
+      const [{ data: reqs, error: e1 }, { data: squares, error: e2 }] = await Promise.all([
+        supabase.from("sb_pool_requests")
+          .select("*")
+          .in("status", ["requested","paid"])
+          .order("created_at", { ascending: true }),
+        supabase.from("sb_pool_squares").select("*").order("square", { ascending: true })
+      ]);
+
+      if (e1 || e2) {
+        requestsArea.innerHTML = `<div class="err">Failed to load data. Are you signed in as an admin?</div>`;
+        console.error(e1, e2);
+        return;
+      }
+
+      const avail = squares.filter(s => !s.assigned_to_request);
+      const byReq = new Map();
+      squares.forEach(s => {
+        if (s.assigned_to_request) {
+          const arr = byReq.get(s.assigned_to_request) || [];
+          arr.push(s);
+          byReq.set(s.assigned_to_request, arr);
+        }
+      });
+
+      requestsArea.innerHTML = `
+        <div class="muted" style="margin-bottom:8px;">Available squares: <b>${avail.length}</b> / 100</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:18%;">Time</th>
+              <th style="width:18%;">Name / Contact</th>
+              <th style="width:12%;">Blocks</th>
+              <th>Prefs / Notes</th>
+              <th style="width:28%;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${reqs.map(r => {
+              const assigned = (byReq.get(r.id) || []).map(s => s.square);
+              return `
+                <tr>
+                  <td class="muted">${new Date(r.created_at).toLocaleString()}</td>
+                  <td>
+                    <div><b>${escapeHtml(r.name)}</b></div>
+                    <div class="muted">${escapeHtml(r.contact || "")}</div>
+                  </td>
+                  <td><b>${r.blocks_requested}</b><div class="muted">assigned: ${assigned.length}</div></td>
+                  <td class="muted">
+                    <div><b>Pref:</b> ${escapeHtml(r.preferred_squares || "")}</div>
+                    <div><b>Notes:</b> ${escapeHtml(r.notes || "")}</div>
+                  </td>
+                  <td>
+                    <div class="muted" style="margin-bottom:6px;">Assigned squares: <b>${assigned.join(", ") || "—"}</b></div>
+
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                      <button class="btn btn-warn" data-act="assign_next" data-id="${r.id}">Assign next available</button>
+                      <button class="btn" data-act="assign_specific" data-id="${r.id}">Assign specific…</button>
+                      <button class="btn btn-good" data-act="mark_paid" data-id="${r.id}">Mark PAID</button>
+                      <button class="btn btn-bad" data-act="cancel" data-id="${r.id}">Cancel</button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      `;
+
+      requestsArea.querySelectorAll("button[data-act]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const act = btn.getAttribute("data-act");
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          const req = reqs.find(r => r.id === id);
+          if (!req) return;
+
+          if (act === "assign_next") await assignNextAvailable(req, squares);
+          if (act === "assign_specific") await assignSpecific(req, squares);
+          if (act === "mark_paid") await markPaid(req, squares);
+          if (act === "cancel") await cancelReq(req, squares);
+
+          await boot();
+        });
+      });
+    }
+
+    async function assignNextAvailable(req, squares) {
+      const needed = req.blocks_requested;
+      const already = squares.filter(s => s.assigned_to_request === req.id);
+      const remaining = needed - already.length;
+      if (remaining <= 0) return;
+
+      const avail = squares.filter(s => !s.assigned_to_request).slice(0, remaining);
+      if (avail.length < remaining) {
+        alert("Not enough available squares left.");
+        return;
+      }
+
+      const updates = avail.map(s => ({
+        square: s.square,
+        assigned_to_request: req.id,
+        display_name: req.name,
+        paid: false,
+        assigned_at: new Date().toISOString()
+      }));
+
+      // Upsert by primary key
+      const { error } = await supabase.from("sb_pool_squares").upsert(updates, { onConflict: "square" });
+      if (error) {
+        console.error(error);
+        alert("Failed to assign squares.");
+        return;
+      }
+
+      // Optional: move request to "paid" only after payment; leave as requested
+      // We'll keep status as requested here (since assigned squares are still PENDING).
+    }
+
+    async function assignSpecific(req, squares) {
+      const raw = prompt("Enter square numbers (comma separated). Example: 3,18,44");
+      if (!raw) return;
+
+      const nums = raw.split(",").map(x => parseInt(x.trim(), 10)).filter(n => Number.isFinite(n) && n >= 1 && n <= 100);
+      if (!nums.length) return;
+
+      // Validate availability or already assigned to same request
+      const byNum = new Map(squares.map(s => [s.square, s]));
+      for (const n of nums) {
+        const sq = byNum.get(n);
+        if (!sq) continue;
+        if (sq.assigned_to_request && sq.assigned_to_request !== req.id) {
+          alert(`Square ${n} is already assigned.`);
+          return;
+        }
+      }
+
+      const updates = nums.map(n => ({
+        square: n,
+        assigned_to_request: req.id,
+        display_name: req.name,
+        paid: false,
+        assigned_at: new Date().toISOString()
+      }));
+
+      const { error } = await supabase.from("sb_pool_squares").upsert(updates, { onConflict: "square" });
+      if (error) {
+        console.error(error);
+        alert("Failed to assign squares.");
+      }
+    }
+
+    async function markPaid(req, squares) {
+      // Mark all squares assigned to this request as paid
+      const assigned = squares.filter(s => s.assigned_to_request === req.id);
+      if (!assigned.length) {
+        // If none assigned, quickly assign next avail then mark paid
+        await assignNextAvailable(req, squares);
+      }
+
+      const { data: freshSquares, error: e1 } = await supabase.from("sb_pool_squares").select("*").order("square", { ascending: true });
+      if (e1) return;
+
+      const assigned2 = freshSquares.filter(s => s.assigned_to_request === req.id);
+      const updates = assigned2.map(s => ({ square: s.square, paid: true }));
+
+      const { error } = await supabase.from("sb_pool_squares").upsert(updates, { onConflict: "square" });
+      if (error) {
+        console.error(error);
+        alert("Failed to mark squares paid.");
+        return;
+      }
+
+      const { error: e2 } = await supabase.from("sb_pool_requests").update({ status: "fulfilled" }).eq("id", req.id);
+      if (e2) {
+        console.error(e2);
+        alert("Squares paid, but failed updating request status.");
+      }
+    }
+
+    async function cancelReq(req, squares) {
+      if (!confirm("Cancel this request and release any assigned squares?")) return;
+
+      const assigned = squares.filter(s => s.assigned_to_request === req.id);
+      if (assigned.length) {
+        const release = assigned.map(s => ({
+          square: s.square,
+          assigned_to_request: null,
+          display_name: null,
+          paid: false,
+          assigned_at: null
+        }));
+        const { error } = await supabase.from("sb_pool_squares").upsert(release, { onConflict: "square" });
+        if (error) {
+          console.error(error);
+          alert("Failed to release squares.");
+          return;
+        }
+      }
+
+      const { error } = await supabase.from("sb_pool_requests").update({ status: "cancelled" }).eq("id", req.id);
+      if (error) console.error(error);
+    }
+
+    async function boot() {
+      const authed = await ensureAuthUI();
+      if (!authed) {
+        axisStatus.textContent = "Sign in to manage axis + assignments.";
+        axisDigits.innerHTML = "";
+        requestsArea.textContent = "Sign in to view requests.";
+        return;
+      }
+      await loadAxis();
+      await loadRequestsAndSquares();
+    }
+
+    boot();
+  </script>
+</body>
+</html>
