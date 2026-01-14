@@ -1,54 +1,255 @@
+
+
+   
+
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SB Pool Admin | SAWA</title>
+
   <style>
-    :root { --bg:#0b0f1a; --card:#121a2b; --ink:#eef2ff; --muted:#b8c2e0; --good:#1fbf75; --bad:#ff4d4d; --warn:#ffcc00; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--ink); }
-    .wrap { max-width:1100px; margin:0 auto; padding:20px; }
-    .card { background:var(--card); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:14px; margin-bottom:14px; }
-    h1,h2 { margin:0 0 10px; }
-    label { display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; }
-    input, select { width:100%; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:var(--ink); }
-    .row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-    @media (max-width: 860px) { .row { grid-template-columns:1fr; } }
-    .btn { display:inline-block; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.10); color:var(--ink); text-decoration:none; border:1px solid rgba(255,255,255,0.18); cursor:pointer; }
-    .btn:hover { background:rgba(255,255,255,0.14); }
-    .btn-good { border-color: rgba(31,191,117,0.35); background: rgba(31,191,117,0.12); }
-    .btn-warn { border-color: rgba(255,204,0,0.35); background: rgba(255,204,0,0.12); }
-    .btn-bad { border-color: rgba(255,77,77,0.35); background: rgba(255,77,77,0.12); }
-    .muted { color:var(--muted); }
-    table { width:100%; border-collapse:collapse; }
-    th, td { text-align:left; padding:10px 8px; border-bottom:1px solid rgba(255,255,255,0.10); vertical-align:top; }
-    th { color:var(--muted); font-size:12px; font-weight:800; }
-    .tag { display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,0.18); color:var(--muted); font-size:12px; }
-    .ok { color:var(--good); font-weight:800; }
-    .err { color:var(--bad); font-weight:800; }
+    /* ---------- SAWA-ish palette (red/blue) + lighter UI ---------- */
+    :root{
+      --bg1:#f6f8fc;
+      --bg2:#eef3fb;
+
+      --card:#ffffff;
+      --stroke:rgba(15, 23, 42, 0.10);
+
+      --text:#0f172a;     /* slate-900 */
+      --muted:#475569;    /* slate-600 */
+
+      --blue:#1b3a6b;     /* deep SA-ish blue */
+      --blue2:#264a86;
+      --red:#c81f2d;      /* SA-ish red */
+      --red2:#e0313f;
+
+      --good:#16a34a;     /* green */
+      --warn:#f59e0b;     /* amber */
+      --bad:#dc2626;      /* red */
+
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    /* Fix your “inputs hanging off the card” issue */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 450px at 15% 0%, rgba(27,58,107,0.08), transparent 55%),
+        radial-gradient(900px 450px at 85% 0%, rgba(200,31,45,0.08), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+
+    .wrap{ max-width:1100px; margin:0 auto; padding:20px; }
+
+    /* Top header */
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      padding:14px 16px;
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      background: linear-gradient(90deg, rgba(27,58,107,0.06), rgba(200,31,45,0.05));
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+    .topbar img{
+      height:42px;
+      width:auto;
+      display:block;
+    }
+    .topbar h1{
+      font-size:22px;
+      margin:0;
+      letter-spacing:0.2px;
+    }
+    .topbar .sub{
+      margin:2px 0 0;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      padding:16px;
+      box-shadow: var(--shadow);
+      margin-bottom:14px;
+    }
+
+    h2{ margin:0 0 10px; font-size:18px; }
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin:10px 0 6px;
+      font-weight:600;
+    }
+
+    input, select{
+      width:100%;
+      max-width:100%;
+      padding:11px 12px;
+      border-radius:14px;
+      border:1px solid rgba(15, 23, 42, 0.14);
+      background:#ffffff;
+      color:var(--text);
+      outline:none;
+    }
+    input:focus, select:focus{
+      border-color: rgba(27,58,107,0.45);
+      box-shadow: 0 0 0 4px rgba(27,58,107,0.12);
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 860px){
+      .row{ grid-template-columns:1fr; }
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(15, 23, 42, 0.14);
+      background:#fff;
+      color:var(--text);
+      cursor:pointer;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .btn:hover{
+      background: rgba(15, 23, 42, 0.03);
+    }
+
+    .btn-blue{
+      border-color: rgba(27,58,107,0.28);
+      background: linear-gradient(180deg, rgba(27,58,107,0.10), rgba(27,58,107,0.06));
+    }
+    .btn-red{
+      border-color: rgba(200,31,45,0.28);
+      background: linear-gradient(180deg, rgba(200,31,45,0.10), rgba(200,31,45,0.06));
+    }
+    .btn-good{
+      border-color: rgba(22,163,74,0.30);
+      background: linear-gradient(180deg, rgba(22,163,74,0.12), rgba(22,163,74,0.06));
+    }
+    .btn-bad{
+      border-color: rgba(220,38,38,0.30);
+      background: linear-gradient(180deg, rgba(220,38,38,0.12), rgba(220,38,38,0.06));
+    }
+    .btn-warn{
+      border-color: rgba(245,158,11,0.34);
+      background: linear-gradient(180deg, rgba(245,158,11,0.14), rgba(245,158,11,0.06));
+    }
+
+    .muted{ color:var(--muted); }
+    .ok{ color:var(--good); font-weight:800; }
+    .err{ color:var(--bad); font-weight:800; }
+
+    .pillbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      color:var(--muted);
+      font-weight:700;
+      font-size:12px;
+      background:#fff;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px; display:inline-block;
+      background: rgba(15,23,42,0.35);
+    }
+    .dot.paid{ background: rgba(22,163,74,0.7); }
+    .dot.pending{ background: rgba(220,38,38,0.65); }
+    .dot.avail{ background: rgba(27,58,107,0.55); }
+
+    table{ width:100%; border-collapse:collapse; }
+    th, td{
+      text-align:left;
+      padding:10px 8px;
+      border-bottom:1px solid rgba(15, 23, 42, 0.08);
+      vertical-align:top;
+      font-size:14px;
+    }
+    th{
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:0.3px;
+      text-transform:uppercase;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 1;
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
   </style>
 </head>
+
 <body>
   <div class="wrap">
+
+    <!-- Top header (swap src to your hosted logo path) -->
+    <div class="topbar">
+      <img src="/assets/sawa.png" alt="SA Wrestling" />
+      <div>
+        <h1>Super Bowl Squares — Admin</h1>
+        <div class="sub">SAWA • 2026 Super Bowl 50/50 Block Pool</div>
+      </div>
+    </div>
+
     <div class="card">
-      <h1>SB Pool Admin</h1>
       <div id="authArea"></div>
     </div>
 
     <div class="card">
       <h2>Axis Numbers</h2>
       <div class="muted" id="axisStatus">Loading…</div>
-      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+
+      <div class="actions" style="margin-top:10px;">
         <button class="btn btn-warn" id="drawAxisBtn">Draw Axis Numbers (one-time)</button>
-        <button class="btn" id="refreshBtn">Refresh</button>
+        <button class="btn btn-blue" id="refreshBtn">Refresh</button>
         <button class="btn btn-bad" id="signOutBtn" style="margin-left:auto;">Sign out</button>
       </div>
+
       <div id="axisDigits" style="margin-top:10px;"></div>
     </div>
 
     <div class="card">
-      <h2>Requests (first come, first served)</h2>
-      <div class="muted">Tip: Confirm payment → assign squares → mark PAID. If you want to temporarily reserve squares, assign and leave as PENDING.</div>
+      <h2>Requests</h2>
+      <div class="muted">Confirm payment → assign squares → mark PAID. If you want to reserve, assign and leave as PENDING.</div>
       <div id="requestsArea" style="margin-top:10px;">Loading…</div>
     </div>
 
@@ -59,7 +260,7 @@
       <div class="row" style="margin-top:10px;">
         <div>
           <label>Search (square #, name, request id)</label>
-          <input id="sqSearch" placeholder="e.g. 44 or 'Dan' or 123" />
+          <input id="sqSearch" placeholder="e.g. 44 or Dan or 123" />
         </div>
         <div>
           <label>Status filter</label>
@@ -72,8 +273,15 @@
         </div>
       </div>
 
+      <div class="pillbar" style="margin-top:10px;">
+        <span class="pill"><span class="dot avail"></span>AVAILABLE</span>
+        <span class="pill"><span class="dot pending"></span>PENDING</span>
+        <span class="pill"><span class="dot paid"></span>PAID</span>
+      </div>
+
       <div id="squaresArea" style="margin-top:10px;">Loading…</div>
     </div>
+
   </div>
 
   <script type="module">
@@ -82,7 +290,6 @@
     const SUPABASE_URL = "https://polfteqwekkhzlhfjhsn.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvbGZ0ZXF3ZWtraHpsaGZqaHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTU2MzAsImV4cCI6MjA4MDY5MTYzMH0.npJCJJKOLTQddFH-xtU_ZtlT9_M8JWWpScDIsZAGY4M";
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 
     const authArea = document.getElementById("authArea");
     const requestsArea = document.getElementById("requestsArea");
@@ -112,7 +319,7 @@
         return;
       }
 
-      if (!confirm("Draw axis numbers now? This should only be done once, after all 100 blocks are sold.")) return;
+      if (!confirm("Draw axis numbers now? Only do this once all 100 blocks are sold.")) return;
 
       const digits = [0,1,2,3,4,5,6,7,8,9];
       const afc = shuffle(digits);
@@ -154,12 +361,19 @@
     async function ensureAuthUI() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        authArea.innerHTML = `<div class="ok">Signed in as ${escapeHtml(session.user.email || "admin")}</div>`;
+        authArea.innerHTML = `
+          <div class="pillbar">
+            <span class="pill"><span class="dot avail"></span>Signed in as <b>${escapeHtml(session.user.email || "admin")}</b></span>
+          </div>
+        `;
         return true;
       }
 
       authArea.innerHTML = `
-        <div class="row">
+        <h2 style="margin:0 0 6px;">Admin Sign In</h2>
+        <div class="muted">You must be in the <b>sb_pool_admins</b> allowlist.</div>
+
+        <div class="row" style="margin-top:10px;">
           <div>
             <label>Email</label>
             <input id="email" placeholder="you@example.com" />
@@ -169,9 +383,11 @@
             <input id="pw" type="password" placeholder="••••••••" />
           </div>
         </div>
-        <button class="btn btn-good" id="loginBtn" style="margin-top:10px;">Sign in</button>
-        <div class="muted" style="margin-top:8px;">Note: You must be in the sb_pool_admins allowlist.</div>
-        <div id="authMsg" style="margin-top:8px;"></div>
+
+        <div class="actions" style="margin-top:10px;">
+          <button class="btn btn-blue" id="loginBtn">Sign in</button>
+          <div id="authMsg"></div>
+        </div>
       `;
 
       document.getElementById("loginBtn").addEventListener("click", async () => {
@@ -207,8 +423,10 @@
 
       axisStatus.innerHTML = `<span class="ok">Axis drawn.</span> <span class="muted">(AFC top + NFC left)</span>`;
       axisDigits.innerHTML = `
-        <div class="tag">AFC: ${settings.afc_digits.join(" ")}</div>
-        <div class="tag" style="margin-left:8px;">NFC: ${settings.nfc_digits.join(" ")}</div>
+        <div class="pillbar">
+          <span class="pill"><b style="color:var(--blue)">AFC</b>: ${settings.afc_digits.join(" ")}</span>
+          <span class="pill"><b style="color:var(--red)">NFC</b>: ${settings.nfc_digits.join(" ")}</span>
+        </div>
       `;
     }
 
@@ -227,9 +445,7 @@
 
       let rows = __allSquares.slice();
 
-      if (filter !== "all") {
-        rows = rows.filter(s => statusOfSquare(s) === filter);
-      }
+      if (filter !== "all") rows = rows.filter(s => statusOfSquare(s) === filter);
 
       if (q) {
         rows = rows.filter(s => {
@@ -240,46 +456,64 @@
         });
       }
 
+      const counts = {
+        available: __allSquares.filter(s => statusOfSquare(s) === "available").length,
+        pending: __allSquares.filter(s => statusOfSquare(s) === "pending").length,
+        paid: __allSquares.filter(s => statusOfSquare(s) === "paid").length
+      };
+
       squaresArea.innerHTML = `
-        <div class="muted" style="margin-bottom:8px;">
-          Showing <b>${rows.length}</b> of <b>${__allSquares.length}</b> squares
+        <div class="pillbar" style="margin-bottom:10px;">
+          <span class="pill"><span class="dot avail"></span>Available: <b>${counts.available}</b></span>
+          <span class="pill"><span class="dot pending"></span>Pending: <b>${counts.pending}</b></span>
+          <span class="pill"><span class="dot paid"></span>Paid: <b>${counts.paid}</b></span>
+          <span class="pill" style="margin-left:auto;">Showing <b>${rows.length}</b> of <b>${__allSquares.length}</b></span>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width:10%;">Square</th>
-              <th style="width:14%;">Status</th>
-              <th>Name</th>
-              <th style="width:16%;">Request ID</th>
-              <th style="width:32%;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map(s => {
-              const st = statusOfSquare(s);
-              const statusLabel = st.toUpperCase();
-              const name = s.display_name ? escapeHtml(s.display_name) : "—";
-              const rid = s.assigned_to_request ?? "—";
-              return `
-                <tr>
-                  <td><b>${s.square}</b></td>
-                  <td class="muted">${statusLabel}</td>
-                  <td>${name}</td>
-                  <td class="muted">${rid}</td>
-                  <td>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                      <button class="btn btn-bad" data-sq-act="release" data-square="${s.square}">Release</button>
-                      <button class="btn btn-good" data-sq-act="togglePaid" data-square="${s.square}">
-                        ${s.paid ? "Unmark Paid" : "Mark Paid"}
-                      </button>
-                      <button class="btn" data-sq-act="reassign" data-square="${s.square}">Reassign…</button>
-                    </div>
-                  </td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
+
+        <div style="overflow:auto; border:1px solid var(--stroke); border-radius: 14px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:90px;">Square</th>
+                <th style="width:120px;">Status</th>
+                <th>Name</th>
+                <th style="width:120px;">Request ID</th>
+                <th style="width:340px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(s => {
+                const st = statusOfSquare(s);
+                const statusLabel = st.toUpperCase();
+                const name = s.display_name ? escapeHtml(s.display_name) : "—";
+                const rid = s.assigned_to_request ?? "—";
+
+                const statusPill =
+                  st === "paid" ? `<span class="pill"><span class="dot paid"></span>${statusLabel}</span>` :
+                  st === "pending" ? `<span class="pill"><span class="dot pending"></span>${statusLabel}</span>` :
+                  `<span class="pill"><span class="dot avail"></span>${statusLabel}</span>`;
+
+                return `
+                  <tr>
+                    <td><b>${s.square}</b></td>
+                    <td>${statusPill}</td>
+                    <td>${name}</td>
+                    <td class="muted">${rid}</td>
+                    <td>
+                      <div class="actions">
+                        <button class="btn btn-bad" data-sq-act="release" data-square="${s.square}">Release</button>
+                        <button class="btn btn-good" data-sq-act="togglePaid" data-square="${s.square}">
+                          ${s.paid ? "Unmark Paid" : "Mark Paid"}
+                        </button>
+                        <button class="btn btn-blue" data-sq-act="reassign" data-square="${s.square}">Reassign…</button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
       `;
 
       squaresArea.querySelectorAll("button[data-sq-act]").forEach(btn => {
@@ -374,7 +608,9 @@
           .select("*")
           .in("status", ["requested","paid"])
           .order("created_at", { ascending: true }),
-        supabase.from("sb_pool_squares").select("*").order("square", { ascending: true })
+        supabase.from("sb_pool_squares")
+          .select("*")
+          .order("square", { ascending: true })
       ]);
 
       if (e1 || e2) {
@@ -397,47 +633,55 @@
       });
 
       requestsArea.innerHTML = `
-        <div class="muted" style="margin-bottom:8px;">Available squares: <b>${avail.length}</b> / 100</div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width:18%;">Time</th>
-              <th style="width:18%;">Name / Contact</th>
-              <th style="width:12%;">Blocks</th>
-              <th>Prefs / Notes</th>
-              <th style="width:28%;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${reqs.map(r => {
-              const assigned = (byReq.get(r.id) || []).map(s => s.square);
-              return `
-                <tr>
-                  <td class="muted">${new Date(r.created_at).toLocaleString()}</td>
-                  <td>
-                    <div><b>${escapeHtml(r.name)}</b></div>
-                    <div class="muted">${escapeHtml(r.contact || "")}</div>
-                  </td>
-                  <td><b>${r.blocks_requested}</b><div class="muted">assigned: ${assigned.length}</div></td>
-                  <td class="muted">
-                    <div><b>Pref:</b> ${escapeHtml(r.preferred_squares || "")}</div>
-                    <div><b>Notes:</b> ${escapeHtml(r.notes || "")}</div>
-                  </td>
-                  <td>
-                    <div class="muted" style="margin-bottom:6px;">Assigned squares: <b>${assigned.join(", ") || "—"}</b></div>
+        <div class="pillbar" style="margin-bottom:10px;">
+          <span class="pill"><span class="dot avail"></span>Available: <b>${avail.length}</b> / 100</span>
+          <span class="pill muted">Tip: “Assign next available” keeps it moving</span>
+        </div>
 
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                      <button class="btn btn-warn" data-act="assign_next" data-id="${r.id}">Assign next available</button>
-                      <button class="btn" data-act="assign_specific" data-id="${r.id}">Assign specific…</button>
-                      <button class="btn btn-good" data-act="mark_paid" data-id="${r.id}">Mark PAID</button>
-                      <button class="btn btn-bad" data-act="cancel" data-id="${r.id}">Cancel</button>
-                    </div>
-                  </td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
+        <div style="overflow:auto; border:1px solid var(--stroke); border-radius: 14px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:180px;">Time</th>
+                <th style="width:220px;">Name / Contact</th>
+                <th style="width:120px;">Blocks</th>
+                <th>Prefs / Notes</th>
+                <th style="width:360px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${reqs.map(r => {
+                const assigned = (byReq.get(r.id) || []).map(s => s.square).sort((a,b)=>a-b);
+                return `
+                  <tr>
+                    <td class="muted">${new Date(r.created_at).toLocaleString()}</td>
+                    <td>
+                      <div><b>${escapeHtml(r.name)}</b></div>
+                      <div class="muted">${escapeHtml(r.contact || "")}</div>
+                    </td>
+                    <td>
+                      <b>${r.blocks_requested}</b>
+                      <div class="muted">assigned: ${assigned.length}</div>
+                    </td>
+                    <td class="muted">
+                      <div><b>Pref:</b> ${escapeHtml(r.preferred_squares || "")}</div>
+                      <div><b>Notes:</b> ${escapeHtml(r.notes || "")}</div>
+                    </td>
+                    <td>
+                      <div class="muted" style="margin-bottom:8px;">Assigned: <b>${assigned.join(", ") || "—"}</b></div>
+                      <div class="actions">
+                        <button class="btn btn-blue" data-act="assign_next" data-id="${r.id}">Assign next</button>
+                        <button class="btn" data-act="assign_specific" data-id="${r.id}">Assign specific…</button>
+                        <button class="btn btn-good" data-act="mark_paid" data-id="${r.id}">Mark PAID</button>
+                        <button class="btn btn-bad" data-act="cancel" data-id="${r.id}">Cancel</button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
       `;
 
       requestsArea.querySelectorAll("button[data-act]").forEach(btn => {
@@ -519,42 +763,23 @@
     }
 
     async function markPaid(req) {
-      // Ensure we have fresh squares
       const { data: freshSquares, error: e0 } = await supabase.from("sb_pool_squares").select("*").order("square", { ascending: true });
-      if (e0) {
-        console.error(e0);
-        alert("Failed to load squares.");
-        return;
-      }
+      if (e0) { console.error(e0); alert("Failed to load squares."); return; }
 
-      // If none assigned, assign next available first
       const assignedNow = freshSquares.filter(s => s.assigned_to_request === req.id);
-      if (!assignedNow.length) {
-        await assignNextAvailable(req, freshSquares);
-      }
+      if (!assignedNow.length) await assignNextAvailable(req, freshSquares);
 
       const { data: fresh2, error: e1 } = await supabase.from("sb_pool_squares").select("*").order("square", { ascending: true });
-      if (e1) {
-        console.error(e1);
-        alert("Failed to reload squares.");
-        return;
-      }
+      if (e1) { console.error(e1); alert("Failed to reload squares."); return; }
 
       const assigned2 = fresh2.filter(s => s.assigned_to_request === req.id);
       const updates = assigned2.map(s => ({ square: s.square, paid: true }));
 
       const { error } = await supabase.from("sb_pool_squares").upsert(updates, { onConflict: "square" });
-      if (error) {
-        console.error(error);
-        alert("Failed to mark squares paid.");
-        return;
-      }
+      if (error) { console.error(error); alert("Failed to mark squares paid."); return; }
 
       const { error: e2 } = await supabase.from("sb_pool_requests").update({ status: "fulfilled" }).eq("id", req.id);
-      if (e2) {
-        console.error(e2);
-        alert("Squares paid, but failed updating request status.");
-      }
+      if (e2) { console.error(e2); alert("Squares paid, but failed updating request status."); }
     }
 
     async function cancelReq(req, squares) {
@@ -570,11 +795,7 @@
           assigned_at: null
         }));
         const { error } = await supabase.from("sb_pool_squares").upsert(release, { onConflict: "square" });
-        if (error) {
-          console.error(error);
-          alert("Failed to release squares.");
-          return;
-        }
+        if (error) { console.error(error); alert("Failed to release squares."); return; }
       }
 
       const { error } = await supabase.from("sb_pool_requests").update({ status: "cancelled" }).eq("id", req.id);
@@ -595,6 +816,7 @@
     }
 
     boot();
+    setInterval(boot, 10000); // auto-refresh
   </script>
 </body>
 </html>
