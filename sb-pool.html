@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>2026 Super Bowl 50/50 Block Pool | SAWA</title>
+  <style>
+    :root { --bg:#0b0f1a; --card:#121a2b; --ink:#eef2ff; --muted:#b8c2e0; --accent:#ffcc00; --good:#1fbf75; --bad:#ff4d4d; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--ink); }
+    .wrap { max-width:1100px; margin:0 auto; padding:20px; }
+    .hero { background:linear-gradient(180deg, rgba(255,255,255,0.06), transparent); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:18px; }
+    h1 { margin:0 0 6px; font-size:28px; }
+    .sub { color:var(--muted); margin:0 0 14px; line-height:1.35; }
+    .grid-area { display:grid; grid-template-columns: 1fr 360px; gap:16px; margin-top:16px; }
+    @media (max-width: 980px) { .grid-area { grid-template-columns:1fr; } }
+    .card { background:var(--card); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:14px; }
+    .pill { display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.18); color:var(--muted); font-size:12px; margin-right:8px; }
+    .btn { display:inline-block; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.10); color:var(--ink); text-decoration:none; border:1px solid rgba(255,255,255,0.18); }
+    .btn:hover { background:rgba(255,255,255,0.14); }
+    .btn-accent { background:rgba(255,204,0,0.18); border-color:rgba(255,204,0,0.35); }
+    .btn-accent:hover { background:rgba(255,204,0,0.24); }
+
+    .board { overflow:auto; }
+    .sq { width:52px; height:44px; border:1px solid rgba(255,255,255,0.10); display:flex; align-items:center; justify-content:center; border-radius:8px; font-weight:800; }
+    .sq small { display:block; font-weight:700; font-size:11px; color:rgba(255,255,255,0.75); margin-top:2px; }
+    .sq.available { background:rgba(255,255,255,0.05); }
+    .sq.paid { background:rgba(31,191,117,0.18); border-color:rgba(31,191,117,0.35); }
+    .sq.pending { background:rgba(255,77,77,0.12); border-color:rgba(255,77,77,0.25); }
+    .grid10 { display:grid; grid-template-columns: 60px repeat(10, 52px); grid-auto-rows:44px; gap:6px; align-items:center; }
+    .axis { width:60px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--muted); font-weight:800; }
+    .axis.top { width:52px; }
+    .legend { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; color:var(--muted); }
+    .dot { width:10px; height:10px; border-radius:99px; display:inline-block; margin-right:6px; vertical-align:middle; }
+    .dot.a { background:rgba(255,255,255,0.35); }
+    .dot.p { background:rgba(31,191,117,0.6); }
+    .dot.u { background:rgba(255,77,77,0.6); }
+
+    label { display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; }
+    input, textarea, select { width:100%; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:var(--ink); }
+    textarea { min-height:90px; }
+    .note { color:var(--muted); font-size:12px; line-height:1.4; }
+    .ok { color:var(--good); font-weight:800; }
+    .err { color:var(--bad); font-weight:800; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>2026 SUPER BOWL 50/50 BLOCK POOL</h1>
+      <p class="sub">
+        Sponsored by Shaler Area HS &amp; MS Wrestling Association (SAWA). Proceeds benefit Shaler Area JH and Varsity Boys and Girls Wrestling Teams.
+      </p>
+
+      <div class="card" style="margin-top:12px;">
+        <div class="pill">$30 / block</div>
+        <div class="pill">4 payouts = $1,500 total</div>
+        <div class="pill">Memo line: <b>SB Pool</b></div>
+
+        <div style="margin-top:10px; line-height:1.5; color:var(--muted);">
+          <b>Payments:</b> Venmo or PayPal <b>@SAWATitans</b> (see QR codes). Please include <b>SB Pool</b> in the memo line.<br/>
+          <b>Payouts:</b> 1st Qtr $150 • Halftime $300 • 3rd Qtr $150 • Final Score $900<br/>
+          <b>One set of numbers will be drawn.</b> Axis numbers will be randomly drawn once all blocks are sold.<br/>
+          <b>Unsold blocks</b> remain the property of Shaler Area Wrestling Association.<br/><br/>
+          Given Shaler's long and storied legacy of outstanding wrestling over many generations, please consider supporting our wrestlers by purchasing a block or two.
+          First come first served — <b>blocks will not be assigned until payment has been received.</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-area">
+      <div class="card">
+        <h2 style="margin:0 0 8px;">Block Board</h2>
+        <div class="note">Top axis = AFC digits. Left axis = NFC digits. Digits appear after the draw.</div>
+
+        <div class="board" style="margin-top:12px;">
+          <div id="board" class="grid10"></div>
+        </div>
+
+        <div class="legend">
+          <span><span class="dot a"></span>Available</span>
+          <span><span class="dot u"></span>Pending (assigned)</span>
+          <span><span class="dot p"></span>Paid</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0 0 10px;">Pay + Request Blocks</h2>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btn btn-accent" href="https://venmo.com/" target="_blank" rel="noreferrer">Pay via Venmo: @SAWATitans</a>
+          <a class="btn btn-accent" href="https://paypal.me/" target="_blank" rel="noreferrer">Pay via PayPal: @SAWATitans</a>
+        </div>
+
+        <div class="note" style="margin-top:10px;">
+          <b>Important:</b> Put <b>SB Pool</b> in the memo line so we can match your payment.
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:150px;">
+            <div class="note">Venmo QR</div>
+            <img src="/images/venmo-qr.png" alt="Venmo QR" style="width:100%; border-radius:12px; border:1px solid rgba(255,255,255,0.12);" />
+          </div>
+          <div style="flex:1; min-width:150px;">
+            <div class="note">PayPal QR</div>
+            <img src="/images/paypal-qr.png" alt="PayPal QR" style="width:100%; border-radius:12px; border:1px solid rgba(255,255,255,0.12);" />
+          </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.12); margin:14px 0;" />
+
+        <form id="reqForm">
+          <label>Your name</label>
+          <input id="name" required placeholder="First + Last" />
+
+          <label>Contact (email or phone)</label>
+          <input id="contact" placeholder="So we can confirm your squares" />
+
+          <label>How many blocks?</label>
+          <select id="count">
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+          </select>
+
+          <label>Preferred square numbers (optional)</label>
+          <input id="pref" placeholder="Example: 3, 18, 44" />
+
+          <label>Notes (optional)</label>
+          <textarea id="notes" placeholder="Anything we should know?"></textarea>
+
+          <button class="btn" type="submit" style="margin-top:10px; width:100%;">Submit Request</button>
+          <div id="msg" style="margin-top:10px;"></div>
+        </form>
+
+        <div class="card" style="margin-top:14px;">
+          <h3 style="margin:0 0 8px;">WHY SUPPORT US?</h3>
+          <div class="note">
+            With fundraising such as this, we are able to support healthy meals for the wrestlers on match days, quality warmups and gear for the wrestlers to rock their Titan Pride,
+            senior gifts, and even unique items such as our newly installed Titan competition spotlight in HS Gym A!!!
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const SUPABASE_URL = "https://polfteqwekkhzlhfjhsn.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvbGZ0ZXF3ZWtraHpsaGZqaHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTU2MzAsImV4cCI6MjA4MDY5MTYzMH0.npJCJJKOLTQddFH-xtU_ZtlT9_M8JWWpScDIsZAGY4M";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const boardEl = document.getElementById("board");
+    const msgEl = document.getElementById("msg");
+
+    function toPublicName(name) {
+      const s = String(name ?? "").trim();
+      if (!s) return "";
+      const parts = s.split(/\s+/).filter(Boolean);
+      if (parts.length === 1) return parts[0];
+      const first = parts[0];
+      const last = parts[parts.length - 1];
+      return `${first} ${last[0].toUpperCase()}.`;
+    }
+
+    function renderBoard({ squares, settings }) {
+      boardEl.innerHTML = "";
+
+      const topDigits = settings?.axis_drawn ? settings.afc_digits : Array(10).fill("#");
+      const leftDigits = settings?.axis_drawn ? settings.nfc_digits : Array(10).fill("#");
+
+      // row 0: top-left blank + top digits
+      boardEl.appendChild(axisCell(""));
+      for (let c = 0; c < 10; c++) boardEl.appendChild(axisCell(String(topDigits?.[c] ?? "#"), true));
+
+      // rows 1..10
+      const byNum = new Map((squares ?? []).map(s => [s.square, s]));
+      for (let r = 0; r < 10; r++) {
+        boardEl.appendChild(axisCell(String(leftDigits?.[r] ?? "#")));
+        for (let c = 0; c < 10; c++) {
+          const squareNumber = r * 10 + (c + 1); // 1..100
+          const sq = byNum.get(squareNumber);
+
+          const paid = !!sq?.paid;
+          const assigned = !!sq?.assigned_to_request;
+
+          const div = document.createElement("div");
+          div.className = "sq " + (paid ? "paid" : assigned ? "pending" : "available");
+
+          const label = paid ? "PAID" : assigned ? "PENDING" : "";
+          const who = sq?.display_name ? toPublicName(sq.display_name) : "";
+
+          div.innerHTML = `<div style="text-align:center;">
+            ${squareNumber}
+            ${(who || label) ? `<small>${escapeHtml(who || label)}</small>` : ``}
+          </div>`;
+
+          boardEl.appendChild(div);
+        }
+      }
+    }
+
+    function axisCell(text, top=false) {
+      const d = document.createElement("div");
+      d.className = "axis" + (top ? " top" : "");
+      d.textContent = text;
+      return d;
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function loadData() {
+      const [{ data: squares, error: e1 }, { data: settings, error: e2 }] = await Promise.all([
+        supabase.from("sb_pool_squares").select("*").order("square", { ascending: true }),
+        supabase.from("sb_pool_settings").select("*").eq("id", 1).single()
+      ]);
+      if (e1) console.error(e1);
+      if (e2) console.error(e2);
+      renderBoard({ squares: squares ?? [], settings: settings ?? null });
+    }
+
+    document.getElementById("reqForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msgEl.textContent = "";
+
+      const name = document.getElementById("name").value.trim();
+      const contact = document.getElementById("contact").value.trim();
+      const blocks_requested = parseInt(document.getElementById("count").value, 10);
+      const preferred_squares = document.getElementById("pref").value.trim();
+      const notes = document.getElementById("notes").value.trim();
+      if (!name) return;
+
+      const { error } = await supabase.from("sb_pool_requests").insert([{
+        name,
+        contact: contact || null,
+        blocks_requested,
+        preferred_squares: preferred_squares || null,
+        notes: notes || null
+      }]);
+
+      if (error) {
+        msgEl.innerHTML = `<div class="err">Could not submit request. Try again.</div>`;
+        console.error(error);
+        return;
+      }
+
+      msgEl.innerHTML = `<div class="ok">Request submitted. Please pay via Venmo/PayPal and include “SB Pool” in the memo. We’ll assign blocks after payment.</div>`;
+      e.target.reset();
+    });
+
+    loadData();
+    setInterval(loadData, 15000); // refresh every 15s (nice for live selling)
+  </script>
+</body>
+</html>
