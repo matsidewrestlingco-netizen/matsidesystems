@@ -48,8 +48,31 @@
 
     <div class="card">
       <h2>Requests (first come, first served)</h2>
-      <div class="muted">Tip: When you confirm payment, assign squares and mark PAID. If you want to temporarily reserve squares, assign and leave as PENDING.</div>
+      <div class="muted">Tip: Confirm payment → assign squares → mark PAID. If you want to temporarily reserve squares, assign and leave as PENDING.</div>
       <div id="requestsArea" style="margin-top:10px;">Loading…</div>
+    </div>
+
+    <div class="card">
+      <h2>Squares Manager</h2>
+      <div class="muted">Search and edit individual squares (release, toggle paid, reassign).</div>
+
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label>Search (square #, name, request id)</label>
+          <input id="sqSearch" placeholder="e.g. 44 or 'Dan' or 123" />
+        </div>
+        <div>
+          <label>Status filter</label>
+          <select id="sqFilter">
+            <option value="all">All</option>
+            <option value="available">Available</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="squaresArea" style="margin-top:10px;">Loading…</div>
     </div>
   </div>
 
@@ -60,16 +83,26 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvbGZ0ZXF3ZWtraHpsaGZqaHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTU2MzAsImV4cCI6MjA4MDY5MTYzMH0.npJCJJKOLTQddFH-xtU_ZtlT9_M8JWWpScDIsZAGY4M";
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+
     const authArea = document.getElementById("authArea");
     const requestsArea = document.getElementById("requestsArea");
     const axisStatus = document.getElementById("axisStatus");
     const axisDigits = document.getElementById("axisDigits");
+
+    const squaresArea = document.getElementById("squaresArea");
+    const sqSearchEl = document.getElementById("sqSearch");
+    const sqFilterEl = document.getElementById("sqFilter");
+
+    let __allSquares = [];
 
     document.getElementById("refreshBtn").addEventListener("click", () => boot());
     document.getElementById("signOutBtn").addEventListener("click", async () => {
       await supabase.auth.signOut();
       boot();
     });
+
+    sqSearchEl?.addEventListener("input", () => renderSquaresManager(__allSquares));
+    sqFilterEl?.addEventListener("change", () => renderSquaresManager(__allSquares));
 
     document.getElementById("drawAxisBtn").addEventListener("click", async () => {
       const { data: settings } = await supabase.from("sb_pool_settings").select("*").eq("id", 1).single();
@@ -179,6 +212,162 @@
       `;
     }
 
+    function statusOfSquare(s) {
+      if (s?.paid) return "paid";
+      if (s?.assigned_to_request) return "pending";
+      return "available";
+    }
+
+    function renderSquaresManager(squares) {
+      __allSquares = squares || [];
+      if (!squaresArea) return;
+
+      const q = (sqSearchEl?.value || "").trim().toLowerCase();
+      const filter = (sqFilterEl?.value || "all");
+
+      let rows = __allSquares.slice();
+
+      if (filter !== "all") {
+        rows = rows.filter(s => statusOfSquare(s) === filter);
+      }
+
+      if (q) {
+        rows = rows.filter(s => {
+          const sqNum = String(s.square ?? "").toLowerCase();
+          const name = String(s.display_name ?? "").toLowerCase();
+          const rid = String(s.assigned_to_request ?? "").toLowerCase();
+          return sqNum.includes(q) || name.includes(q) || rid.includes(q);
+        });
+      }
+
+      squaresArea.innerHTML = `
+        <div class="muted" style="margin-bottom:8px;">
+          Showing <b>${rows.length}</b> of <b>${__allSquares.length}</b> squares
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:10%;">Square</th>
+              <th style="width:14%;">Status</th>
+              <th>Name</th>
+              <th style="width:16%;">Request ID</th>
+              <th style="width:32%;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(s => {
+              const st = statusOfSquare(s);
+              const statusLabel = st.toUpperCase();
+              const name = s.display_name ? escapeHtml(s.display_name) : "—";
+              const rid = s.assigned_to_request ?? "—";
+              return `
+                <tr>
+                  <td><b>${s.square}</b></td>
+                  <td class="muted">${statusLabel}</td>
+                  <td>${name}</td>
+                  <td class="muted">${rid}</td>
+                  <td>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                      <button class="btn btn-bad" data-sq-act="release" data-square="${s.square}">Release</button>
+                      <button class="btn btn-good" data-sq-act="togglePaid" data-square="${s.square}">
+                        ${s.paid ? "Unmark Paid" : "Mark Paid"}
+                      </button>
+                      <button class="btn" data-sq-act="reassign" data-square="${s.square}">Reassign…</button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      `;
+
+      squaresArea.querySelectorAll("button[data-sq-act]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const act = btn.getAttribute("data-sq-act");
+          const square = parseInt(btn.getAttribute("data-square"), 10);
+
+          if (act === "release") await releaseSquare(square);
+          if (act === "togglePaid") await togglePaid(square);
+          if (act === "reassign") await reassignSquare(square);
+
+          await boot();
+        });
+      });
+    }
+
+    async function releaseSquare(square) {
+      if (!confirm(`Release square ${square}? This clears assignment + paid.`)) return;
+
+      const { error } = await supabase.from("sb_pool_squares").upsert([{
+        square,
+        assigned_to_request: null,
+        display_name: null,
+        paid: false,
+        assigned_at: null
+      }], { onConflict: "square" });
+
+      if (error) {
+        console.error(error);
+        alert("Failed to release square.");
+      }
+    }
+
+    async function togglePaid(square) {
+      const current = __allSquares.find(s => s.square === square);
+      if (!current) return;
+
+      if (!current.assigned_to_request && !current.paid) {
+        if (!confirm(`Square ${square} is not assigned. Marking paid anyway is odd — continue?`)) return;
+      }
+
+      const { error } = await supabase.from("sb_pool_squares").upsert([{
+        square,
+        paid: !current.paid
+      }], { onConflict: "square" });
+
+      if (error) {
+        console.error(error);
+        alert("Failed to toggle paid.");
+      }
+    }
+
+    async function reassignSquare(square) {
+      const reqIdRaw = prompt(`Reassign square ${square} to which request ID? (number)`);
+      if (!reqIdRaw) return;
+
+      const reqId = parseInt(reqIdRaw.trim(), 10);
+      if (!Number.isFinite(reqId) || reqId <= 0) {
+        alert("Invalid request ID.");
+        return;
+      }
+
+      const { data: req, error: e1 } = await supabase
+        .from("sb_pool_requests")
+        .select("id,name,status")
+        .eq("id", reqId)
+        .single();
+
+      if (e1 || !req) {
+        console.error(e1);
+        alert("Request not found (or you don’t have access).");
+        return;
+      }
+
+      const { error: e2 } = await supabase.from("sb_pool_squares").upsert([{
+        square,
+        assigned_to_request: req.id,
+        display_name: req.name,
+        paid: false,
+        assigned_at: new Date().toISOString()
+      }], { onConflict: "square" });
+
+      if (e2) {
+        console.error(e2);
+        alert("Failed to reassign square.");
+      }
+    }
+
     async function loadRequestsAndSquares() {
       const [{ data: reqs, error: e1 }, { data: squares, error: e2 }] = await Promise.all([
         supabase.from("sb_pool_requests")
@@ -190,13 +379,16 @@
 
       if (e1 || e2) {
         requestsArea.innerHTML = `<div class="err">Failed to load data. Are you signed in as an admin?</div>`;
+        if (squaresArea) squaresArea.innerHTML = `<div class="err">Failed to load squares.</div>`;
         console.error(e1, e2);
         return;
       }
 
-      const avail = squares.filter(s => !s.assigned_to_request);
+      __allSquares = squares || [];
+
+      const avail = __allSquares.filter(s => !s.assigned_to_request);
       const byReq = new Map();
-      squares.forEach(s => {
+      __allSquares.forEach(s => {
         if (s.assigned_to_request) {
           const arr = byReq.get(s.assigned_to_request) || [];
           arr.push(s);
@@ -255,14 +447,16 @@
           const req = reqs.find(r => r.id === id);
           if (!req) return;
 
-          if (act === "assign_next") await assignNextAvailable(req, squares);
-          if (act === "assign_specific") await assignSpecific(req, squares);
-          if (act === "mark_paid") await markPaid(req, squares);
-          if (act === "cancel") await cancelReq(req, squares);
+          if (act === "assign_next") await assignNextAvailable(req, __allSquares);
+          if (act === "assign_specific") await assignSpecific(req, __allSquares);
+          if (act === "mark_paid") await markPaid(req);
+          if (act === "cancel") await cancelReq(req, __allSquares);
 
           await boot();
         });
       });
+
+      renderSquaresManager(__allSquares);
     }
 
     async function assignNextAvailable(req, squares) {
@@ -285,16 +479,11 @@
         assigned_at: new Date().toISOString()
       }));
 
-      // Upsert by primary key
       const { error } = await supabase.from("sb_pool_squares").upsert(updates, { onConflict: "square" });
       if (error) {
         console.error(error);
         alert("Failed to assign squares.");
-        return;
       }
-
-      // Optional: move request to "paid" only after payment; leave as requested
-      // We'll keep status as requested here (since assigned squares are still PENDING).
     }
 
     async function assignSpecific(req, squares) {
@@ -304,7 +493,6 @@
       const nums = raw.split(",").map(x => parseInt(x.trim(), 10)).filter(n => Number.isFinite(n) && n >= 1 && n <= 100);
       if (!nums.length) return;
 
-      // Validate availability or already assigned to same request
       const byNum = new Map(squares.map(s => [s.square, s]));
       for (const n of nums) {
         const sq = byNum.get(n);
@@ -330,18 +518,29 @@
       }
     }
 
-    async function markPaid(req, squares) {
-      // Mark all squares assigned to this request as paid
-      const assigned = squares.filter(s => s.assigned_to_request === req.id);
-      if (!assigned.length) {
-        // If none assigned, quickly assign next avail then mark paid
-        await assignNextAvailable(req, squares);
+    async function markPaid(req) {
+      // Ensure we have fresh squares
+      const { data: freshSquares, error: e0 } = await supabase.from("sb_pool_squares").select("*").order("square", { ascending: true });
+      if (e0) {
+        console.error(e0);
+        alert("Failed to load squares.");
+        return;
       }
 
-      const { data: freshSquares, error: e1 } = await supabase.from("sb_pool_squares").select("*").order("square", { ascending: true });
-      if (e1) return;
+      // If none assigned, assign next available first
+      const assignedNow = freshSquares.filter(s => s.assigned_to_request === req.id);
+      if (!assignedNow.length) {
+        await assignNextAvailable(req, freshSquares);
+      }
 
-      const assigned2 = freshSquares.filter(s => s.assigned_to_request === req.id);
+      const { data: fresh2, error: e1 } = await supabase.from("sb_pool_squares").select("*").order("square", { ascending: true });
+      if (e1) {
+        console.error(e1);
+        alert("Failed to reload squares.");
+        return;
+      }
+
+      const assigned2 = fresh2.filter(s => s.assigned_to_request === req.id);
       const updates = assigned2.map(s => ({ square: s.square, paid: true }));
 
       const { error } = await supabase.from("sb_pool_squares").upsert(updates, { onConflict: "square" });
@@ -388,6 +587,7 @@
         axisStatus.textContent = "Sign in to manage axis + assignments.";
         axisDigits.innerHTML = "";
         requestsArea.textContent = "Sign in to view requests.";
+        if (squaresArea) squaresArea.textContent = "Sign in to manage squares.";
         return;
       }
       await loadAxis();
