@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Shaler Area Wrestling - OBS Overlay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Antonio:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-red: #C8102E;
+            --primary-blue: #1E3A5F;
+            --secondary-blue: #2B4C7E;
+            --text-light: #FFFFFF;
+            --text-gray: #B0B0B0;
+        }
+
+        body {
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            font-family: 'Oswald', sans-serif;
+            background: transparent;
+        }
+
+        /* Lower Third Banner */
+        .lower-third {
+            position: absolute;
+            bottom: 100px;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            padding: 20px 60px;
+            background: linear-gradient(90deg, 
+                rgba(30, 58, 95, 0.95) 0%, 
+                rgba(30, 58, 95, 0.85) 50%, 
+                transparent 100%);
+            backdrop-filter: blur(10px);
+            animation: slideInLeft 0.6s ease-out;
+            max-width: 1200px;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .lower-third::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-red) 0%, var(--primary-red) 30%, transparent 100%);
+        }
+
+        .lower-third-logo {
+            width: 120px;
+            height: 120px;
+            margin-right: 30px;
+            flex-shrink: 0;
+        }
+
+        .lower-third-content {
+            flex: 1;
+        }
+
+        .lower-third-title {
+            font-family: 'Antonio', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .lower-third-subtitle {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.5rem;
+            color: var(--text-gray);
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(26, 26, 26, 0.95));
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid var(--primary-blue);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+        }
+
+        .scoreboard::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+        }
+
+        .team-score {
+            padding: 25px 40px;
+            min-width: 300px;
+            text-align: center;
+        }
+
+        .team-score.home {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.3), transparent);
+            border-right: 2px solid rgba(30, 58, 95, 0.5);
+        }
+
+        .team-score.away {
+            background: linear-gradient(135deg, transparent, rgba(200, 16, 46, 0.2));
+            border-left: 2px solid rgba(200, 16, 46, 0.5);
+        }
+
+        .team-name-score {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: var(--text-light);
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .team-score.home .team-name-score {
+            color: var(--primary-blue);
+        }
+
+        .team-score.away .team-name-score {
+            color: var(--primary-red);
+        }
+
+        .score-value {
+            font-family: 'Antonio', sans-serif;
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--text-light);
+            line-height: 1;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+        }
+
+        .vs-divider-score {
+            padding: 25px 30px;
+            background: linear-gradient(180deg, rgba(30, 58, 95, 0.4), rgba(200, 16, 46, 0.3));
+        }
+
+        .vs-text-score {
+            font-family: 'Antonio', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-light);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Match Info Box */
+        .match-info {
+            position: absolute;
+            top: 150px;
+            left: 40px;
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.95), rgba(10, 10, 10, 0.95));
+            backdrop-filter: blur(10px);
+            padding: 25px 35px;
+            border-radius: 12px;
+            border: 2px solid var(--primary-blue);
+            min-width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .match-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+        }
+
+        .match-label {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .match-value {
+            font-family: 'Antonio', sans-serif;
+            font-size: 2.2rem;
+            color: var(--text-light);
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .weight-class {
+            color: var(--primary-red);
+        }
+
+        /* Wrestler Names Bar */
+        .wrestler-bar {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(26, 26, 26, 0.95));
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--primary-blue);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .wrestler-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+        }
+
+        .wrestler-info {
+            padding: 20px 50px;
+            min-width: 400px;
+            text-align: center;
+        }
+
+        .wrestler-info.home-wrestler {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.3), transparent);
+            border-right: 2px solid rgba(30, 58, 95, 0.5);
+        }
+
+        .wrestler-info.away-wrestler {
+            background: linear-gradient(135deg, transparent, rgba(200, 16, 46, 0.2));
+        }
+
+        .wrestler-team-label {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1rem;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .wrestler-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: var(--text-light);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .wrestler-info.home-wrestler .wrestler-name {
+            color: var(--primary-blue);
+        }
+
+        .wrestler-info.away-wrestler .wrestler-name {
+            color: var(--primary-red);
+        }
+
+        .wrestler-record {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.3rem;
+            color: var(--text-gray);
+            margin-top: 5px;
+        }
+
+        /* Corner Logo */
+        .corner-logo {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            width: 180px;
+            height: auto;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.7));
+        }
+
+        /* Sponsor Bug (small logo in corner) */
+        .sponsor-bug {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 10px;
+            border: 2px solid rgba(30, 58, 95, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sponsor-bug::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+        }
+
+        .sponsor-label {
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sponsor-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            letter-spacing: 1px;
+        }
+
+        /* Full Screen Intro */
+        .intro-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 50%, #0A0A0A 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .intro-logo {
+            width: 500px;
+            height: auto;
+            margin-bottom: 60px;
+            filter: drop-shadow(0 10px 30px rgba(30, 58, 95, 0.5));
+            animation: scaleIn 0.8s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .intro-title {
+            font-family: 'Antonio', sans-serif;
+            font-size: 5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: slideUp 0.8s ease-out 0.3s both;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .intro-subtitle {
+            font-family: 'Oswald', sans-serif;
+            font-size: 2.5rem;
+            color: var(--text-gray);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: slideUp 0.8s ease-out 0.5s both;
+        }
+
+        .intro-vs {
+            font-family: 'Antonio', sans-serif;
+            font-size: 8rem;
+            font-weight: 700;
+            color: var(--text-light);
+            margin: 40px 0;
+            text-shadow: 0 0 40px rgba(30, 58, 95, 0.6);
+            animation: slideUp 0.8s ease-out 0.7s both;
+        }
+
+        .intro-teams {
+            display: flex;
+            gap: 100px;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        .intro-team {
+            text-align: center;
+            animation: slideUp 0.8s ease-out 0.9s both;
+        }
+
+        .intro-team-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.5rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .intro-team.home .intro-team-name {
+            color: var(--primary-blue);
+            text-shadow: 0 0 30px rgba(30, 58, 95, 0.6);
+        }
+
+        .intro-team.away .intro-team-name {
+            color: var(--primary-red);
+            text-shadow: 0 0 30px rgba(200, 16, 46, 0.6);
+        }
+
+        /* Hide elements by default - toggle visibility as needed */
+        .lower-third,
+        .scoreboard,
+        .match-info,
+        .wrestler-bar,
+        .sponsor-bug,
+        .intro-screen {
+            display: none;
+        }
+
+        /* Show classes - add these to elements via browser source interaction or remove display:none above */
+        .show {
+            display: flex !important;
+        }
+
+        .show-block {
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Corner Logo (always visible) -->
+    <img src="Asset_5SAWrestlingNew.png" alt="Shaler Area Wrestling" class="corner-logo show-block">
+
+    <!-- Lower Third Banner -->
+    <div class="lower-third">
+        <img src="Asset_5SAWrestlingNew.png" alt="Shaler Area Wrestling" class="lower-third-logo">
+        <div class="lower-third-content">
+            <div class="lower-third-title">Shaler Area vs Fox Chapel</div>
+            <div class="lower-third-subtitle">Section 3-AAA Match • January 18, 2026</div>
+        </div>
+    </div>
+
+    <!-- Scoreboard -->
+    <div class="scoreboard">
+        <div class="team-score home">
+            <div class="team-name-score">Shaler Area</div>
+            <div class="score-value">24</div>
+        </div>
+        <div class="vs-divider-score">
+            <div class="vs-text-score">VS</div>
+        </div>
+        <div class="team-score away">
+            <div class="team-name-score">Fox Chapel</div>
+            <div class="score-value">18</div>
+        </div>
+    </div>
+
+    <!-- Match Info Box -->
+    <div class="match-info">
+        <div class="match-label">Weight Class</div>
+        <div class="match-value weight-class">152 lbs</div>
+        <div class="match-label">Period</div>
+        <div class="match-value">2nd Period</div>
+    </div>
+
+    <!-- Wrestler Names Bar -->
+    <div class="wrestler-bar">
+        <div class="wrestler-info home-wrestler">
+            <div class="wrestler-team-label">Shaler Area</div>
+            <div class="wrestler-name">John Smith</div>
+            <div class="wrestler-record">Record: 15-3</div>
+        </div>
+        <div class="wrestler-info away-wrestler">
+            <div class="wrestler-team-label">Fox Chapel</div>
+            <div class="wrestler-name">Mike Johnson</div>
+            <div class="wrestler-record">Record: 12-5</div>
+        </div>
+    </div>
+
+    <!-- Sponsor Bug -->
+    <div class="sponsor-bug">
+        <div class="sponsor-label">Presented By</div>
+        <div class="sponsor-name">Your Sponsor</div>
+    </div>
+
+    <!-- Full Screen Intro -->
+    <div class="intro-screen">
+        <img src="Asset_5SAWrestlingNew.png" alt="Shaler Area Wrestling" class="intro-logo">
+        <div class="intro-title">Titans Wrestling</div>
+        <div class="intro-subtitle">Live Match Coverage</div>
+        <div class="intro-vs">VS</div>
+        <div class="intro-teams">
+            <div class="intro-team home">
+                <div class="intro-team-name">Shaler Area</div>
+            </div>
+            <div class="intro-team away">
+                <div class="intro-team-name">Fox Chapel</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
