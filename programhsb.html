@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wrestling Event - Tonight's Matchup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Antonio:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-red: #C8102E;
+            --primary-blue: #1E3A5F;
+            --secondary-blue: #2B4C7E;
+            --dark-bg: #0A0A0A;
+            --card-bg: #1A1A1A;
+            --text-light: #FFFFFF;
+            --text-gray: #B0B0B0;
+            --accent-gold: #FFD700;
+        }
+
+        body {
+            font-family: 'Oswald', sans-serif;
+            background: linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 50%, #0A0A0A 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeOut 0.5s ease-out 2.5s forwards;
+        }
+
+        #logo-loader {
+            animation: logoLoad 2s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes logoLoad {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        /* Main Content */
+        #main-content {
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out 3s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        .event-header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .event-header::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+        }
+
+        .event-logo {
+            max-width: 400px;
+            width: 100%;
+            height: auto;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 5px 20px rgba(30, 58, 95, 0.4));
+        }
+
+        .event-title {
+            font-family: 'Antonio', sans-serif;
+            font-size: 4rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .event-date {
+            font-size: 1.5rem;
+            color: var(--text-gray);
+            letter-spacing: 2px;
+        }
+
+        /* VS Section */
+        .vs-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 40px;
+            margin-bottom: 80px;
+            align-items: start;
+        }
+
+        .vs-divider {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 100px;
+        }
+
+        .vs-text {
+            font-family: 'Antonio', sans-serif;
+            font-size: 6rem;
+            font-weight: 700;
+            background: linear-gradient(180deg, var(--primary-blue), var(--primary-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .vs-text::before,
+        .vs-text::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 2px;
+            background: var(--primary-red);
+        }
+
+        .vs-text::before {
+            top: -20px;
+        }
+
+        .vs-text::after {
+            bottom: -20px;
+        }
+
+        /* Team Card */
+        .team-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .team-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+        }
+
+        .team-card.team-red {
+            border-color: rgba(211, 47, 47, 0.3);
+        }
+
+        .team-card.team-red::before {
+            background: linear-gradient(90deg, var(--primary-red), #FF5252);
+        }
+
+        .team-card.team-blue {
+            border-color: rgba(21, 101, 192, 0.3);
+        }
+
+        .team-card.team-blue::before {
+            background: linear-gradient(90deg, var(--primary-blue), #42A5F5);
+        }
+
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        .team-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .coaches-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .head-coach {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .assistant-coaches {
+            font-size: 0.95rem;
+            color: var(--text-gray);
+            font-style: italic;
+        }
+
+        .assistant-coaches span {
+            display: inline-block;
+            margin: 0 8px;
+        }
+
+        .team-red .team-name {
+            color: var(--primary-red);
+            text-shadow: 0 0 20px rgba(211, 47, 47, 0.5);
+        }
+
+        .team-blue .team-name {
+            color: var(--primary-blue);
+            text-shadow: 0 0 20px rgba(21, 101, 192, 0.5);
+        }
+
+        .wrestler {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .wrestler.has-link {
+            cursor: pointer;
+        }
+
+        .wrestler.has-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(10px);
+        }
+
+        .wrestler:not(.has-link):hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .team-red .wrestler {
+            border-left-color: var(--primary-red);
+        }
+
+        .team-blue .wrestler {
+            border-left-color: var(--primary-blue);
+        }
+
+        .wrestler-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .wrestler-weight {
+            color: var(--text-gray);
+            font-size: 1.1rem;
+        }
+
+        /* Sponsors Section */
+        .sponsors-section {
+            margin-top: 80px;
+            padding: 60px 40px;
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.8), rgba(10, 10, 10, 0.8));
+            border-radius: 20px;
+            border: 2px solid rgba(30, 58, 95, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Social Media Section */
+        .social-media-section {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .social-title {
+            font-family: 'Antonio', sans-serif;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            color: var(--primary-blue);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(30, 58, 95, 0.3);
+        }
+
+        .social-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .sponsors-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+        }
+
+        .sponsors-title {
+            font-family: 'Antonio', sans-serif;
+            font-size: 2.5rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 50px;
+            color: var(--primary-blue);
+        }
+
+        .sponsors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .sponsor-logo {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            width: 100%;
+        }
+
+        .sponsor-logo:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+            border-color: var(--primary-blue);
+            box-shadow: 0 10px 40px rgba(30, 58, 95, 0.3);
+        }
+
+        .sponsor-logo img {
+            max-width: 100%;
+            height: auto;
+            max-height: 80px;
+            filter: brightness(0.9);
+        }
+
+        .sponsor-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        /* CMS Edit Button */
+        .edit-mode-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-blue));
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .edit-mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(200, 16, 46, 0.6);
+        }
+
+        /* CMS Modal */
+        .cms-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            overflow-y: auto;
+            padding: 40px 20px;
+        }
+
+        .cms-modal.active {
+            display: block;
+        }
+
+        .cms-content {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid var(--primary-blue);
+        }
+
+        .cms-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(30, 58, 95, 0.5);
+        }
+
+        .cms-title {
+            font-family: 'Antonio', sans-serif;
+            font-size: 2.5rem;
+            color: var(--primary-blue);
+        }
+
+        .close-btn {
+            background: transparent;
+            color: var(--text-light);
+            border: 2px solid var(--text-gray);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            border-color: var(--primary-red);
+            color: var(--primary-red);
+        }
+
+        .cms-section {
+            margin-bottom: 40px;
+        }
+
+        .cms-section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            color: var(--primary-blue);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-gray);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-family: 'Oswald', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .wrestler-entry {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .add-btn, .remove-btn, .save-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .add-btn {
+            background: var(--primary-blue);
+            color: white;
+            margin-top: 10px;
+        }
+
+        .add-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+        }
+
+        .remove-btn {
+            background: var(--primary-red);
+            color: white;
+            margin-top: 10px;
+        }
+
+        .remove-btn:hover {
+            background: #E53935;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-blue));
+            color: white;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(200, 16, 46, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .vs-container {
+                gap: 20px;
+            }
+
+            .vs-text {
+                font-size: 3rem;
+            }
+
+            .vs-divider {
+                padding-top: 60px;
+            }
+
+            .event-title {
+                font-size: 2.5rem;
+            }
+
+            .team-name {
+                font-size: 1.8rem;
+            }
+
+            .team-card {
+                padding: 25px;
+            }
+
+            .wrestler-name {
+                font-size: 1.2rem;
+            }
+
+            .sponsors-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div id="logo-loader">
+            <img src="/mnt/user-data/uploads/Asset_5SAWrestlingNew.png" alt="Shaler Area Wrestling" style="max-width: 400px; width: 100%; height: auto;">
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content">
+        <div class="container">
+            <!-- Event Header -->
+            <div class="event-header">
+                <img src="/mnt/user-data/uploads/Asset_5SAWrestlingNew.png" alt="Shaler Area Wrestling" class="event-logo" style="max-width: 400px;">
+                <h1 class="event-title" id="eventTitle">Tonight's Showdown</h1>
+                <p class="event-date" id="eventDate">January 18, 2026</p>
+            </div>
+
+            <!-- VS Section -->
+            <div class="vs-container">
+                <!-- Team 1 -->
+                <div class="team-card team-red">
+                    <h2 class="team-name" id="team1Name">Shaler Area Titans</h2>
+                    <div class="coaches-section">
+                        <div class="head-coach" id="team1HeadCoach">Head Coach Name</div>
+                        <div class="assistant-coaches" id="team1Assistants">
+                            <span>Assistant Coach 1</span>
+                            <span>Assistant Coach 2</span>
+                        </div>
+                    </div>
+                    <div id="team1Roster">
+                        <div class="wrestler">
+                            <div class="wrestler-name">Wrestler Name</div>
+                            <div class="wrestler-weight">106 lbs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VS Divider -->
+                <div class="vs-divider">
+                    <div class="vs-text">VS</div>
+                </div>
+
+                <!-- Team 2 -->
+                <div class="team-card team-blue">
+                    <h2 class="team-name" id="team2Name">Visiting Team</h2>
+                    <div class="coaches-section">
+                        <div class="head-coach" id="team2HeadCoach">Head Coach Name</div>
+                        <div class="assistant-coaches" id="team2Assistants">
+                            <span>Assistant Coach 1</span>
+                        </div>
+                    </div>
+                    <div id="team2Roster">
+                        <div class="wrestler">
+                            <div class="wrestler-name">Wrestler Name</div>
+                            <div class="wrestler-weight">106 lbs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sponsors Section -->
+            <div class="sponsors-section">
+                <h2 class="sponsors-title">Our Sponsors</h2>
+                <div class="sponsors-grid" id="sponsorsGrid">
+                    <div class="sponsor-logo">
+                        <div class="sponsor-name">Local Gym</div>
+                    </div>
+                    <div class="sponsor-logo">
+                        <div class="sponsor-name">Sports Nutrition Co.</div>
+                    </div>
+                    <div class="sponsor-logo">
+                        <div class="sponsor-name">Community Bank</div>
+                    </div>
+                    <div class="sponsor-logo">
+                        <div class="sponsor-name">Athletic Wear Store</div>
+                    </div>
+                </div>
+
+                <!-- Social Media Section -->
+                <div class="social-media-section">
+                    <h3 class="social-title">Follow Us</h3>
+                    <div class="social-links" id="socialLinks">
+                        <!-- Social links will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Mode Button -->
+    <button class="edit-mode-btn" onclick="openCMS()">Edit Event</button>
+
+    <!-- CMS Modal -->
+    <div class="cms-modal" id="cmsModal">
+        <div class="cms-content">
+            <div class="cms-header">
+                <h2 class="cms-title">Event Content Manager</h2>
+                <button class="close-btn" onclick="closeCMS()">Close</button>
+            </div>
+
+            <!-- Event Details -->
+            <div class="cms-section">
+                <h3 class="cms-section-title">Event Details</h3>
+                <div class="form-group">
+                    <label class="form-label">Event Title</label>
+                    <input type="text" class="form-input" id="cmsEventTitle" placeholder="Tonight's Showdown">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Event Date</label>
+                    <input type="text" class="form-input" id="cmsEventDate" placeholder="January 18, 2026">
+                </div>
+            </div>
+
+            <!-- Team 1 -->
+            <div class="cms-section">
+                <h3 class="cms-section-title">Team 1 (Red)</h3>
+                <div class="form-group">
+                    <label class="form-label">Team Name</label>
+                    <input type="text" class="form-input" id="cmsTeam1Name" placeholder="Shaler Area Titans">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Head Coach</label>
+                    <input type="text" class="form-input" id="cmsTeam1HeadCoach" placeholder="Head Coach Name">
+                </div>
+                <div id="cmsTeam1Assistants"></div>
+                <button class="add-btn" onclick="addAssistantCoach('team1')">+ Add Assistant Coach</button>
+                <div id="cmsTeam1Wrestlers" style="margin-top: 20px;"></div>
+                <button class="add-btn" onclick="addWrestler('team1')">+ Add Wrestler</button>
+            </div>
+
+            <!-- Team 2 -->
+            <div class="cms-section">
+                <h3 class="cms-section-title">Team 2 (Blue)</h3>
+                <div class="form-group">
+                    <label class="form-label">Team Name</label>
+                    <input type="text" class="form-input" id="cmsTeam2Name" placeholder="Visiting Team">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Head Coach</label>
+                    <input type="text" class="form-input" id="cmsTeam2HeadCoach" placeholder="Head Coach Name">
+                </div>
+                <div id="cmsTeam2Assistants"></div>
+                <button class="add-btn" onclick="addAssistantCoach('team2')">+ Add Assistant Coach</button>
+                <div id="cmsTeam2Wrestlers" style="margin-top: 20px;"></div>
+                <button class="add-btn" onclick="addWrestler('team2')">+ Add Wrestler</button>
+            </div>
+
+            <!-- Sponsors -->
+            <div class="cms-section">
+                <h3 class="cms-section-title">Sponsors</h3>
+                <div id="cmsSponsors"></div>
+                <button class="add-btn" onclick="addSponsor()">+ Add Sponsor</button>
+            </div>
+
+            <!-- Social Media -->
+            <div class="cms-section">
+                <h3 class="cms-section-title">Social Media</h3>
+                <div id="cmsSocialMedia"></div>
+                <button class="add-btn" onclick="addSocialMedia()">+ Add Social Media Link</button>
+            </div>
+
+            <button class="save-btn" onclick="saveChanges()">Save Changes</button>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let eventData = {
+            title: "Titans Home Match",
+            date: "January 18, 2026",
+            team1: {
+                name: "Shaler Area Titans",
+                coaches: {
+                    head: "Head Coach Name",
+                    assistants: ["Assistant Coach 1", "Assistant Coach 2"]
+                },
+                wrestlers: [
+                    { name: "Wrestler Name", weight: "106 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "113 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "120 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "126 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "132 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "138 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "145 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "152 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "160 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "170 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "182 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "195 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "220 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "285 lbs", link: "" }
+                ]
+            },
+            team2: {
+                name: "Visiting Team",
+                coaches: {
+                    head: "Head Coach Name",
+                    assistants: ["Assistant Coach 1"]
+                },
+                wrestlers: [
+                    { name: "Wrestler Name", weight: "106 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "113 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "120 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "126 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "132 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "138 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "145 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "152 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "160 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "170 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "182 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "195 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "220 lbs", link: "" },
+                    { name: "Wrestler Name", weight: "285 lbs", link: "" }
+                ]
+            },
+            sponsors: [
+                { name: "Your Sponsor", logo: "" },
+                { name: "Your Sponsor", logo: "" },
+                { name: "Your Sponsor", logo: "" },
+                { name: "Your Sponsor", logo: "" }
+            ],
+            socialMedia: [
+                { platform: "Instagram", url: "", icon: "instagram" },
+                { platform: "Facebook", url: "", icon: "facebook" }
+            ]
+        };
+
+        // Load from localStorage if available
+        const savedData = localStorage.getItem('wrestlingEventData');
+        if (savedData) {
+            eventData = JSON.parse(savedData);
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            // Update event details
+            document.getElementById('eventTitle').textContent = eventData.title;
+            document.getElementById('eventDate').textContent = eventData.date;
+
+            // Update team names
+            document.getElementById('team1Name').textContent = eventData.team1.name;
+            document.getElementById('team2Name').textContent = eventData.team2.name;
+
+            // Update coaches for team 1
+            document.getElementById('team1HeadCoach').textContent = eventData.team1.coaches.head;
+            const team1Assistants = eventData.team1.coaches.assistants
+                .map(a => `<span>${a}</span>`)
+                .join('');
+            document.getElementById('team1Assistants').innerHTML = team1Assistants;
+
+            // Update coaches for team 2
+            document.getElementById('team2HeadCoach').textContent = eventData.team2.coaches.head;
+            const team2Assistants = eventData.team2.coaches.assistants
+                .map(a => `<span>${a}</span>`)
+                .join('');
+            document.getElementById('team2Assistants').innerHTML = team2Assistants;
+
+            // Update team 1 roster
+            const team1Roster = document.getElementById('team1Roster');
+            team1Roster.innerHTML = eventData.team1.wrestlers.map(w => {
+                const hasLink = w.link && w.link.trim() !== '';
+                const wrestlerClass = hasLink ? 'wrestler has-link' : 'wrestler';
+                const onclick = hasLink ? `onclick="window.open('${w.link}', '_blank')"` : '';
+                return `
+                    <div class="${wrestlerClass}" ${onclick}>
+                        <div class="wrestler-name">${w.name}</div>
+                        <div class="wrestler-weight">${w.weight}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Update team 2 roster
+            const team2Roster = document.getElementById('team2Roster');
+            team2Roster.innerHTML = eventData.team2.wrestlers.map(w => {
+                const hasLink = w.link && w.link.trim() !== '';
+                const wrestlerClass = hasLink ? 'wrestler has-link' : 'wrestler';
+                const onclick = hasLink ? `onclick="window.open('${w.link}', '_blank')"` : '';
+                return `
+                    <div class="${wrestlerClass}" ${onclick}>
+                        <div class="wrestler-name">${w.name}</div>
+                        <div class="wrestler-weight">${w.weight}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Update sponsors
+            const sponsorsGrid = document.getElementById('sponsorsGrid');
+            sponsorsGrid.innerHTML = eventData.sponsors.map(s => `
+                <div class="sponsor-logo">
+                    ${s.logo ? `<img src="${s.logo}" alt="${s.name}">` : `<div class="sponsor-name">${s.name}</div>`}
+                </div>
+            `).join('');
+
+            // Update social media links
+            const socialLinks = document.getElementById('socialLinks');
+            const activeSocial = eventData.socialMedia.filter(s => s.url && s.url.trim() !== '');
+            if (activeSocial.length > 0) {
+                socialLinks.innerHTML = activeSocial.map(s => {
+                    const icon = getSocialIcon(s.icon);
+                    return `
+                        <a href="${s.url}" target="_blank" class="social-link">
+                            ${icon}
+                            <span>${s.platform}</span>
+                        </a>
+                    `;
+                }).join('');
+            } else {
+                socialLinks.innerHTML = '<p style="color: var(--text-gray);">No social media links added yet</p>';
+            }
+        }
+
+        function getSocialIcon(icon) {
+            const icons = {
+                instagram: `<svg class="social-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`,
+                facebook: `<svg class="social-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
+                twitter: `<svg class="social-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>`,
+                youtube: `<svg class="social-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`,
+                generic: `<svg class="social-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22C6.486 22 2 17.514 2 12S6.486 2 12 2s10 4.486 10 10-4.486 10-10 10zm1-11h4v2h-4v4h-2v-4H7v-2h4V7h2v4z"/></svg>`
+            };
+            return icons[icon] || icons.generic;
+        }
+
+        function openCMS() {
+            // Populate CMS form with current data
+            document.getElementById('cmsEventTitle').value = eventData.title;
+            document.getElementById('cmsEventDate').value = eventData.date;
+            document.getElementById('cmsTeam1Name').value = eventData.team1.name;
+            document.getElementById('cmsTeam2Name').value = eventData.team2.name;
+            document.getElementById('cmsTeam1HeadCoach').value = eventData.team1.coaches.head;
+            document.getElementById('cmsTeam2HeadCoach').value = eventData.team2.coaches.head;
+
+            // Populate assistant coaches
+            populateAssistantCoaches('team1');
+            populateAssistantCoaches('team2');
+
+            // Populate wrestlers
+            populateWrestlers('team1');
+            populateWrestlers('team2');
+            populateSponsors();
+            populateSocialMedia();
+
+            document.getElementById('cmsModal').classList.add('active');
+        }
+
+        function closeCMS() {
+            document.getElementById('cmsModal').classList.remove('active');
+        }
+
+        function populateWrestlers(team) {
+            const container = document.getElementById(`cms${team.charAt(0).toUpperCase() + team.slice(1)}Wrestlers`);
+            const wrestlers = eventData[team].wrestlers;
+            
+            container.innerHTML = wrestlers.map((w, i) => `
+                <div class="wrestler-entry">
+                    <div class="form-group">
+                        <label class="form-label">Wrestler Name</label>
+                        <input type="text" class="form-input" value="${w.name}" data-team="${team}" data-index="${i}" data-field="name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Weight Class</label>
+                        <input type="text" class="form-input" value="${w.weight}" data-team="${team}" data-index="${i}" data-field="weight">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Profile Link (optional)</label>
+                        <input type="text" class="form-input" value="${w.link || ''}" data-team="${team}" data-index="${i}" data-field="link" placeholder="https://example.com/wrestler-profile">
+                    </div>
+                    <button class="remove-btn" onclick="removeWrestler('${team}', ${i})">Remove Wrestler</button>
+                </div>
+            `).join('');
+        }
+
+        function populateSponsors() {
+            const container = document.getElementById('cmsSponsors');
+            
+            container.innerHTML = eventData.sponsors.map((s, i) => `
+                <div class="wrestler-entry">
+                    <div class="form-group">
+                        <label class="form-label">Sponsor Name</label>
+                        <input type="text" class="form-input" value="${s.name}" data-sponsor="${i}" data-field="name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Logo URL (optional)</label>
+                        <input type="text" class="form-input" value="${s.logo}" data-sponsor="${i}" data-field="logo" placeholder="https://example.com/logo.png">
+                    </div>
+                    <button class="remove-btn" onclick="removeSponsor(${i})">Remove Sponsor</button>
+                </div>
+            `).join('');
+        }
+
+        function addWrestler(team) {
+            eventData[team].wrestlers.push({ name: "", weight: "", link: "" });
+            populateWrestlers(team);
+        }
+
+        function removeWrestler(team, index) {
+            eventData[team].wrestlers.splice(index, 1);
+            populateWrestlers(team);
+        }
+
+        function populateAssistantCoaches(team) {
+            const container = document.getElementById(`cms${team.charAt(0).toUpperCase() + team.slice(1)}Assistants`);
+            const assistants = eventData[team].coaches.assistants;
+            
+            container.innerHTML = assistants.map((a, i) => `
+                <div class="wrestler-entry" style="margin-top: 10px;">
+                    <div class="form-group">
+                        <label class="form-label">Assistant Coach ${i + 1}</label>
+                        <input type="text" class="form-input" value="${a}" data-team="${team}" data-coach-index="${i}">
+                    </div>
+                    <button class="remove-btn" onclick="removeAssistantCoach('${team}', ${i})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function addAssistantCoach(team) {
+            eventData[team].coaches.assistants.push("");
+            populateAssistantCoaches(team);
+        }
+
+        function removeAssistantCoach(team, index) {
+            eventData[team].coaches.assistants.splice(index, 1);
+            populateAssistantCoaches(team);
+        }
+
+        function populateSocialMedia() {
+            const container = document.getElementById('cmsSocialMedia');
+            
+            container.innerHTML = eventData.socialMedia.map((s, i) => `
+                <div class="wrestler-entry">
+                    <div class="form-group">
+                        <label class="form-label">Platform Name</label>
+                        <input type="text" class="form-input" value="${s.platform}" data-social="${i}" data-field="platform" placeholder="Instagram, Facebook, Twitter, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">URL</label>
+                        <input type="text" class="form-input" value="${s.url}" data-social="${i}" data-field="url" placeholder="https://instagram.com/yourhandle">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Icon Type</label>
+                        <select class="form-input" data-social="${i}" data-field="icon">
+                            <option value="instagram" ${s.icon === 'instagram' ? 'selected' : ''}>Instagram</option>
+                            <option value="facebook" ${s.icon === 'facebook' ? 'selected' : ''}>Facebook</option>
+                            <option value="twitter" ${s.icon === 'twitter' ? 'selected' : ''}>Twitter</option>
+                            <option value="youtube" ${s.icon === 'youtube' ? 'selected' : ''}>YouTube</option>
+                            <option value="generic" ${s.icon === 'generic' ? 'selected' : ''}>Other/Generic</option>
+                        </select>
+                    </div>
+                    <button class="remove-btn" onclick="removeSocialMedia(${i})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function addSocialMedia() {
+            eventData.socialMedia.push({ platform: "", url: "", icon: "generic" });
+            populateSocialMedia();
+        }
+
+        function removeSocialMedia(index) {
+            eventData.socialMedia.splice(index, 1);
+            populateSocialMedia();
+        }
+
+        function addSponsor() {
+            eventData.sponsors.push({ name: "", logo: "" });
+            populateSponsors();
+        }
+
+        function removeSponsor(index) {
+            eventData.sponsors.splice(index, 1);
+            populateSponsors();
+        }
+
+        function saveChanges() {
+            // Get event details
+            eventData.title = document.getElementById('cmsEventTitle').value;
+            eventData.date = document.getElementById('cmsEventDate').value;
+            eventData.team1.name = document.getElementById('cmsTeam1Name').value;
+            eventData.team2.name = document.getElementById('cmsTeam2Name').value;
+            eventData.team1.coaches.head = document.getElementById('cmsTeam1HeadCoach').value;
+            eventData.team2.coaches.head = document.getElementById('cmsTeam2HeadCoach').value;
+
+            // Get assistant coach data
+            ['team1', 'team2'].forEach(team => {
+                const coachInputs = document.querySelectorAll(`[data-team="${team}"][data-coach-index]`);
+                coachInputs.forEach(input => {
+                    const index = parseInt(input.dataset.coachIndex);
+                    eventData[team].coaches.assistants[index] = input.value;
+                });
+            });
+
+            // Get wrestler data
+            ['team1', 'team2'].forEach(team => {
+                const inputs = document.querySelectorAll(`[data-team="${team}"]`);
+                inputs.forEach(input => {
+                    if (input.dataset.index !== undefined) {
+                        const index = parseInt(input.dataset.index);
+                        const field = input.dataset.field;
+                        eventData[team].wrestlers[index][field] = input.value;
+                    }
+                });
+            });
+
+            // Get sponsor data
+            const sponsorInputs = document.querySelectorAll('[data-sponsor]');
+            sponsorInputs.forEach(input => {
+                const index = parseInt(input.dataset.sponsor);
+                const field = input.dataset.field;
+                eventData.sponsors[index][field] = input.value;
+            });
+
+            // Get social media data
+            const socialInputs = document.querySelectorAll('[data-social]');
+            socialInputs.forEach(input => {
+                const index = parseInt(input.dataset.social);
+                const field = input.dataset.field;
+                eventData.socialMedia[index][field] = input.value;
+            });
+
+            // Save to localStorage
+            localStorage.setItem('wrestlingEventData', JSON.stringify(eventData));
+
+            // Update display
+            updateDisplay();
+            closeCMS();
+
+            // Show success message
+            alert('Event updated successfully!');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('cmsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCMS();
+            }
+        });
+    </script>
+</body>
+</html>
