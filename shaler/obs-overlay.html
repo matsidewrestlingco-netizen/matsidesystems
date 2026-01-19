@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1920, height=1080">
-    <title>Shaler Area Wrestling - OBS Overlay</title>
+    <title>Shaler Area Wrestling - OBS Overlay (Firebase Connected)</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Antonio:wght@700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -34,7 +34,7 @@
             bottom: 100px;
             left: 0;
             right: 0;
-            display: flex;
+            display: none;
             align-items: center;
             padding: 20px 60px;
             background: linear-gradient(90deg, 
@@ -44,6 +44,10 @@
             backdrop-filter: blur(10px);
             animation: slideInLeft 0.6s ease-out;
             max-width: 1200px;
+        }
+
+        .lower-third.show {
+            display: flex;
         }
 
         @keyframes slideInLeft {
@@ -103,7 +107,7 @@
             top: 40px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
+            display: none;
             align-items: center;
             gap: 0;
             background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(26, 26, 26, 0.95));
@@ -112,6 +116,10 @@
             overflow: hidden;
             border: 3px solid var(--primary-blue);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+        }
+
+        .scoreboard.show {
+            display: flex;
         }
 
         .scoreboard::before {
@@ -192,6 +200,11 @@
             border: 2px solid var(--primary-blue);
             min-width: 350px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            display: none;
+        }
+
+        .match-info.show {
+            display: block;
         }
 
         .match-info::before {
@@ -232,7 +245,7 @@
             bottom: 40px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
+            display: none;
             align-items: center;
             gap: 0;
             background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(26, 26, 26, 0.95));
@@ -241,6 +254,10 @@
             overflow: hidden;
             border: 2px solid var(--primary-blue);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .wrestler-bar.show {
+            display: flex;
         }
 
         .wrestler-bar::before {
@@ -311,7 +328,7 @@
             filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.7));
         }
 
-        /* Sponsor Bug (small logo in corner) */
+        /* Sponsor Bug */
         .sponsor-bug {
             position: absolute;
             bottom: 40px;
@@ -321,10 +338,14 @@
             padding: 15px 25px;
             border-radius: 10px;
             border: 2px solid rgba(30, 58, 95, 0.5);
-            display: flex;
+            display: none;
             flex-direction: column;
             align-items: center;
             gap: 8px;
+        }
+
+        .sponsor-bug.show {
+            display: flex;
         }
 
         .sponsor-bug::before {
@@ -360,11 +381,15 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 50%, #0A0A0A 100%);
-            display: flex;
+            display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             animation: fadeIn 0.5s ease-out;
+        }
+
+        .intro-screen.show {
+            display: flex;
         }
 
         @keyframes fadeIn {
@@ -463,97 +488,175 @@
             color: var(--primary-red);
             text-shadow: 0 0 30px rgba(200, 16, 46, 0.6);
         }
-
-        /* Hide elements by default - toggle visibility as needed */
-        .lower-third,
-        .scoreboard,
-        .match-info,
-        .wrestler-bar,
-        .sponsor-bug,
-        .intro-screen {
-            display: none;
-        }
-
-        /* Show classes - add these to elements via browser source interaction or remove display:none above */
-        .show {
-            display: flex !important;
-        }
-
-        .show-block {
-            display: block !important;
-        }
     </style>
 </head>
 <body>
-    <!-- Corner Logo (always visible) -->
-    <img src="/assets/sawa3.png" alt="Shaler Area Wrestling" class="corner-logo show-block">
+    <!-- Corner Logo -->
+    <img src="/assets/sawa3.png" alt="Shaler Area Wrestling" class="corner-logo">
 
     <!-- Lower Third Banner -->
-    <div class="lower-third">
+    <div class="lower-third" id="lowerThird">
         <img src="/assets/sawa3.png" alt="Shaler Area Wrestling" class="lower-third-logo">
         <div class="lower-third-content">
-            <div class="lower-third-title">Shaler Area vs Fox Chapel</div>
-            <div class="lower-third-subtitle">Section 3-AAA Match • January 18, 2026</div>
+            <div class="lower-third-title" id="lowerThirdTitle">Shaler Area vs Visiting Team</div>
+            <div class="lower-third-subtitle" id="lowerThirdSubtitle">Live Match Coverage</div>
         </div>
     </div>
 
     <!-- Scoreboard -->
-    <div class="scoreboard">
+    <div class="scoreboard" id="scoreboard">
         <div class="team-score home">
-            <div class="team-name-score">Shaler Area</div>
-            <div class="score-value">24</div>
+            <div class="team-name-score" id="homeTeamNameScore">Shaler Area</div>
+            <div class="score-value" id="homeScoreValue">0</div>
         </div>
         <div class="vs-divider-score">
             <div class="vs-text-score">VS</div>
         </div>
         <div class="team-score away">
-            <div class="team-name-score">Fox Chapel</div>
-            <div class="score-value">18</div>
+            <div class="team-name-score" id="awayTeamNameScore">Visiting Team</div>
+            <div class="score-value" id="awayScoreValue">0</div>
         </div>
     </div>
 
     <!-- Match Info Box -->
-    <div class="match-info">
+    <div class="match-info" id="matchInfo">
         <div class="match-label">Weight Class</div>
-        <div class="match-value weight-class">152 lbs</div>
+        <div class="match-value weight-class" id="weightClassValue">152 lbs</div>
         <div class="match-label">Period</div>
-        <div class="match-value">2nd Period</div>
+        <div class="match-value" id="periodValue">1st Period</div>
     </div>
 
     <!-- Wrestler Names Bar -->
-    <div class="wrestler-bar">
+    <div class="wrestler-bar" id="wrestlerBar">
         <div class="wrestler-info home-wrestler">
-            <div class="wrestler-team-label">Shaler Area</div>
-            <div class="wrestler-name">John Smith</div>
-            <div class="wrestler-record">Record: 15-3</div>
+            <div class="wrestler-team-label" id="homeWrestlerTeamLabel">Shaler Area</div>
+            <div class="wrestler-name" id="homeWrestlerName">Wrestler Name</div>
+            <div class="wrestler-record" id="homeWrestlerRecord">Record: 0-0</div>
         </div>
         <div class="wrestler-info away-wrestler">
-            <div class="wrestler-team-label">Fox Chapel</div>
-            <div class="wrestler-name">Mike Johnson</div>
-            <div class="wrestler-record">Record: 12-5</div>
+            <div class="wrestler-team-label" id="awayWrestlerTeamLabel">Visiting Team</div>
+            <div class="wrestler-name" id="awayWrestlerName">Wrestler Name</div>
+            <div class="wrestler-record" id="awayWrestlerRecord">Record: 0-0</div>
         </div>
     </div>
 
     <!-- Sponsor Bug -->
-    <div class="sponsor-bug show">
+    <div class="sponsor-bug" id="sponsorBug">
         <div class="sponsor-label">Presented By</div>
-        <div class="sponsor-name">Your Sponsor</div>
+        <div class="sponsor-name" id="sponsorName">Your Sponsor</div>
     </div>
 
     <!-- Full Screen Intro -->
-    <div class="intro-screen show">
+    <div class="intro-screen" id="introScreen">
         <img src="/assets/sawa3.png" alt="Shaler Area Wrestling" class="intro-logo">
         <div class="intro-title">Titans Wrestling</div>
         <div class="intro-subtitle">Live Match Coverage</div>
         <div class="intro-vs">VS</div>
         <div class="intro-teams">
             <div class="intro-team home">
-                <div class="intro-team-name">Shaler Area</div>
+                <div class="intro-team-name" id="introHomeTeam">Shaler Area</div>
             </div>
             <div class="intro-team away">
-                <div class="intro-team-name">Fox Chapel</div>
+                <div class="intro-team-name" id="introAwayTeam">Visiting Team</div>
             </div>
         </div>
     </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script>
+        // ============================================
+        // FIREBASE CONFIG - REPLACE WITH YOUR CONFIG
+        // ============================================
+        const firebaseConfig = {
+          apiKey: "AIzaSyAdrUwi5g1otriGAIcuC_dqlMUyhoPUHg8",
+          authDomain: "shaler-wrestling-overlay.firebaseapp.com",
+          databaseURL: "https://shaler-wrestling-overlay-default-rtdb.firebaseio.com",
+          projectId: "shaler-wrestling-overlay",
+          storageBucket: "shaler-wrestling-overlay.firebasestorage.app",
+          messagingSenderId: "156211959188",
+          appId: "1:156211959188:web:841fd19e504aa90e06eb81"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Listen for visibility changes
+        database.ref('overlay/visibility').on('value', (snapshot) => {
+            const visibility = snapshot.val() || {};
+            
+            toggleElement('lowerThird', visibility.lowerThird);
+            toggleElement('scoreboard', visibility.scoreboard);
+            toggleElement('matchInfo', visibility.matchInfo);
+            toggleElement('wrestlerBar', visibility.wrestlerBar);
+            toggleElement('sponsorBug', visibility.sponsorBug);
+            toggleElement('introScreen', visibility.introScreen);
+        });
+
+        // Listen for score changes
+        database.ref('overlay/scores').on('value', (snapshot) => {
+            const scores = snapshot.val() || { home: 0, away: 0 };
+            document.getElementById('homeScoreValue').textContent = scores.home;
+            document.getElementById('awayScoreValue').textContent = scores.away;
+        });
+
+        // Listen for team name changes
+        database.ref('overlay/teams').on('value', (snapshot) => {
+            const teams = snapshot.val() || { home: 'Shaler Area', away: 'Visiting Team' };
+            document.getElementById('homeTeamNameScore').textContent = teams.home;
+            document.getElementById('awayTeamNameScore').textContent = teams.away;
+            document.getElementById('homeWrestlerTeamLabel').textContent = teams.home;
+            document.getElementById('awayWrestlerTeamLabel').textContent = teams.away;
+            document.getElementById('introHomeTeam').textContent = teams.home;
+            document.getElementById('introAwayTeam').textContent = teams.away;
+        });
+
+        // Listen for match info changes
+        database.ref('overlay/match').on('value', (snapshot) => {
+            const match = snapshot.val() || { weightClass: '152 lbs', period: '1st Period' };
+            document.getElementById('weightClassValue').textContent = match.weightClass;
+            document.getElementById('periodValue').textContent = match.period;
+        });
+
+        // Listen for wrestler changes
+        database.ref('overlay/wrestlers').on('value', (snapshot) => {
+            const wrestlers = snapshot.val() || { 
+                home: { name: 'Wrestler Name', record: '0-0' },
+                away: { name: 'Wrestler Name', record: '0-0' }
+            };
+            
+            document.getElementById('homeWrestlerName').textContent = wrestlers.home.name || 'Wrestler Name';
+            document.getElementById('homeWrestlerRecord').textContent = 'Record: ' + (wrestlers.home.record || '0-0');
+            document.getElementById('awayWrestlerName').textContent = wrestlers.away.name || 'Wrestler Name';
+            document.getElementById('awayWrestlerRecord').textContent = 'Record: ' + (wrestlers.away.record || '0-0');
+        });
+
+        // Listen for lower third changes
+        database.ref('overlay/lowerThird').on('value', (snapshot) => {
+            const lowerThird = snapshot.val() || { title: '', subtitle: '' };
+            document.getElementById('lowerThirdTitle').textContent = lowerThird.title || 'Match Information';
+            document.getElementById('lowerThirdSubtitle').textContent = lowerThird.subtitle || 'Live Coverage';
+        });
+
+        // Listen for sponsor changes
+        database.ref('overlay/sponsor').on('value', (snapshot) => {
+            const sponsor = snapshot.val() || { name: 'Your Sponsor' };
+            document.getElementById('sponsorName').textContent = sponsor.name || 'Your Sponsor';
+        });
+
+        function toggleElement(elementId, show) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                if (show) {
+                    element.classList.add('show');
+                } else {
+                    element.classList.remove('show');
+                }
+            }
+        }
+    </script>
 </body>
 </html>
