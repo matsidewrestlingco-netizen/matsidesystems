@@ -466,22 +466,22 @@
         function renderSponsors() {
             const container = document.getElementById('sponsorsContainer');
             container.innerHTML = sponsors.map((sponsor, index) => `
-                <div class="wrestler-entry">
+                <div class="wrestler-entry" style="margin-bottom: 20px;">
                     <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label">Sponsor ${index + 1} Name</label>
-                            <input type="text" class="form-input" id="sponsor_${index}_name" value="${sponsor.name}" placeholder="Sponsor Name">
+                            <input type="text" class="form-input sponsor-input" data-index="${index}" data-field="name" value="${sponsor.name || ''}" placeholder="Sponsor Name">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Logo URL</label>
-                            <input type="text" class="form-input" id="sponsor_${index}_logo" value="${sponsor.logo}" placeholder="https://example.com/logo.png">
+                            <input type="text" class="form-input sponsor-input" data-index="${index}" data-field="logo" value="${sponsor.logo || ''}" placeholder="https://example.com/logo.png">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Website URL</label>
-                            <input type="text" class="form-input" id="sponsor_${index}_url" value="${sponsor.url}" placeholder="https://sponsor-website.com">
+                            <input type="text" class="form-input sponsor-input" data-index="${index}" data-field="url" value="${sponsor.url || ''}" placeholder="https://sponsor-website.com">
                         </div>
                     </div>
-                    <button class="btn btn-danger" onclick="removeSponsor(${index})" style="margin-top: 10px;">Remove Sponsor</button>
+                    <button class="btn btn-danger" onclick="removeSponsor(${index})">Remove Sponsor</button>
                 </div>
             `).join('');
         }
@@ -489,11 +489,15 @@
         function addSponsor() {
             sponsors.push({ name: '', logo: '', url: '' });
             renderSponsors();
+            showAlert('Sponsor slot added! Remember to click "Update Sponsors" to save.');
         }
 
         function removeSponsor(index) {
-            sponsors.splice(index, 1);
-            renderSponsors();
+            if (confirm('Remove this sponsor?')) {
+                sponsors.splice(index, 1);
+                renderSponsors();
+                showAlert('Sponsor removed! Remember to click "Update Sponsors" to save.');
+            }
         }
 
         function loadCurrentData() {
@@ -543,10 +547,13 @@
                     }
 
                     // Sponsors
-                    if (data.sponsors) {
+                    if (data.sponsors && data.sponsors.length > 0) {
                         sponsors = data.sponsors;
-                        renderSponsors();
+                    } else {
+                        // Start with one empty sponsor if none exist
+                        sponsors = [{ name: '', logo: '', url: '' }];
                     }
+                    renderSponsors();
 
                     // Social media
                     if (data.socialMedia) {
@@ -618,15 +625,42 @@
         }
 
         function updateSponsors() {
-            const sponsorData = sponsors.map((_, index) => ({
-                name: document.getElementById(`sponsor_${index}_name`).value,
-                logo: document.getElementById(`sponsor_${index}_logo`).value,
-                url: document.getElementById(`sponsor_${index}_url`).value
-            })).filter(s => s.name || s.logo);
+            // Collect data from all sponsor inputs
+            const sponsorInputs = document.querySelectorAll('.sponsor-input');
+            const sponsorData = [];
+            
+            // Group inputs by index
+            const sponsorsByIndex = {};
+            sponsorInputs.forEach(input => {
+                const index = parseInt(input.dataset.index);
+                const field = input.dataset.field;
+                
+                if (!sponsorsByIndex[index]) {
+                    sponsorsByIndex[index] = { name: '', logo: '', url: '' };
+                }
+                sponsorsByIndex[index][field] = input.value;
+            });
+            
+            // Convert to array and filter out empty sponsors
+            Object.keys(sponsorsByIndex).forEach(index => {
+                const sponsor = sponsorsByIndex[index];
+                if (sponsor.name || sponsor.logo || sponsor.url) {
+                    sponsorData.push(sponsor);
+                }
+            });
+
+            // Update local sponsors array
+            sponsors = sponsorData.length > 0 ? sponsorData : [{ name: '', logo: '', url: '' }];
 
             database.ref('program/sponsors').set(sponsorData)
-                .then(() => showAlert('Sponsors updated!'))
-                .catch(error => console.error('Error:', error));
+                .then(() => {
+                    showAlert('Sponsors updated successfully!');
+                    renderSponsors(); // Re-render to show current state
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error updating sponsors. Please try again.');
+                });
         }
 
         function updateSocialMedia() {
