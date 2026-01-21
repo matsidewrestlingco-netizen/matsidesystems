@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Programs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Antonio:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-red: #C8102E;
+            --primary-blue: #1E3A5F;
+            --secondary-blue: #2B4C7E;
+            --dark-bg: #0A0A0A;
+            --card-bg: #1A1A1A;
+            --text-light: #FFFFFF;
+            --text-gray: #B0B0B0;
+            --accent-gold: #FFD700;
+        }
+
+        body {
+            font-family: 'Oswald', sans-serif;
+            background: linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 50%, #0A0A0A 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeOut 0.5s ease-out 2.5s forwards;
+        }
+
+        #logo-loader {
+            animation: logoLoad 2s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes logoLoad {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        /* Main Content */
+        #main-content {
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out 3s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        .event-header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .event-header::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+        }
+
+        .event-logo {
+            max-width: 400px;
+            width: 100%;
+            height: auto;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 5px 20px rgba(30, 58, 95, 0.4));
+        }
+
+        .event-title {
+            font-family: 'Antonio', sans-serif;
+            font-size: 4rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .event-date {
+            font-size: 1.5rem;
+            color: var(--text-gray);
+            letter-spacing: 2px;
+        }
+
+        /* VS Section */
+        .vs-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 40px;
+            margin-bottom: 80px;
+            align-items: start;
+        }
+
+        .vs-divider {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 100px;
+        }
+
+        .vs-text {
+            font-family: 'Antonio', sans-serif;
+            font-size: 6rem;
+            font-weight: 700;
+            background: linear-gradient(180deg, var(--primary-blue), var(--primary-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .vs-text::before,
+        .vs-text::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 2px;
+            background: var(--primary-red);
+        }
+
+        .vs-text::before {
+            top: -20px;
+        }
+
+        .vs-text::after {
+            bottom: -20px;
+        }
+
+        /* Team Card */
+        .team-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .team-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+        }
+
+        .team-card.team-red {
+            border-color: rgba(211, 47, 47, 0.3);
+        }
+
+        .team-card.team-red::before {
+            background: linear-gradient(90deg, var(--primary-red), #FF5252);
+        }
+
+        .team-card.team-blue {
+            border-color: rgba(21, 101, 192, 0.3);
+        }
+
+        .team-card.team-blue::before {
+            background: linear-gradient(90deg, var(--primary-blue), #42A5F5);
+        }
+
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        .team-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .coaches-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .head-coach {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .assistant-coaches {
+            font-size: 0.95rem;
+            color: var(--text-gray);
+            font-style: italic;
+        }
+
+        .assistant-coaches span {
+            display: inline-block;
+            margin: 0 8px;
+        }
+
+        .team-red .team-name {
+            color: var(--primary-red);
+            text-shadow: 0 0 20px rgba(211, 47, 47, 0.5);
+        }
+
+        .team-blue .team-name {
+            color: var(--primary-blue);
+            text-shadow: 0 0 20px rgba(21, 101, 192, 0.5);
+        }
+
+        .wrestler {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .wrestler.has-link {
+            cursor: pointer;
+        }
+
+        .wrestler.has-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(10px);
+        }
+
+        .wrestler:not(.has-link):hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .team-red .wrestler {
+            border-left-color: var(--primary-red);
+        }
+
+        .team-blue .wrestler {
+            border-left-color: var(--primary-blue);
+        }
+
+        .wrestler-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .wrestler-weight {
+            color: var(--text-gray);
+            font-size: 1.1rem;
+        }
+
+        /* Sponsors Section */
+        .sponsors-section {
+            margin-top: 80px;
+            padding: 60px 40px;
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.8), rgba(10, 10, 10, 0.8));
+            border-radius: 20px;
+            border: 2px solid rgba(30, 58, 95, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sponsors-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-blue));
+        }
+
+        .sponsors-title {
+            font-family: 'Antonio', sans-serif;
+            font-size: 2.5rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 50px;
+            color: var(--primary-blue);
+        }
+
+        .sponsors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .sponsor-logo {
+            background: rgba(255, 255, 255, 1);
+            padding: 30px;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            width: 100%;
+        }
+
+        .sponsor-logo:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+            border-color: var(--primary-blue);
+            box-shadow: 0 10px 40px rgba(30, 58, 95, 0.3);
+        }
+
+        .sponsor-logo img {
+            max-width: 100%;
+            height: auto;
+            max-height: 80px;
+            filter: brightness(0.9);
+        }
+
+        .sponsor-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        /* Social Media Section */
+        .social-media-section {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .social-title {
+            font-family: 'Antonio', sans-serif;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            color: var(--primary-blue);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(30, 58, 95, 0.3);
+        }
+
+        .social-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .vs-container {
+                gap: 20px;
+            }
+
+            .vs-text {
+                font-size: 3rem;
+            }
+
+            .vs-divider {
+                padding-top: 60px;
+            }
+
+            .event-title {
+                font-size: 2.5rem;
+            }
+
+            .team-name {
+                font-size: 1.8rem;
+            }
+
+            .team-card {
+                padding: 25px;
+            }
+
+            .wrestler-name {
+                font-size: 1.2rem;
+            }
+
+            .sponsors-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div id="logo-loader">
+            <img src="https://www.matsidesystems.com/assets/sawa3.png" alt="Shaler Area Wrestling" style="max-width: 400px; width: 100%; height: auto;">
+        </div>
+    </div>
+
+            <!-- VS Section -->
+            <div class="vs-container">
+                    <div>
+                        <!-- 100 lbs -->
+                        <a href="https://www.matsidesystems.com/shaler/program.html" target="_blank" style="text-decoration: none; color: inherit;">
+                            <div class="wrestler has-link">
+                            <div class="wrestler-name">Boy's Program</div>
+                            </div>
+                        </a>
+                        <a href="https://www.matsidesystems.com/shaler/program-panel.html" target="_blank" style="text-decoration: none; color: inherit;">
+                            <div class="wrestler has-link">
+                            <div class="wrestler-name">Boy's Program Control Panel</div>
+                            </div>
+                        </a>
+                       
+                           <a href="https://www.matsidesystems.com/shaler/programhsg.html" target="_blank" style="text-decoration: none; color: inherit;">
+                            <div class="wrestler has-link">
+                            <div class="wrestler-name">Girls's Program</div>
+                            </div>
+                        </a>
+                    </div>
+</body>
+</html>
+
+                      
