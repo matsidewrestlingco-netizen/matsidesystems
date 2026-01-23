@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TDC Raffle Admin | SAWA</title>
+
+  <style>
+    :root{
+      --bg1:#f6f8fc;
+      --bg2:#eef3fb;
+
+      --card:#ffffff;
+      --stroke:rgba(15, 23, 42, 0.10);
+
+      --text:#0f172a;
+      --muted:#475569;
+
+      --blue:#1b3a6b;
+      --red:#c81f2d;
+
+      --paidDeep:#0b6b2a;
+      --paidDeepBg:rgba(11,107,42,0.14);
+
+      --warn:#f59e0b;
+      --warnBg:rgba(245,158,11,0.14);
+
+      --danger:#dc2626;
+      --dangerBg:rgba(220,38,38,0.10);
+
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 450px at 15% 0%, rgba(27,58,107,0.08), transparent 55%),
+        radial-gradient(900px 450px at 85% 0%, rgba(200,31,45,0.08), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+    .wrap{ max-width:1200px; margin:0 auto; padding:20px; }
+
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+      padding:14px 16px;
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      background: linear-gradient(90deg, rgba(27,58,107,0.06), rgba(200,31,45,0.05));
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+    .brand{ display:flex; align-items:center; gap:14px; }
+    .brand img{ height:46px; width:auto; display:block; }
+    .brand h1{ font-size:22px; margin:0; line-height:1.1; }
+    .brand .sub{ margin-top:4px; color:var(--muted); font-size:13px; }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      padding:16px;
+      box-shadow: var(--shadow);
+      margin-bottom:14px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){ .grid{ grid-template-columns:1fr; } }
+
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    @media (max-width: 700px){ .row{ grid-template-columns:1fr; } }
+
+    .pillbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid var(--stroke);
+      color:var(--muted);
+      font-weight:900; font-size:12px;
+      background:#fff;
+    }
+    .dot{ width:10px; height:10px; border-radius:999px; display:inline-block; }
+    .dot.req{ background: rgba(245,158,11,0.9); }
+    .dot.conf{ background: rgba(11,107,42,0.92); }
+    .dot.can{ background: rgba(220,38,38,0.85); }
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      padding:10px 12px; border-radius:14px;
+      border:1px solid rgba(15, 23, 42, 0.14);
+      background:#fff; color:var(--text);
+      cursor:pointer; font-weight:900; text-decoration:none; white-space:nowrap;
+    }
+    .btn:hover{ background: rgba(15,23,42,0.03); }
+    .btn-blue{
+      border-color: rgba(27,58,107,0.28);
+      background: linear-gradient(180deg, rgba(27,58,107,0.10), rgba(27,58,107,0.06));
+    }
+    .btn-green{
+      border-color: rgba(11,107,42,0.28);
+      background: linear-gradient(180deg, rgba(11,107,42,0.12), rgba(11,107,42,0.06));
+    }
+    .btn-red{
+      border-color: rgba(220,38,38,0.28);
+      background: linear-gradient(180deg, rgba(220,38,38,0.10), rgba(220,38,38,0.06));
+    }
+
+    input, select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(15, 23, 42, 0.14);
+      font-size:14px;
+      outline:none;
+      background:#fff;
+    }
+    input:focus, select:focus{
+      border-color: rgba(27,58,107,0.45);
+      box-shadow: 0 0 0 4px rgba(27,58,107,0.12);
+    }
+
+    .hr{ height:1px; background: rgba(15,23,42,0.10); margin:14px 0; }
+
+    .table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      background:#fff;
+    }
+    .table th, .table td{
+      text-align:left;
+      padding:10px 10px;
+      border-bottom:1px solid rgba(15,23,42,0.08);
+      font-size:13px;
+      vertical-align:top;
+    }
+    .table th{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:1000;
+      background: rgba(15,23,42,0.02);
+    }
+    .table tr:last-child td{ border-bottom:none; }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:4px 10px; border-radius:999px;
+      font-weight:1000; font-size:11px;
+      border:1px solid rgba(15,23,42,0.10);
+      background:#fff;
+    }
+    .badge.req{ background: var(--warnBg); border-color: rgba(245,158,11,0.25); color:#7a4b00; }
+    .badge.conf{ background: var(--paidDeepBg); border-color: rgba(11,107,42,0.25); color: var(--paidDeep); }
+    .badge.can{ background: var(--dangerBg); border-color: rgba(220,38,38,0.25); color: var(--danger); }
+
+    .ok{ color:#16a34a; font-weight:900; }
+    .err{ color:#dc2626; font-weight:900; }
+    .muted{ color:var(--muted); }
+    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size:12px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <img src="/images/Asset_11SAWresstlingNew.jpeg" alt="SA Wrestling" />
+        <div>
+          <h1>TDC Raffle Admin</h1>
+          <div class="sub">Confirm tickets, manage requests, and monitor totals</div>
+        </div>
+      </div>
+
+      <div class="pillbar">
+        <span class="pill" id="authState">Not signed in</span>
+        <button class="btn btn-blue" id="btnSignIn">Sign in (Google)</button>
+        <button class="btn" id="btnSignOut" style="display:none;">Sign out</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div>
+          <div class="pillbar">
+            <span class="pill"><span class="dot req"></span>Requested</span>
+            <span class="pill"><span class="dot conf"></span>Confirmed</span>
+            <span class="pill"><span class="dot can"></span>Cancelled</span>
+            <span class="pill" id="stats">Loading…</span>
+          </div>
+          <div class="hr"></div>
+          <div class="row">
+            <div>
+              <label class="muted" style="font-size:12px; font-weight:900;">View</label>
+              <select id="filterStatus">
+                <option value="requested">Requested</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div>
+              <label class="muted" style="font-size:12px; font-weight:900;">Search (name/contact)</label>
+              <input id="search" placeholder="Type to filter…" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="muted" style="font-size:12px; font-weight:900;">Your UID (for Firestore admins allowlist)</div>
+          <div style="margin-top:6px;">
+            <code id="uid">—</code>
+          </div>
+          <div style="margin-top:10px;" class="muted">
+            To grant admin access: create a Firestore doc at <code>admins/&lt;YOUR_UID&gt;</code>, then refresh.
+          </div>
+          <div id="msg" style="margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2 style="margin:0 0 10px;">Tickets</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Ticket</th>
+              <th>Name</th>
+              <th>Contact</th>
+              <th>Pay</th>
+              <th>Status</th>
+              <th style="width:260px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr><td colspan="6" class="muted">Sign in to load tickets.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0 0 10px;">Quick Actions</h2>
+        <div class="muted" style="margin-bottom:10px;">
+          - “Confirm” moves tickets to the public list<br/>
+          - “Cancel” keeps record but hides from public list<br/>
+          - “Delete” removes it entirely
+        </div>
+        <div class="hr"></div>
+        <div class="muted" style="font-size:12px;">
+          If you want bulk confirm (select multiple + confirm), say so and I’ll add it.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy, limit,
+      updateDoc, deleteDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // Your Firebase config (same as raffle page)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDiXKDy1Xg_W7BNzO-bo1FbapXt_hJTYco",
+      authDomain: "tdc-raffle.firebaseapp.com",
+      projectId: "tdc-raffle",
+      storageBucket: "tdc-raffle.firebasestorage.app",
+      messagingSenderId: "832529502371",
+      appId: "1:832529502371:web:7f35743f8be7774c736f16"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const authState = document.getElementById("authState");
+    const btnSignIn = document.getElementById("btnSignIn");
+    const btnSignOut = document.getElementById("btnSignOut");
+    const uidEl = document.getElementById("uid");
+    const msg = document.getElementById("msg");
+    const rowsEl = document.getElementById("rows");
+    const statsEl = document.getElementById("stats");
+    const filterStatus = document.getElementById("filterStatus");
+    const searchEl = document.getElementById("search");
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function setMessage(type, text) {
+      const cls = type === "ok" ? "ok" : (type === "err" ? "err" : "muted");
+      msg.innerHTML = `<div class="${cls}">${escapeHtml(text)}</div>`;
+    }
+
+    function ticketLabelFromId(docId) {
+      return "#" + String(docId).slice(-6).toUpperCase();
+    }
+
+    async function isAdmin(uid) {
+      if (!uid) return false;
+      const snap = await getDoc(doc(db, "admins", uid));
+      return snap.exists();
+    }
+
+    async function loadStats() {
+      // lightweight counts by status (limit is fine for fundraiser scale)
+      const statuses = ["requested", "confirmed", "cancelled"];
+      const counts = {};
+      for (const st of statuses) {
+        const q = query(collection(db, "tdc_raffle_tickets"), where("status", "==", st), limit(10000));
+        const snap = await getDocs(q);
+        counts[st] = snap.size;
+      }
+      statsEl.textContent = `Req ${counts.requested} • Conf ${counts.confirmed} • Canc ${counts.cancelled}`;
+    }
+
+    let lastLoaded = [];
+
+    function renderTable(data) {
+      const term = (searchEl.value || "").trim().toLowerCase();
+      const filtered = term
+        ? data.filter(r =>
+            (r.name || "").toLowerCase().includes(term) ||
+            (r.contact || "").toLowerCase().includes(term) ||
+            (r.payment_method || "").toLowerCase().includes(term) ||
+            (r.id || "").toLowerCase().includes(term)
+          )
+        : data;
+
+      if (!filtered.length) {
+        rowsEl.innerHTML = `<tr><td colspan="6" class="muted">No tickets found for this view.</td></tr>`;
+        return;
+      }
+
+      rowsEl.innerHTML = filtered.map(r => {
+        const badgeCls = r.status === "confirmed" ? "conf" : (r.status === "cancelled" ? "can" : "req");
+        const badgeTxt = r.status;
+        return `
+          <tr>
+            <td><b>${escapeHtml(ticketLabelFromId(r.id))}</b><div class="muted" style="font-size:11px;">${escapeHtml(r.id)}</div></td>
+            <td>${escapeHtml(r.name || "")}</td>
+            <td>${escapeHtml(r.contact || "")}</td>
+            <td>${escapeHtml(r.payment_method || "")}</td>
+            <td><span class="badge ${badgeCls}">${escapeHtml(badgeTxt)}</span></td>
+            <td>
+              <div class="pillbar">
+                <button class="btn btn-green" data-act="confirm" data-id="${escapeHtml(r.id)}">Confirm</button>
+                <button class="btn btn-red" data-act="cancel" data-id="${escapeHtml(r.id)}">Cancel</button>
+                <button class="btn" data-act="delete" data-id="${escapeHtml(r.id)}">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function loadTicketsForStatus(status) {
+      setMessage("muted", "Loading…");
+      rowsEl.innerHTML = `<tr><td colspan="6" class="muted">Loading…</td></tr>`;
+
+      const q = query(
+        collection(db, "tdc_raffle_tickets"),
+        where("status", "==", status),
+        orderBy("createdAt", "desc"),
+        limit(500)
+      );
+
+      const snap = await getDocs(q);
+      lastLoaded = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderTable(lastLoaded);
+      setMessage("ok", `Loaded ${lastLoaded.length} ticket(s).`);
+    }
+
+    async function doAction(action, id) {
+      try {
+        const ref = doc(db, "tdc_raffle_tickets", id);
+
+        if (action === "confirm") {
+          await updateDoc(ref, { status: "confirmed", confirmedAt: serverTimestamp() });
+          setMessage("ok", `Confirmed ${ticketLabelFromId(id)}.`);
+        } else if (action === "cancel") {
+          await updateDoc(ref, { status: "cancelled" });
+          setMessage("ok", `Cancelled ${ticketLabelFromId(id)}.`);
+        } else if (action === "delete") {
+          const ok = confirm(`Delete ${ticketLabelFromId(id)} permanently?`);
+          if (!ok) return;
+          await deleteDoc(ref);
+          setMessage("ok", `Deleted ${ticketLabelFromId(id)}.`);
+        }
+
+        await loadStats();
+        await loadTicketsForStatus(filterStatus.value);
+      } catch (e) {
+        console.error(e);
+        setMessage("err", "Action failed. Make sure you are an admin (admins/<uid>) and Firestore rules are updated.");
+      }
+    }
+
+    rowsEl.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-act]");
+      if (!btn) return;
+      doAction(btn.dataset.act, btn.dataset.id);
+    });
+
+    filterStatus.addEventListener("change", () => {
+      loadTicketsForStatus(filterStatus.value);
+    });
+
+    searchEl.addEventListener("input", () => {
+      renderTable(lastLoaded);
+    });
+
+    btnSignIn.addEventListener("click", async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        console.error(e);
+        setMessage("err", "Sign-in failed. Make sure your GitHub Pages domain is added to Firebase Authorized Domains.");
+      }
+    });
+
+    btnSignOut.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        authState.textContent = "Not signed in";
+        uidEl.textContent = "—";
+        btnSignIn.style.display = "";
+        btnSignOut.style.display = "none";
+        rowsEl.innerHTML = `<tr><td colspan="6" class="muted">Sign in to load tickets.</td></tr>`;
+        setMessage("muted", "");
+        return;
+      }
+
+      uidEl.textContent = user.uid;
+      authState.textContent = `Signed in: ${user.email || "Google User"}`;
+      btnSignIn.style.display = "none";
+      btnSignOut.style.display = "";
+
+      const ok = await isAdmin(user.uid);
+      if (!ok) {
+        setMessage("err", "You are signed in, but NOT an admin yet. Add a doc: admins/<your_uid> in Firestore, then refresh.");
+        rowsEl.innerHTML = `<tr><td colspan="6" class="muted">Not authorized.</td></tr>`;
+        return;
+      }
+
+      setMessage("ok", "Admin access granted.");
+      await loadStats();
+      await loadTicketsForStatus(filterStatus.value);
+    });
+  </script>
+</body>
+</html>
