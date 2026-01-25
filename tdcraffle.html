@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Take Down Cancer Raffle | Shaler Area Wrestling</title>
+  <title>Take Down Cancer Raffle | SAWA</title>
 
   <style>
     :root{
@@ -41,6 +41,19 @@
 
     .wrap{ max-width:1100px; margin:0 auto; padding:20px; }
 
+    .hero-banner{
+      width:100%;
+      border-radius: var(--radius);
+      overflow:hidden;
+      margin-bottom:14px;
+      box-shadow: var(--shadow);
+    }
+    .hero-banner img{
+      width:100%;
+      height:auto;
+      display:block;
+    }
+
     .topbar{
       display:flex;
       align-items:center;
@@ -53,6 +66,28 @@
       margin-bottom: 14px;
     }
     .topbar img{ height:46px; width:auto; display:block; }
+
+    .prize-card{
+      text-align:center;
+    }
+    .prize-card img{
+      max-width:100%;
+      height:auto;
+      border-radius:14px;
+      margin-bottom:12px;
+    }
+    .prize-title{
+      font-size:20px;
+      font-weight:900;
+      color:var(--blue);
+      margin:0 0 8px;
+    }
+    .prize-value{
+      font-size:28px;
+      font-weight:1000;
+      color:var(--red);
+      margin:8px 0;
+    }
     .topbar h1{ font-size:24px; margin:0; line-height:1.1; }
     .topbar .sub{ margin:4px 0 0; color:var(--muted); font-size:13px; }
 
@@ -248,6 +283,11 @@
 
 <body>
   <div class="wrap">
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <img src="https://www.matsidesystems.com/assets/tdc_header.png" alt="Take Down Cancer - One Team. One Fight." />
+    </div>
+
     <div class="topbar">
       <!-- Update these image paths to match your repo -->
       <img src="https://www.matsidesystems.com/assets/sawa.png" alt="SA Wrestling" />
@@ -338,9 +378,21 @@
           <div id="msg" style="margin-top:10px;"></div>
         </form>
       </div>
-      <!-- Right: info -->
-      <div class="card">
-        <h2>How this works</h2>
+
+      <!-- Right column -->
+      <div>
+        <!-- Prize Card -->
+        <div class="card prize-card">
+          <h2>Grand Prize</h2>
+          <img src="https://www.matsidesystems.com/assets/tdc_prize.png" alt="TV and Soundbar Prize" />
+          <p class="prize-title">TV &amp; Home Entertainment System</p>
+          <p class="prize-value">$1000+ Value!</p>
+          <p class="muted">Winner will be drawn at Take Down Cancer Night. Must be present or reachable to claim.</p>
+        </div>
+
+        <!-- How it works -->
+        <div class="card">
+          <h2>How this works</h2>
         <p>
           1) Pay via Venmo/PayPal (memo: <b>TDC Raffle</b>)<br/>
           2) Submit your request here<br/>
@@ -354,6 +406,7 @@
         <p class="muted" style="font-size:12px;">
           Admin note: Confirm tickets by setting <b>status = "confirmed"</b> in the Firestore console.
         </p>
+        </div>
       </div>
     </div>
   </div>
