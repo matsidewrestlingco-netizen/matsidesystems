@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matside Systems</title>
+
+<style>
+  :root {
+    --bg: #05060a;
+    --panel: #11131b;
+    --panel-soft: #141824;
+    --outline: rgba(255,255,255,0.08);
+    --outline-strong: rgba(255,255,255,0.16);
+    --muted: #9aa0a6;
+    --accent: #1e88e5;
+    --card-hover: rgba(30,136,229,0.22);
+  }
+
+  body {
+    margin: 0;
+    background: radial-gradient(circle at top, #1a1d2e 0%, #05060a 60%, #020308 100%);
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #e9eaee;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+  }
+
+  .logo {
+    width: 180px;
+    height: auto;
+    margin-bottom: 18px;
+    opacity: 0.95;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+
+  .subtitle {
+    margin-top: 6px;
+    margin-bottom: 40px;
+    font-size: 16px;
+    color: var(--muted);
+  }
+
+  /* GRID SECTIONS */
+
+  .section {
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 30px;
+  }
+
+  .section h2 {
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--outline);
+    padding: 18px 16px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+    text-decoration: none;
+    color: #fff;
+  }
+
+  .card:hover {
+    background: var(--card-hover);
+    transform: translateY(-2px);
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: #c7c9cf;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    padding: 20px 0;
+    font-size: 13px;
+    margin-top: auto;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <img src="/assets/matsidesystems.png" class="logo" alt="Matside Systems Logo">
+
+  <h1>Matside Systems</h1>
+  <div class="subtitle">Cloud-Based Wrestling Assistant</div>
+
+
+<footer>
+  © Matside Systems — All Rights Reserved
+</footer>
+
+</body>
+</html>
